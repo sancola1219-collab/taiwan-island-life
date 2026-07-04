@@ -402,6 +402,65 @@ const BUILDING_DRAWS={
   ctx.moveTo(x-8,y-22);ctx.lineTo(x+w/2,y-44);ctx.lineTo(x+w+8,y-22);ctx.closePath();ctx.fill();
   ctx.fillStyle='#6a4a3a';rr(x+w/2-12,y+h-32,24,32,3);ctx.fill();
   ctx.fillStyle='#ffe9b0';rr(x+8,y-8,20,16,3);ctx.fill();rr(x+w-28,y-8,20,16,3);ctx.fill();},
+ oldstreet(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w);
+  const cols=['#c98a6a','#d8a878','#b87a5a'];
+  for(let i=0;i<3;i++){const sx=x+i*w/3,sw=w/3,lift=(i%2)*8;
+    ctx.fillStyle=cols[i];rr(sx+1,y-32-lift,sw-2,h+32+lift,3);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;rr(sx+1,y-32-lift,sw-2,h+32+lift,3);ctx.stroke();
+    ctx.fillStyle='#6a4534';ctx.beginPath();ctx.arc(sx+sw/2,y+h-4,sw/2-6,Math.PI,0);ctx.fill();
+    ctx.fillRect(sx+6,y+h-4,sw-12,4);
+    ctx.fillStyle='#f0e0c0';rr(sx+5,y-26-lift,sw-10,12,3);ctx.fill();
+    ctx.fillStyle='#8a5a3a';ctx.beginPath();ctx.arc(sx+sw/2,y-32-lift,7,Math.PI,0);ctx.fill();}
+  drawRoofSign(x+w/2,y-56,b.label,'#8a5a3a');},
+ highheel(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='rgba(126,200,232,.8)';ctx.strokeStyle='#5f9fd8';ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(cx2-40,y+h-4);ctx.lineTo(cx2-34,y-40);
+  ctx.quadraticCurveTo(cx2-10,y-58,cx2+18,y-34);
+  ctx.quadraticCurveTo(cx2+44,y-14,cx2+42,y+h-4);ctx.lineTo(cx2+16,y+h-4);
+  ctx.quadraticCurveTo(cx2+8,y-6,cx2-16,y-2);
+  ctx.quadraticCurveTo(cx2-28,y+2,cx2-30,y+h-4);ctx.closePath();
+  ctx.fill();ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(cx2-28+i*17,y-44+i*5);ctx.lineTo(cx2-20+i*17,y+h-8);ctx.stroke();}
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(cx2-2,y-42,5,0,7);ctx.fill();
+  drawRoofSign(cx2,y+h+20,b.label,'#5f9fd8');},
+ rockform(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w);
+  const g=ctx.createLinearGradient(x,y-34,x,y+h);
+  g.addColorStop(0,'#c9b490');g.addColorStop(1,'#9a8668');
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.moveTo(x,y+h);ctx.quadraticCurveTo(x+w*0.15,y-26,x+w*0.42,y-18);
+  ctx.quadraticCurveTo(x+w*0.6,y-14,x+w*0.7,y-32);ctx.quadraticCurveTo(x+w*0.92,y-42,x+w,y+h);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.25)';ctx.beginPath();ctx.arc(x+w*0.76,y-26,6,0,7);ctx.fill();
+  drawRoofSign(x+w/2,y+h+20,b.label,'#8a7458');},
+ archbridge(b){const x=b.x,y=b.y,w=b.w,h=b.h;
+  ctx.fillStyle='#e8e8e2';ctx.fillRect(x-12,y+8,w+24,10);
+  ctx.strokeStyle='#d0d0c8';ctx.lineWidth=3;
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(x+w*(i+0.5)/4,y+18,w/8-5,0,Math.PI);ctx.stroke();}
+  ctx.strokeStyle='#c8c8c0';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x-12,y+6);ctx.lineTo(x+w+12,y+6);ctx.stroke();
+  for(let i=0;i<=8;i++){ctx.beginPath();ctx.moveTo(x-12+(w+24)*i/8,y+6);ctx.lineTo(x-12+(w+24)*i/8,y+10);ctx.stroke();}
+  drawRoofSign(x+w/2,y-10,b.label,'#7a8a9a');},
+ canoe(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2,cy2=y+h-8;bShadow(x,y+h,w);
+  ctx.fillStyle='#f5f0e0';
+  ctx.beginPath();ctx.moveTo(cx2-34,cy2-6);ctx.quadraticCurveTo(cx2-42,cy2-28,cx2-30,cy2-32);
+  ctx.quadraticCurveTo(cx2,cy2,cx2+30,cy2-32);ctx.quadraticCurveTo(cx2+42,cy2-28,cx2+34,cy2-6);
+  ctx.quadraticCurveTo(cx2,cy2+10,cx2-34,cy2-6);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#c94f43';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle='#c94f43';
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(cx2-14+i*14,cy2-9,4,0,7);ctx.fill();}
+  ctx.fillStyle='#2f2f2f';
+  ctx.beginPath();ctx.moveTo(cx2-26,cy2-4);ctx.lineTo(cx2-19,cy2-14);ctx.lineTo(cx2-12,cy2-4);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx2+12,cy2-4);ctx.lineTo(cx2+19,cy2-14);ctx.lineTo(cx2+26,cy2-4);ctx.closePath();ctx.fill();
+  drawRoofSign(cx2,y-12,b.label,'#c94f43');},
+ cablecar(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#f3ead1';rr(x,y-20,w,h+20,6);ctx.fill();
+  ctx.fillStyle='#c9500f';ctx.beginPath();ctx.moveTo(x-8,y-16);ctx.lineTo(cx2,y-40);ctx.lineTo(x+w+8,y-16);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#6a5a4a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx2,y-40);ctx.lineTo(cx2,y-66);ctx.stroke();
+  ctx.fillStyle='#6a5a4a';ctx.beginPath();ctx.arc(cx2,y-66,6,0,7);ctx.fill();
+  ctx.fillStyle='#7a4a22';rr(cx2-16,y+h-38,32,38,5);ctx.fill();
+  drawRoofSign(cx2,y-80,'🚡 '+b.label,'#c9500f');},
 };
 const BUILDINGS=[];
 function addBuild(t,tx,ty,tw,th,label,extra){
@@ -410,10 +469,15 @@ function addBuild(t,tx,ty,tw,th,label,extra){
 const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],lantern:[3,2],
   hotspring:[4,3],gate:[4,2],opera:[6,3],windmill:[2,2],buddha:[3,3],temple:[6,4],fort:[5,4],
   redtower:[4,3],pagodas:[6,3],tower85:[3,3],gianttree:[3,3],peak:[2,2],lighthouse:[2,2],
-  balloon:[4,3],weir:[4,3],station:[5,3],harbor:[3,3],house:[3,2]};
+  balloon:[4,3],weir:[4,3],station:[5,3],harbor:[3,3],house:[3,2],
+  oldstreet:[6,3],highheel:[3,3],rockform:[4,2],archbridge:[6,2],canoe:[3,2],cablecar:[3,3]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 HARBORS.forEach(h2=>addBuild('harbor',h2.tx,h2.ty,3,3,h2.n,{routes:h2.routes}));
+CABLECARS.forEach(c=>{
+  addBuild('cablecar',Math.round(c.a[0])-1,Math.round(c.a[1])-1,3,3,c.a[2],{line:c,end:'a'});
+  addBuild('cablecar',Math.round(c.b[0])-1,Math.round(c.b[1])-1,3,3,c.b[2],{line:c,end:'b'});
+});
 // 三合院民宅（各鄉鎮周邊）
 { rs=SEED+7;
   const offs=[[-7,-2],[6,-3],[-5,4],[7,3]];
@@ -427,16 +491,16 @@ HARBORS.forEach(h2=>addBuild('harbor',h2.tx,h2.ty,3,3,h2.n,{routes:h2.routes}));
     }}}
 
 /* ================= 世界物件 ================= */
-const trees=[],rocks=[],weeds=[],flowers=[],drops=[],bugs=[],digs=[],teaBushes=[],cacti=[],lamps=[],lanterns=[];
+const trees=[],rocks=[],weeds=[],flowers=[],drops=[],bugs=[],digs=[],teaBushes=[],cacti=[],strawberries=[],lamps=[],lanterns=[];
 let bees=null;
 function nearBuilding(tx,ty){ return BUILDINGS.some(b=>tx>=b.tx-1&&tx<=b.tx+b.tw&&ty>=b.ty-2&&ty<=b.ty+b.th); }
 function inRectA(tx,ty,r){return tx>=r.x0&&tx<=r.x1&&ty>=r.y0&&ty<=r.y1;}
 function fruitOf(tx,ty){
   if(inRectA(tx,ty,CACTUS_AREA))return null;
   const r=hsh(tx*3,ty*7);
-  if(ty<120)return '橘子';
-  if(tx>210&&ty>110&&ty<340)return '釋迦';
-  if(ty<270)return '香蕉';
+  if(ty<MH*0.231)return '橘子';
+  if(tx>MW*0.525&&ty>MH*0.212&&ty<MH*0.654)return '釋迦';
+  if(ty<MH*0.519)return '香蕉';
   return r<0.5?'芒果':'蓮霧';
 }
 function genWorld(){
@@ -447,20 +511,20 @@ function genWorld(){
     const nearPath=[[0,0],[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const q=T(tx+dx,ty+dy);return q===PATH||q===PLAZA;});
     if(nearPath)continue;
     if(t===SAND){
-      if(rand()<0.006&&trees.length<950&&!nearBuilding(tx,ty))
+      if(rand()<0.006&&trees.length<1450&&!nearBuilding(tx,ty))
         trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:'palm',fruit:'椰子',has:true,regrow:0,shake:0});
       continue;}
     const cluster=vnoise(tx*0.07+7,ty*0.07+3);
-    if(cluster>0.66&&rand()<0.22&&trees.length<900&&!nearBuilding(tx,ty)){
+    if(cluster>0.66&&rand()<0.22&&trees.length<1400&&!nearBuilding(tx,ty)){
       if(t===HIGH){ const peach=rand()<0.3;
         trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:peach?'fruit':'pine',
           fruit:peach?'水蜜桃':null,has:true,regrow:0,shake:0});}
       else{ const f=fruitOf(tx,ty);
         if(f)trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:'fruit',fruit:f,has:true,regrow:0,shake:0});}
       continue;}
-    if(rand()<0.005&&rocks.length<110&&!nearBuilding(tx,ty)){rocks.push({x:(tx+0.5)*TILE,y:(ty+0.6)*TILE,hit:0});continue;}
-    if(rand()<0.0018&&weeds.length<160){weeds.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE});continue;}
-    if(rand()<0.006&&flowers.length<420)flowers.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE,
+    if(rand()<0.005&&rocks.length<170&&!nearBuilding(tx,ty)){rocks.push({x:(tx+0.5)*TILE,y:(ty+0.6)*TILE,hit:0});continue;}
+    if(rand()<0.0018&&weeds.length<240){weeds.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE});continue;}
+    if(rand()<0.006&&flowers.length<650)flowers.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE,
       c:['#f26d7d','#f9c74f','#fff','#c77dff','#ff9e50'][Math.floor(rand()*5)]});
   }
   // 茶園
@@ -469,10 +533,22 @@ function genWorld(){
       const t=T(tx,ty); if(t===GRASS||t===HIGH)
         teaBushes.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE,ready:true,t:0});}
   // 澎湖仙人掌
-  for(let ty=CACTUS_AREA.y0;ty<=CACTUS_AREA.y1&&cacti.length<25;ty++)
-    for(let tx=CACTUS_AREA.x0;tx<=CACTUS_AREA.x1&&cacti.length<25;tx++)
+  for(let ty=CACTUS_AREA.y0;ty<=CACTUS_AREA.y1&&cacti.length<30;ty++)
+    for(let tx=CACTUS_AREA.x0;tx<=CACTUS_AREA.x1&&cacti.length<30;tx++)
       if(T(tx,ty)===GRASS&&hsh(tx*5,ty*3)>0.8&&!nearBuilding(tx,ty))
         cacti.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE,ready:true,t:0});
+  // 大湖草莓園
+  for(let ty=STRAWBERRY_AREA[1];ty<=STRAWBERRY_AREA[3];ty+=2)
+    for(let tx=STRAWBERRY_AREA[0];tx<=STRAWBERRY_AREA[2];tx++){
+      const t=T(tx,ty); if(t===GRASS||t===FIELD)
+        strawberries.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE,ready:true,t:0});}
+  // 花海（金針花、花園）
+  for(const ff of FLOWER_FIELDS){
+    const [x0,y0,x1,y1,col]=ff;
+    for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){
+      const t=T(tx,ty); if(t!==GRASS&&t!==HIGH&&t!==FIELD)continue;
+      for(let k=0;k<2;k++)flowers.push({x:(tx+hsh(tx+k,ty)*0.9+0.05)*TILE,
+        y:(ty+hsh(tx,ty+k*3)*0.9+0.05)*TILE,c:col});}}
   // 路燈（市鎮）
   for(const tw of TOWNS){
     for(const [ox,oy] of [[-2,2],[2,-2]]){
@@ -480,8 +556,26 @@ function genWorld(){
       if(t===PATH||t===PLAZA)lamps.push({x:(tw.tx+ox+0.5)*TILE,y:(tw.ty+oy+0.5)*TILE});}}
 }
 
+/* ================= 乘坐系統（火車 / 纜車） ================= */
+function railPath(i0,i1){ // 環島鐵路：取較短方向的節點序列
+  const N=RAILS.length-1; // 首尾同點（閉環）
+  const segLen=[]; let tot=0;
+  for(let i=0;i<N;i++){segLen.push(Math.hypot(RAILS[(i+1)%N][0]-RAILS[i][0],RAILS[(i+1)%N][1]-RAILS[i][1]));tot+=segLen[i];}
+  let fwd=0; for(let i=i0;i!==i1;i=(i+1)%N)fwd+=segLen[i];
+  const pts=[];
+  if(fwd<=tot-fwd){ for(let i=i0;;i=(i+1)%N){pts.push(RAILS[i]);if(i===i1)break;} }
+  else { for(let i=i0;;i=(i-1+N)%N){pts.push(RAILS[i]);if(i===i1)break;} }
+  return pts.map(([x,y])=>({x:x*TILE,y:y*TILE}));
+}
+function startRide(pts,kind,speed,onEnd){
+  let len=0; const segs=[];
+  for(let i=0;i<pts.length-1;i++){const l=dist(pts[i].x,pts[i].y,pts[i+1].x,pts[i+1].y);segs.push(l);len+=l;}
+  player.riding={pts,segs,len:len||1,d:0,kind,speed,onEnd};
+  player.fishing=null; player.sailing=false; ui=null; menu=null;
+}
+
 /* ================= 玩家 / NPC ================= */
-const spawn=findWalkSafe(196,47);
+const spawn=findWalkSafe(294,70); // 台北車站前
 const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   buffSpd:0,buffLuck:0,swing:0,show:null,fishing:null,name:'小島民',shirt:'#e74c3c',
   boat:false,sailing:false};
@@ -528,6 +622,9 @@ function moveActor(a,dx,dy,spd,dt){
 
 /* ================= UI 狀態 ================= */
 let ui=null, menu=null, dialog=null, toasts=[], banner=null, lastRegion='', uiHits=[], flash=0;
+let zoom=1, zoomT=1;
+function camPos(){ const VWz=VW/zoom, VHz=VH/zoom;
+  return {cx:clamp(player.x-VWz/2,0,MW*TILE-VWz),cy:clamp(player.y-VHz/2,0,MH*TILE-VHz),VWz,VHz};}
 function toast(t){toasts.push({t,life:3});}
 function dlg(name,lines,onDone){ ui='dialog';
   dialog={name,lines:lines.map(l=>l.replace(/\{name\}/g,player.name)),i:0,ch:0,onDone,npc:null}; }
@@ -591,17 +688,29 @@ function buildAct(b){
          dlg(b.label,['你誠心地擲了筊……','「'+FORTUNES[Math.floor(Math.random()*FORTUNES.length)]+'」']);}
        else dlg(b.label,['身上的錢不夠呢…','媽祖婆微笑著說：心誠則靈，保重身體喔。']);}},
      {label:'離開',cb(){ui=null;}}]);},
-   station(){ const here=b;
+   station(){ const here=STATIONS.find(s=>s.n===b.label);
      const opts=STATIONS.filter(s=>s.n!==b.label).map(s=>{
        const fee=Math.round((50+dist(here.tx,here.ty,s.tx,s.ty)*1.3)/10)*10;
        return {label:s.n.replace('車站','')+'（'+fmt(fee)+'元）',cb(){
          if(money<fee){dlg(b.label,['車票錢不夠喔！','去賣點東西再來吧。']);return;}
-         money-=fee; sfx('train'); flash=1;
-         const p=findWalkSafe(s.tx+2,s.ty+4);
-         player.x=p.x;player.y=p.y;player.sailing=false;player.fishing=null;
-         toast('🚉 抵達 '+s.n+'！'); save();}};});
+         money-=fee; sfx('train');
+         startRide(railPath(here.railIdx,s.railIdx),'train',920,()=>{
+           const p=findWalkSafe(s.tx+2,s.ty+4);
+           player.x=p.x;player.y=p.y;
+           toast('🚉 抵達 '+s.n+'！'); save();});
+         toast('🚂 火車出發！沿著鐵軌前進…（點擊/空白鍵加速）');}};});
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('🚉 '+b.label+'：要搭車去哪裡呢？',opts);},
+   cablecar(){ const c=b.line, from=b.end==='a'?c.a:c.b, to=b.end==='a'?c.b:c.a;
+     openMenu('🚡 '+c.n+'・'+from[2]+'：要搭纜車嗎？',[
+       {label:'搭到 '+to[2]+'（'+c.fee+'元）',cb(){
+         if(money<c.fee){dlg(c.n,['搭一次 '+c.fee+' 元喔。']);return;}
+         money-=c.fee; sfx('chime'); save();
+         startRide([{x:from[0]*TILE,y:from[1]*TILE-40},{x:to[0]*TILE,y:to[1]*TILE-40}],'gondola',180,()=>{
+           const p=findWalkSafe(Math.round(to[0]),Math.round(to[1])+3);
+           player.x=p.x;player.y=p.y;toast('🚡 抵達 '+to[2]+'！');save();});
+         toast('🚡 纜車出發！從空中看風景～');}},
+       {label:'不搭了',cb(){ui=null;}}]);},
    harbor(){ const opts=[];
      if(!player.boat)opts.push({label:'買一艘小船（3,000元・永久）',cb(){
        if(money>=3000){money-=3000;player.boat=true;sfx('cash');save();
@@ -634,9 +743,11 @@ function buildAct(b){
        toast('♨️ 泡完湯全身暖呼呼！速度＆運氣UP 60秒');}},
      {label:'不用了',cb(){ui=null;}}]);},
    balloon(){ openMenu('🎈 '+b.label+'：要搭熱氣球嗎？',[
-     {label:'搭熱氣球鳥瞰台灣（100元）',cb(){ if(money<100){dlg(b.label,['搭一次 100 元喔。']);return;}
-       money-=100; sfx('chime'); save();
-       dlg(b.label,['熱氣球緩緩升空……','花東縱谷的稻田像拼布一樣，太美了！'],()=>{ui='map';});}},
+     {label:'搭熱氣球升空鳥瞰（100元）',cb(){ if(money<100){dlg(b.label,['搭一次 100 元喔。']);return;}
+       money-=100; sfx('chime'); save(); ui=null;
+       player.balloonRide={t:0,dur:16,cx:player.x,cy:player.y};
+       player.fishing=null;
+       toast('🎈 熱氣球緩緩升空…鳥瞰花東縱谷！');}},
      {label:'不用了',cb(){ui=null;}}]);},
   };
   if(L[b.t]){L[b.t]();return true;}
@@ -750,6 +861,8 @@ function tryShake(tr){ tr.shake=0.5;
 }
 function interact(){
   if(ui)return;
+  if(player.riding){player.riding.speed=Math.max(player.riding.speed,2400);return;}
+  if(player.balloonRide)return;
   const p=frontPoint(44);
   if(!player.sailing)
     for(const n of NPCS) if(dist(n.x,n.y,p.x,p.y)<52||dist(n.x,n.y,player.x,player.y)<50){talkTo(n);return;}
@@ -771,6 +884,8 @@ function interact(){
   for(const tr of trees) if(dist(tr.x,tr.y-4,p.x,p.y)<52||dist(tr.x,tr.y-4,player.x,player.y)<50){tryShake(tr);return;}
   for(const tb of teaBushes) if(tb.ready&&dist(tb.x,tb.y,player.x,player.y)<50){
     tb.ready=false;tb.t=120;caught('茶葉','採到');return;}
+  for(const sb of strawberries) if(sb.ready&&dist(sb.x,sb.y,player.x,player.y)<50){
+    sb.ready=false;sb.t=150;caught('草莓','採到');return;}
   for(const ca of cacti) if(ca.ready&&dist(ca.x,ca.y,player.x,player.y)<50){
     ca.ready=false;ca.t=180;
     if(Math.random()<0.12){toast('哎呀！被仙人掌刺到了！好痛！');sfx('sad');}
@@ -824,20 +939,95 @@ addEventListener('keydown',e=>{
   else if(c==='KeyN'){musicOn=!musicOn;toast(musicOn?'🎵 音樂開啟':'🔇 音樂關閉');save();}
 });
 addEventListener('keyup',e=>keys[e.code]=false);
-cv.addEventListener('click',e=>{
+
+/* ---------- 觸控 / 滑鼠（虛擬搖桿、點按移動、雙指縮放） ---------- */
+let touchUI=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+const pointers=new Map();
+let joy=null, moveHold=null, pinch0=null, tapInfo=null;
+cv.style.touchAction='none';
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+function uiHitAt(mx,my){ for(let i=uiHits.length-1;i>=0;i--){const h2=uiHits[i];
+  if(mx>=h2.x&&mx<=h2.x+h2.w&&my>=h2.y&&my<=h2.y+h2.h)return h2;} return null;}
+function advanceDialog(){ if(!dialog)return; const full=dialog.lines[dialog.i];
+  if(dialog.ch<full.length)dialog.ch=full.length;
+  else if(dialog.i<dialog.lines.length-1){dialog.i++;dialog.ch=0;}
+  else{ui=null;const f=dialog.onDone;dialog=null;if(f)f();}}
+cv.addEventListener('pointerdown',e=>{
+  if(!started)return;
+  if(e.pointerType==='touch')touchUI=true;
+  try{cv.setPointerCapture(e.pointerId);}catch(err){}
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===2){ const ps=[...pointers.values()];
+    pinch0={d:Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)||1,z:zoomT}; joy=null; moveHold=null; return;}
   const mx=e.clientX,my=e.clientY;
-  for(let i=uiHits.length-1;i>=0;i--){const h=uiHits[i];
-    if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h){h.cb();return;}}
+  const hit=uiHitAt(mx,my);
+  if(hit){hit.cb();return;}
+  if(ui==='dialog'){advanceDialog();return;}
+  if(ui)return;
+  if(player.riding){ player.riding.speed=Math.max(player.riding.speed,2400); return;}
+  if(player.balloonRide)return;
+  if(touchUI&&mx<VW*0.45&&my>VH*0.35){ joy={id:e.pointerId,bx:mx,by:my,dx:0,dy:0}; return;}
+  moveHold={id:e.pointerId,x:mx,y:my};
+  tapInfo={t:performance.now(),x:mx,y:my};
 });
+cv.addEventListener('pointermove',e=>{
+  if(!pointers.has(e.pointerId))return;
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch0&&pointers.size===2){ const ps=[...pointers.values()];
+    const d=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y);
+    zoomT=clamp(pinch0.z*d/pinch0.d,0.45,1.8); return;}
+  if(joy&&joy.id===e.pointerId){ let jx=(e.clientX-joy.bx)/52, jy=(e.clientY-joy.by)/52;
+    const L=Math.hypot(jx,jy); if(L>1){jx/=L;jy/=L;} joy.dx=jx;joy.dy=jy; return;}
+  if(moveHold&&moveHold.id===e.pointerId){moveHold.x=e.clientX;moveHold.y=e.clientY;}
+});
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if(pointers.size<2)pinch0=null;
+  if(joy&&joy.id===e.pointerId)joy=null;
+  if(moveHold&&moveHold.id===e.pointerId){
+    if(tapInfo&&performance.now()-tapInfo.t<260&&Math.hypot(e.clientX-tapInfo.x,e.clientY-tapInfo.y)<10){
+      const cam=camPos();
+      const wx=cam.cx+e.clientX/zoom, wy=cam.cy+e.clientY/zoom;
+      if(dist(wx,wy,player.x,player.y)<110)interact();
+    }
+    moveHold=null; tapInfo=null;}
+}
+cv.addEventListener('pointerup',endPointer);
+cv.addEventListener('pointercancel',endPointer);
+addEventListener('wheel',e=>{ if(!started)return;
+  zoomT=clamp(zoomT*(e.deltaY<0?1.12:0.89),0.45,1.8);},{passive:true});
 
 /* ================= 更新 ================= */
 let bugSpawnT=0, digSpawnT=0, shellSpawnT=0, firefly=[];
 function update(dt){
   const night=isNight();
+  zoom+=(zoomT-zoom)*Math.min(1,dt*8);
+  // 乘坐中（火車/纜車）
+  if(player.riding){ const r=player.riding;
+    r.d+=r.speed*((keys.Space||keys.KeyE)?3:1)*dt;
+    if(r.d>=r.len){ const e=r.pts[r.pts.length-1]; player.x=e.x;player.y=e.y;
+      const f=r.onEnd; player.riding=null; if(f)f(); }
+    else { let d=r.d,i=0; while(i<r.segs.length-1&&d>r.segs[i]){d-=r.segs[i];i++;}
+      const a=r.pts[i],bb=r.pts[i+1],t2=r.segs[i]?d/r.segs[i]:0;
+      player.x=a.x+(bb.x-a.x)*t2; player.y=a.y+(bb.y-a.y)*t2;
+      player.face=Math.abs(bb.x-a.x)>Math.abs(bb.y-a.y)?(bb.x<a.x?1:2):(bb.y<a.y?3:0);} }
+  // 熱氣球
+  if(player.balloonRide){ const bR=player.balloonRide; bR.t+=dt;
+    const ph=bR.t/bR.dur;
+    player.x=bR.cx+Math.sin(ph*6.283)*70; player.y=bR.cy+Math.cos(ph*6.283)*40-20;
+    zoomT=ph<0.25?1-(ph/0.25)*0.55:(ph>0.78?0.45+((ph-0.78)/0.22)*0.55:0.45);
+    if(bR.t>=bR.dur){player.balloonRide=null;zoomT=1;player.x=bR.cx;player.y=bR.cy;
+      toast('🎈 回到地面了！剛剛的景色真美～');}}
   let dx=0,dy=0;
-  if(!ui){
+  if(!ui&&!player.riding&&!player.balloonRide){
     if(keys.KeyW||keys.ArrowUp)dy-=1; if(keys.KeyS||keys.ArrowDown)dy+=1;
     if(keys.KeyA||keys.ArrowLeft)dx-=1; if(keys.KeyD||keys.ArrowRight)dx+=1;
+    if(!dx&&!dy){
+      if(joy){dx=joy.dx;dy=joy.dy;}
+      else if(moveHold){ const cam=camPos();
+        const wx=cam.cx+moveHold.x/zoom, wy=cam.cy+moveHold.y/zoom;
+        if(dist(wx,wy,player.x,player.y)>16){dx=wx-player.x;dy=wy-player.y;}}
+    }
   }
   const run=keys.ShiftLeft||keys.ShiftRight;
   let spd=player.sailing?420:(run?385:255)*(player.buffSpd>0?1.25:1);
@@ -865,6 +1055,7 @@ function update(dt){
   for(const r of rocks)r.hit=Math.max(0,(r.hit||0)-dt);
   for(const tb of teaBushes)if(!tb.ready){tb.t-=dt;if(tb.t<=0)tb.ready=true;}
   for(const ca of cacti)if(!ca.ready){ca.t-=dt;if(ca.t<=0)ca.ready=true;}
+  for(const sb of strawberries)if(!sb.ready){sb.t-=dt;if(sb.t<=0)sb.ready=true;}
   for(let i=lanterns.length-1;i>=0;i--){const L=lanterns[i];L.t+=dt;
     L.y-=32*dt;L.x+=Math.sin(L.t*1.5)*12*dt;
     if(L.t>12)lanterns.splice(i,1);}
@@ -1076,6 +1267,52 @@ function drawActor(x,y,face,walk,o){
       ctx.beginPath();ctx.moveTo(x-15+ex,hy+5);ctx.lineTo(x-6+ex,hy+6);
       ctx.moveTo(x+15+ex,hy+5);ctx.lineTo(x+6+ex,hy+6);ctx.stroke();}}
 }
+function drawTrain(x,y,face){
+  ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(x,y+10,36,9,0,0,7);ctx.fill();
+  const horiz=face===1||face===2;
+  const w=horiz?76:38,h=horiz?30:64;
+  let g=ctx.createLinearGradient(x,y-h/2-14,x,y+h/2);
+  g.addColorStop(0,'#f8f8f4');g.addColorStop(1,'#d8d8d0');
+  ctx.fillStyle=g;rr(x-w/2,y-h/2-14,w,h+14,10);ctx.fill();
+  ctx.strokeStyle='#b0b0a8';ctx.lineWidth=2;rr(x-w/2,y-h/2-14,w,h+14,10);ctx.stroke();
+  ctx.fillStyle='#e2574c';
+  if(horiz)ctx.fillRect(x-w/2,y-2,w,8); else ctx.fillRect(x-6,y-h/2-14,8,h+14);
+  ctx.fillStyle='#7ec8e8';
+  if(horiz){for(let i=0;i<3;i++){rr(x-w/2+9+i*23,y-h/2-8,15,11,3);ctx.fill();}}
+  else {for(let i=0;i<3;i++){rr(x-14,y-h/2-8+i*20,11,11,3);ctx.fill();}}
+  ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x+(horiz?-w/2+16:-8),y-h/2-3,4,0,7);ctx.fill();
+  ctx.fillStyle='#5a5048';
+  ctx.beginPath();ctx.arc(x-w/2+10,y+h/2+2,5,0,7);ctx.arc(x+w/2-10,y+h/2+2,5,0,7);ctx.fill();
+}
+function drawGondolaCabin(x,y){
+  ctx.strokeStyle='#6a5a4a';ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(x,y-48);ctx.lineTo(x,y-28);ctx.stroke();
+  let g=ctx.createLinearGradient(x,y-28,x,y+8);
+  g.addColorStop(0,'#f2726a');g.addColorStop(1,'#c94f43');
+  ctx.fillStyle=g;rr(x-17,y-28,34,34,9);ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=1.5;rr(x-17,y-28,34,34,9);ctx.stroke();
+  ctx.fillStyle='#cfe8f5';rr(x-12,y-22,24,13,4);ctx.fill();
+  ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x-3,y-14,4.5,0,7);ctx.fill();
+  ctx.fillStyle='#4a2f1d';ctx.beginPath();ctx.arc(x-3,y-17,4.5,Math.PI,0);ctx.fill();
+}
+function drawBalloonRideSprite(x,y,bR){
+  const ph=bR.t/bR.dur;
+  const alt=(ph<0.25?ph/0.25:(ph>0.78?Math.max(0,1-(ph-0.78)/0.22):1));
+  const oy=alt*80;
+  ctx.fillStyle='rgba(0,0,0,'+(0.24-alt*0.14)+')';
+  ctx.beginPath();ctx.ellipse(x,y+12,30-alt*12,9-alt*4,0,0,7);ctx.fill();
+  const by2=y-oy;
+  let g=ctx.createRadialGradient(x-8,by2-72,6,x,by2-58,36);
+  g.addColorStop(0,'#ff9d7a');g.addColorStop(1,'#e2574c');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,by2-58,32,0,7);ctx.fill();
+  ctx.fillStyle='#f2c94c';ctx.beginPath();ctx.arc(x,by2-58,32,-0.45,0.45);
+  ctx.arc(x,by2-58,32,Math.PI-0.45,Math.PI+0.45);ctx.fill();
+  ctx.strokeStyle='#8a6b3a';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x-14,by2-32);ctx.lineTo(x-9,by2-8);ctx.moveTo(x+14,by2-32);ctx.lineTo(x+9,by2-8);ctx.stroke();
+  ctx.fillStyle='#8a5a2b';rr(x-12,by2-8,24,16,4);ctx.fill();
+  ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x,by2-12,5,0,7);ctx.fill();
+  ctx.fillStyle='#4a2f1d';ctx.beginPath();ctx.arc(x,by2-15,5,Math.PI,0);ctx.fill();
+}
 function drawBoat(x,y,face,moving){
   ctx.fillStyle='rgba(0,0,40,.2)';ctx.beginPath();ctx.ellipse(x,y+8,27,10,0,0,7);ctx.fill();
   if(moving){ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=2;
@@ -1146,6 +1383,17 @@ function drawTeaBush(tb){
   if(tb.ready){ctx.fillStyle='#9fd45e';
     ctx.beginPath();ctx.arc(tb.x-8,tb.y-8,2.5,0,7);ctx.arc(tb.x+2,tb.y-12,2.5,0,7);ctx.arc(tb.x+9,tb.y-7,2.5,0,7);ctx.fill();}
 }
+function drawStrawberry(sb){
+  ctx.fillStyle='rgba(0,0,0,.1)';ctx.beginPath();ctx.ellipse(sb.x,sb.y+5,14,4,0,0,7);ctx.fill();
+  let g=ctx.createRadialGradient(sb.x-3,sb.y-6,2,sb.x,sb.y-2,14);
+  g.addColorStop(0,'#5fa050');g.addColorStop(1,'#3a7a35');
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.arc(sb.x-8,sb.y-1,7,0,7);ctx.arc(sb.x,sb.y-5,8,0,7);ctx.arc(sb.x+8,sb.y-1,7,0,7);ctx.fill();
+  if(sb.ready){ctx.fillStyle='#e2453c';
+    ctx.beginPath();ctx.arc(sb.x-6,sb.y-2,3,0,7);ctx.arc(sb.x+2,sb.y-7,3,0,7);ctx.arc(sb.x+7,sb.y-1,3,0,7);ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.fillRect(sb.x-7,sb.y-3,1.2,1.2);ctx.fillRect(sb.x+1,sb.y-8,1.2,1.2);}
+}
 function drawCactus(ca){
   ctx.fillStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.ellipse(ca.x,ca.y+6,12,4,0,0,7);ctx.fill();
   let g=ctx.createLinearGradient(ca.x-6,ca.y,ca.x+6,ca.y);
@@ -1177,10 +1425,10 @@ function drawLanternBody(L){
 /* ================= 繪製主流程 ================= */
 let tGlobal=0;
 function draw(){
-  const cx=clamp(player.x-VW/2,0,MW*TILE-VW), cy=clamp(player.y-VH/2,0,MH*TILE-VH);
-  ctx.save();ctx.translate(-cx,-cy);
+  const {cx,cy,VWz,VHz}=camPos();
+  ctx.save();ctx.scale(zoom,zoom);ctx.translate(-cx,-cy);
   const x0=Math.floor(cx/TILE),y0=Math.floor(cy/TILE),
-        x1=Math.ceil((cx+VW)/TILE),y1=Math.ceil((cy+VH)/TILE);
+        x1=Math.ceil((cx+VWz)/TILE),y1=Math.ceil((cy+VHz)/TILE);
   for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){
     const t=T(tx,ty); ctx.drawImage(tileImgs[t],tx*TILE,ty*TILE);
     if(t===SEA||t===LAKE){
@@ -1193,7 +1441,37 @@ function draw(){
       if(hsh(tx,ty)>0.9){const a=0.3+0.3*Math.sin(tGlobal*3+tx*7);
         ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fillRect(tx*TILE+18,ty*TILE+22,4,4);}}
   }
-  const inView=(x,y,m)=>x>cx-(m||80)&&x<cx+VW+(m||80)&&y>cy-(m||80)&&y<cy+VH+(m||80);
+  const inView=(x,y,m)=>x>cx-(m||80)&&x<cx+VWz+(m||80)&&y>cy-(m||80)&&y<cy+VHz+(m||80);
+  // 環島鐵路軌道
+  ctx.lineCap='round';
+  for(let i=0;i<RAILS.length-1;i++){
+    const ax=RAILS[i][0]*TILE,ay=RAILS[i][1]*TILE,bx=RAILS[i+1][0]*TILE,by=RAILS[i+1][1]*TILE;
+    if(Math.max(ax,bx)<cx-100||Math.min(ax,bx)>cx+VWz+100||Math.max(ay,by)<cy-100||Math.min(ay,by)>cy+VHz+100)continue;
+    const L=Math.hypot(bx-ax,by-ay)||1,ux=(bx-ax)/L,uy=(by-ay)/L,px2=-uy,py2=ux;
+    ctx.strokeStyle='rgba(150,125,95,.5)';ctx.lineWidth=13;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+    ctx.strokeStyle='#8a6b4a';ctx.lineWidth=2.5;
+    for(let d=0;d<L;d+=16){const tx2=ax+ux*d,ty3=ay+uy*d;
+      if(tx2<cx-20||tx2>cx+VWz+20||ty3<cy-20||ty3>cy+VHz+20)continue;
+      ctx.beginPath();ctx.moveTo(tx2+px2*7,ty3+py2*7);ctx.lineTo(tx2-px2*7,ty3-py2*7);ctx.stroke();}
+    ctx.strokeStyle='#5a5048';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(ax+px2*4,ay+py2*4);ctx.lineTo(bx+px2*4,by+py2*4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ax-px2*4,ay-py2*4);ctx.lineTo(bx-px2*4,by-py2*4);ctx.stroke();
+  }
+  ctx.lineCap='butt';
+  // 纜車纜線與往返車廂
+  for(const c of CABLECARS){
+    const ax=c.a[0]*TILE,ay=c.a[1]*TILE-40,bx=c.b[0]*TILE,by=c.b[1]*TILE-40;
+    if(Math.max(ax,bx)<cx-200||Math.min(ax,bx)>cx+VWz+200||Math.max(ay,by)<cy-200||Math.min(ay,by)>cy+VHz+200)continue;
+    ctx.strokeStyle='#5a5048';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(ax,ay-24);ctx.lineTo(bx,by-24);ctx.stroke();
+    for(let k=0;k<3;k++){ const f=((tGlobal*0.04)+k/3)%1;
+      const gx=ax+(bx-ax)*f, gy=ay-24+(by-ay)*f;
+      ctx.strokeStyle='#6a5a4a';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(gx,gy+8);ctx.stroke();
+      ctx.fillStyle='#e2574c';rr(gx-8,gy+8,16,12,4);ctx.fill();
+      ctx.fillStyle='#ffe9b0';rr(gx-5,gy+10,10,5,2);ctx.fill();}
+  }
   // 地面裝飾
   for(const f of flowers)if(inView(f.x,f.y)){
     ctx.fillStyle=f.c;
@@ -1229,12 +1507,18 @@ function draw(){
   for(const r of rocks)if(inView(r.x,r.y))list.push({y:r.y+6,f:()=>drawRock(r)});
   for(const tb of teaBushes)if(inView(tb.x,tb.y))list.push({y:tb.y+6,f:()=>drawTeaBush(tb)});
   for(const ca of cacti)if(inView(ca.x,ca.y))list.push({y:ca.y+6,f:()=>drawCactus(ca)});
+  for(const sb of strawberries)if(inView(sb.x,sb.y))list.push({y:sb.y+5,f:()=>drawStrawberry(sb)});
   for(const l of lamps)if(inView(l.x,l.y))list.push({y:l.y,f:()=>drawLamp(l)});
   for(const b of BUILDINGS){const bx=b.x+b.w/2,by=b.y+b.h;
     if(inView(bx,by,400))list.push({y:by,f:()=>BUILDING_DRAWS[b.t](b)});}
   for(const n of NPCS)if(inView(n.x,n.y))
     list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});
   list.push({y:player.y,f:()=>{
+    if(player.riding){
+      if(player.riding.kind==='train')drawTrain(player.x,player.y,player.face);
+      else drawGondolaCabin(player.x,player.y);
+      return;}
+    if(player.balloonRide){drawBalloonRideSprite(player.x,player.y,player.balloonRide);return;}
     if(player.sailing){
       const wob=Math.sin(tGlobal*2.2)*2;
       drawBoat(player.x,player.y+wob,player.face,player.moving);
@@ -1268,8 +1552,8 @@ function draw(){
   for(const L of lanterns)if(inView(L.x,L.y,200))drawLanternBody(L);
   // 晝夜
   const [tr_,tg,tb2,ta]=skyTint();
-  if(ta>0.005){ctx.fillStyle=`rgba(${tr_|0},${tg|0},${tb2|0},${ta})`;ctx.fillRect(cx,cy,VW,VH);}
-  if(isRainy()){ctx.fillStyle='rgba(60,80,120,.14)';ctx.fillRect(cx,cy,VW,VH);}
+  if(ta>0.005){ctx.fillStyle=`rgba(${tr_|0},${tg|0},${tb2|0},${ta})`;ctx.fillRect(cx,cy,VWz,VHz);}
+  if(isRainy()){ctx.fillStyle='rgba(60,80,120,.14)';ctx.fillRect(cx,cy,VWz,VHz);}
   if(isNight()){
     ctx.globalCompositeOperation='lighter';
     for(const b of BUILDINGS){if(b.t==='house'&&hsh(b.tx,b.ty)>0.5)continue;
@@ -1295,7 +1579,7 @@ function draw(){
   if(isRainy()){
     ctx.strokeStyle='rgba(190,210,255,.4)';ctx.lineWidth=1.5;
     for(let i=0;i<90;i++){
-      const rx2=cx+((hsh(i,9)*VW+tGlobal*60)%VW), ry2=cy+((hsh(i,5)*VH+tGlobal*860)%VH);
+      const rx2=cx+((hsh(i,9)*VWz+tGlobal*60)%VWz), ry2=cy+((hsh(i,5)*VHz+tGlobal*860)%VHz);
       ctx.beginPath();ctx.moveTo(rx2,ry2);ctx.lineTo(rx2-4,ry2+14);ctx.stroke();}}
   ctx.restore();
   if(flash>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(1,flash)})`;ctx.fillRect(0,0,VW,VH);}
@@ -1343,8 +1627,36 @@ function drawUI(){
     uiHits.push({x:sx,y:hy+8,w:58,h:56,cb:(k=>()=>{player.tool=k;sfx('blip');})(i)});
   }
   ctx.font='bold 13px '+F;ctx.fillStyle='rgba(255,251,233,.9)';
-  const hint=player.sailing?'空白鍵 靠岸/釣魚 · M地圖':'空白鍵 互動 · B背包 M地圖 P圖鑑 J任務 H說明';
+  const hint=touchUI?'雙指縮放地圖 · 點地面移動':
+    (player.sailing?'空白鍵 靠岸/釣魚 · M地圖 · 滾輪縮放':'空白鍵 互動 · B背包 M地圖 P圖鑑 J任務 H說明');
   ctx.fillText(hint,VW-ctx.measureText(hint).width-16,VH-14);
+  // ---- 觸控介面 ----
+  if(touchUI){
+    if(!ui&&!player.riding&&!player.balloonRide){
+      // 虛擬搖桿
+      const jbx=joy?joy.bx:110, jby=joy?joy.by:VH-130;
+      ctx.globalAlpha=joy?0.55:0.22;
+      ctx.fillStyle='#fffbe9';ctx.beginPath();ctx.arc(jbx,jby,56,0,7);ctx.fill();
+      ctx.strokeStyle='#c9a06a';ctx.lineWidth=3;ctx.beginPath();ctx.arc(jbx,jby,56,0,7);ctx.stroke();
+      ctx.fillStyle='#c9a06a';ctx.beginPath();
+      ctx.arc(jbx+(joy?clamp(joy.dx,-1,1)*34:0),jby+(joy?clamp(joy.dy,-1,1)*34:0),26,0,7);ctx.fill();
+      ctx.globalAlpha=1;
+      // A 互動鍵
+      ctx.globalAlpha=0.85;
+      ctx.fillStyle='#f0913a';ctx.beginPath();ctx.arc(VW-74,VH-124,40,0,7);ctx.fill();
+      ctx.strokeStyle='#c76f22';ctx.lineWidth=4;ctx.beginPath();ctx.arc(VW-74,VH-124,40,0,7);ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='bold 30px '+F;ctx.textAlign='center';
+      ctx.fillText('A',VW-74,VH-113);ctx.textAlign='left';ctx.globalAlpha=1;
+      uiHits.push({x:VW-118,y:VH-168,w:88,h:88,cb(){interact();}});
+    }
+    // 側邊功能圖示
+    const icons=[['🎒','bag'],['🗺️','map'],['📖','dex'],['📋','quest'],['❓','help']];
+    const step=Math.min(52,(VH*0.55)/icons.length), iy0=Math.max(96,VH*0.2);
+    icons.forEach(([em,mode],i)=>{ const iy=iy0+i*step;
+      ctx.globalAlpha=0.85;panel(VW-52,iy,42,42,.85);ctx.globalAlpha=1;
+      ctx.font='20px serif';ctx.fillText(em,VW-45,iy+29);
+      uiHits.push({x:VW-52,y:iy,w:42,h:42,cb:((m)=>()=>{ui=(ui===m?null:m);sfx('blip');})(mode)});});
+  }
   let ty2=96;
   for(const t of toasts){ ctx.font='bold 16px '+F;
     const w=ctx.measureText(t.t).width;
@@ -1428,7 +1740,7 @@ function drawUI(){
       ['嘉義',156,258],['台南',159,328],['高雄',171,360],['墾丁',210,458],['宜蘭',242,74],
       ['花蓮',257,171],['台東',245,282],['日月潭',186,220],['玉山',206,262],['阿里山',184,260],
       ['澎湖',54,309],['金門',19,255],['馬祖',24,47],['綠島',328,415],['蘭嶼',339,477],
-      ['小琉球',168,449],['龜山島',311,71]];
+      ['小琉球',168,449],['龜山島',311,71]].map(([n,x2,y2])=>[n,x2*1.5,y2*1.5]);
     ctx.font='bold 11px '+F;
     for(const [nm,tx,ty3] of MKS){const px=x+tx/MW*mw3,py=y+ty3/MH*mh;
       ctx.fillStyle='#e2574c';ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fill();
@@ -1473,17 +1785,17 @@ function drawUI(){
   if(ui==='help'){
     const w=Math.min(660,VW-60),x=VW/2-w/2,y=50;
     const lines=['🏝️ 歡迎來到台灣島！','',
-      '移動：WASD / 方向鍵　·　奔跑：Shift　·　互動：空白鍵 或 E',
+      '💻 電腦：WASD移動·Shift奔跑·空白鍵互動·滾輪縮放·滑鼠按住地面移動',
+      '📱 手機：左下搖桿移動·右下Ⓐ互動·雙指縮放·右側圖示開功能',
       '工具：1 手　2 捕蟲網　3 釣竿　4 鏟子　5 斧頭',
       '',
-      '🎣 拿釣竿面向水邊按空白鍵，「❗」出現時再按一次！',
-      '⛵ 到港口買船（3,000元）→ 面向大海按空白鍵出海！',
-      '　 船上釣魚可釣到黑鮪魚、旗魚等深海魚！靠岸按空白鍵上岸。',
-      '🚉 到車站搭火車、港口搭渡輪，快速環島旅行。',
-      '📋 和動物朋友對話接任務，完成有豐厚獎勵（按 J 查看）。',
-      '🌳 空手搖樹掉水果、⛏️挖 ✕ 記號、🍵茶園採茶、🌵澎湖摘仙人掌果。',
-      '♨️ 溫泉、🏮平溪天燈、🎈鹿野熱氣球、廟裡抽籤…到處走走吧！',
-      '💰 收穫拿去雜貨店賣，夜市小吃有增益效果。',
+      '🎣 拿釣竿面向水邊互動，「❗」出現時再按一次！',
+      '⛵ 到港口買船（3,000元）出海，船上可釣黑鮪魚等深海魚！',
+      '🚂 車站搭火車沿鐵軌環島（可看沿途風景）、港口搭渡輪去離島。',
+      '🚡 貓空／日月潭有纜車、🎈鹿野高台熱氣球可以升空鳥瞰！',
+      '📋 和動物朋友對話接任務（J 查看）。',
+      '🌳 搖樹採果、⛏️挖寶、🍵採茶、🍓大湖採草莓、🌵澎湖摘仙人掌果。',
+      '♨️ 溫泉、🏮平溪天燈、廟裡抽籤…115+ 個鄉鎮景點等你探索！',
       '',
       'B 背包　M 地圖　P 圖鑑　J 任務　N 音樂　(H 或 Esc 關閉)'];
     panel(x,y,w,lines.length*27+46);
@@ -1494,7 +1806,7 @@ function drawUI(){
 }
 
 /* ================= 存檔 ================= */
-const SAVEKEY='twisland_v2';
+const SAVEKEY='twisland_v3';
 function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   name:player.name,shirt:player.shirt,money,inv,dex,quests:questState,boat:player.boat,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
