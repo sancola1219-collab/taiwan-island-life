@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>我的小世界：台灣島物語</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{margin:0;padding:0;overflow:hidden;background:#3f9fc0;height:100%;}
+  canvas{display:block;}
+  #intro{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#8fd3e8 0%,#bfe8c8 60%,#f5e9b8 100%);z-index:10;
+    font-family:"Microsoft JhengHei","PingFang TC",sans-serif;}
+  #introCard{background:#fffbe9;border:6px solid #b58a4e;border-radius:28px;padding:32px 44px;
+    box-shadow:0 12px 40px rgba(0,0,0,.25);text-align:center;max-width:560px;}
+  #introCard h1{margin:0 0 6px;color:#5b4023;font-size:34px;letter-spacing:2px;}
+  #introCard .sub{color:#8a6f4d;margin-bottom:18px;font-size:15px;}
+  #introCard label{display:block;color:#6b4f2f;font-size:15px;margin:12px 0 6px;font-weight:bold;}
+  #nameIn{font-size:20px;padding:8px 14px;border:3px solid #d9b97f;border-radius:12px;outline:none;
+    text-align:center;width:220px;background:#fff;color:#5b4023;font-family:inherit;}
+  .swatches{display:flex;gap:10px;justify-content:center;margin-top:4px;flex-wrap:wrap;}
+  .sw{width:36px;height:36px;border-radius:50%;border:4px solid transparent;cursor:pointer;}
+  .sw.sel{border-color:#6b4f2f;}
+  #startBtn{margin-top:22px;font-size:22px;font-weight:bold;color:#fff;background:#f0913a;border:none;
+    border-radius:16px;padding:12px 46px;cursor:pointer;box-shadow:0 5px 0 #c76f22;font-family:inherit;}
+  #startBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #c76f22;}
+  #introCard .keys{margin-top:18px;font-size:13px;color:#9a805c;line-height:1.8;}
+  #introCard .feat{margin-top:10px;font-size:13px;color:#3f8f5a;line-height:1.7;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="intro">
+  <div id="introCard">
+    <h1>我的小世界</h1>
+    <div class="sub">～ 台灣島物語・環島大冒險 ～</div>
+    <div class="feat">🏝️ 超大台灣地圖＋7大離島　⛵ 買船出海＆渡輪　🚉 火車環島<br>
+      🎣 深海釣魚　📋 動物任務　♨️ 溫泉　🏮 放天燈　🎈 熱氣球</div>
+    <label>你的名字</label>
+    <input id="nameIn" maxlength="8" value="小島民">
+    <label>衣服顏色</label>
+    <div class="swatches" id="swatches"></div>
+    <button id="startBtn">出發前往台灣島！</button>
+    <div class="keys">移動 WASD／方向鍵　·　奔跑 Shift　·　互動/工具 空白鍵<br>
+      工具 1~5　·　背包 B　·　地圖 M　·　圖鑑 P　·　任務 J　·　說明 H</div>
+  </div>
+</div>
+<script src="data.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
