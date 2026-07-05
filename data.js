@@ -368,26 +368,26 @@ const LM_POOL={
   '天氣好時能看到好遠好遠。','燈塔已經守護這片海一百年了。']};
 /* ---------- 各縣市美食小店（有招牌、老闆委託） ---------- */
 const EATERIES=[
- {tx:222,ty:27,label:'基隆鼎邊銼',food:'鼎邊銼',price:80},{tx:204,ty:27,label:'金山鴨肉ㄜˋ',food:'白斬鴨肉',price:120},
- {tx:184,ty:42,label:'淡水阿給老店',food:'阿給',price:60},{tx:203,ty:56,label:'深坑臭豆腐',food:'脆皮臭豆腐',price:70},
- {tx:192,ty:53,label:'永和豆漿大王',food:'燒餅油條配豆漿',price:60},{tx:223,ty:52,label:'平溪香腸攤',food:'炭烤香腸',price:50},
- {tx:176,ty:70,label:'龍岡米干店',food:'雲南米干',price:90},{tx:186,ty:75,label:'大溪豆干本舖',food:'滷豆干',price:60},
- {tx:163,ty:101,label:'新竹貢丸米粉',food:'貢丸米粉',price:70},{tx:171,ty:111,label:'北埔擂茶坊',food:'客家擂茶',price:90},
- {tx:169,ty:129,label:'客家小炒館',food:'客家小炒',price:110},{tx:156,ty:151,label:'大甲芋頭酥舖',food:'芋頭酥',price:80},
- {tx:159,ty:177,label:'台中太陽餅舖',food:'太陽餅',price:70},{tx:177,ty:163,label:'東勢肉圓攤',food:'肉圓',price:60},
- {tx:158,ty:205,label:'彰化肉圓王',food:'彰化肉圓',price:65},{tx:161,ty:213,label:'員林蜜餞行',food:'甘草芭樂',price:55},
- {tx:147,ty:199,label:'鹿港蚵仔煎',food:'蚵仔煎',price:75},{tx:183,ty:200,label:'埔里米粉店',food:'炒米粉',price:65},
- {tx:169,ty:231,label:'竹山蕃薯包',food:'蕃薯包',price:50},{tx:161,ty:241,label:'斗六炊仔飯',food:'炊仔飯',price:70},
- {tx:151,ty:241,label:'北港鴨肉飯',food:'鴨肉飯',price:75},{tx:159,ty:262,label:'嘉義火雞肉飯',food:'火雞肉飯',price:70},
- {tx:177,ty:257,label:'奮起湖便當舖',food:'鐵路便當',price:100},{tx:162,ty:327,label:'台南擔仔麵',food:'擔仔麵',price:60},
- {tx:161,ty:301,label:'麻豆碗粿林',food:'碗粿',price:45},{tx:179,ty:307,label:'玉井芒果乾行',food:'芒果乾',price:90},
- {tx:172,ty:364,label:'鹽埕鴨肉珍',food:'鴨肉切盤',price:110},{tx:173,ty:341,label:'岡山羊肉爐',food:'羊肉爐',price:150},
- {tx:191,ty:346,label:'美濃粄條店',food:'客家粄條',price:70},{tx:199,ty:437,label:'車城綠豆蒜',food:'綠豆蒜',price:50},
- {tx:182,ty:393,label:'東港生魚片',food:'黑鮪魚生魚片',price:150},{tx:238,ty:62,label:'三星蔥油餅',food:'蔥油餅',price:50},
- {tx:243,ty:77,label:'羅東包心粉圓',food:'包心粉圓',price:55},{tx:253,ty:178,label:'花蓮公正包子',food:'小籠包',price:60},
- {tx:239,ty:227,label:'玉里麵老店',food:'玉里麵',price:65},{tx:241,ty:236,label:'池上飯包本家',food:'池上飯包',price:90},
- {tx:244,ty:286,label:'台東米苔目',food:'米苔目',price:55},{tx:55,ty:307,label:'澎湖仙人掌冰',food:'仙人掌冰',price:60},
- {tx:21,ty:257,label:'金門廣東粥',food:'廣東粥',price:70},{tx:25,ty:49,label:'馬祖老酒麵線',food:'老酒麵線',price:85},
+ {tx:222,ty:27,label:'基隆鼎邊銼',food:'鼎邊銼',price:80,icon:'🍲'},{tx:204,ty:27,label:'金山鴨肉ㄜˋ',food:'白斬鴨肉',price:120,icon:'🦆'},
+ {tx:184,ty:42,label:'淡水阿給老店',food:'阿給',price:60,icon:'🍢'},{tx:203,ty:56,label:'深坑臭豆腐',food:'脆皮臭豆腐',price:70,icon:'🥡'},
+ {tx:192,ty:53,label:'永和豆漿大王',food:'燒餅油條配豆漿',price:60,icon:'🥛'},{tx:223,ty:52,label:'平溪香腸攤',food:'炭烤香腸',price:50,icon:'🌭'},
+ {tx:176,ty:70,label:'龍岡米干店',food:'雲南米干',price:90,icon:'🍜'},{tx:186,ty:75,label:'大溪豆干本舖',food:'滷豆干',price:60,icon:'🍘'},
+ {tx:163,ty:101,label:'新竹貢丸米粉',food:'貢丸米粉',price:70,icon:'🍥'},{tx:171,ty:111,label:'北埔擂茶坊',food:'客家擂茶',price:90,icon:'🍵'},
+ {tx:169,ty:129,label:'客家小炒館',food:'客家小炒',price:110,icon:'🥘'},{tx:156,ty:151,label:'大甲芋頭酥舖',food:'芋頭酥',price:80,icon:'🥮'},
+ {tx:159,ty:177,label:'台中太陽餅舖',food:'太陽餅',price:70,icon:'🥠'},{tx:177,ty:163,label:'東勢肉圓攤',food:'肉圓',price:60,icon:'🍡'},
+ {tx:158,ty:205,label:'彰化肉圓王',food:'彰化肉圓',price:65,icon:'🍡'},{tx:161,ty:213,label:'員林蜜餞行',food:'甘草芭樂',price:55,icon:'🍬'},
+ {tx:147,ty:199,label:'鹿港蚵仔煎',food:'蚵仔煎',price:75,icon:'🍳'},{tx:183,ty:200,label:'埔里米粉店',food:'炒米粉',price:65,icon:'🍝'},
+ {tx:169,ty:231,label:'竹山蕃薯包',food:'蕃薯包',price:50,icon:'🍠'},{tx:161,ty:241,label:'斗六炊仔飯',food:'炊仔飯',price:70,icon:'🍚'},
+ {tx:151,ty:241,label:'北港鴨肉飯',food:'鴨肉飯',price:75,icon:'🍛'},{tx:159,ty:262,label:'嘉義火雞肉飯',food:'火雞肉飯',price:70,icon:'🍗'},
+ {tx:177,ty:257,label:'奮起湖便當舖',food:'鐵路便當',price:100,icon:'🍱'},{tx:162,ty:327,label:'台南擔仔麵',food:'擔仔麵',price:60,icon:'🍜'},
+ {tx:161,ty:301,label:'麻豆碗粿林',food:'碗粿',price:45,icon:'🍮'},{tx:179,ty:307,label:'玉井芒果乾行',food:'芒果乾',price:90,icon:'🥭'},
+ {tx:172,ty:364,label:'鹽埕鴨肉珍',food:'鴨肉切盤',price:110,icon:'🦆'},{tx:173,ty:341,label:'岡山羊肉爐',food:'羊肉爐',price:150,icon:'🍲'},
+ {tx:191,ty:346,label:'美濃粄條店',food:'客家粄條',price:70,icon:'🍜'},{tx:199,ty:437,label:'車城綠豆蒜',food:'綠豆蒜',price:50,icon:'🍧'},
+ {tx:182,ty:393,label:'東港生魚片',food:'黑鮪魚生魚片',price:150,icon:'🍣'},{tx:238,ty:62,label:'三星蔥油餅',food:'蔥油餅',price:50,icon:'🥞'},
+ {tx:243,ty:77,label:'羅東包心粉圓',food:'包心粉圓',price:55,icon:'🧋'},{tx:253,ty:178,label:'花蓮公正包子',food:'小籠包',price:60,icon:'🥟'},
+ {tx:239,ty:227,label:'玉里麵老店',food:'玉里麵',price:65,icon:'🍜'},{tx:241,ty:236,label:'池上飯包本家',food:'池上飯包',price:90,icon:'🍱'},
+ {tx:244,ty:286,label:'台東米苔目',food:'米苔目',price:55,icon:'🍜'},{tx:55,ty:307,label:'澎湖仙人掌冰',food:'仙人掌冰',price:60,icon:'🍧'},
+ {tx:21,ty:257,label:'金門廣東粥',food:'廣東粥',price:70,icon:'🥣'},{tx:25,ty:49,label:'馬祖老酒麵線',food:'老酒麵線',price:85,icon:'🍜'},
 ];
 /* ---------- 各縣市旅館（睡到隔天06:00、恢復疲勞） ---------- */
 const HOTELS=[
@@ -566,10 +566,19 @@ const FLOWER_FIELDS=[ // 花海（觀賞）
  [152,217,159,223,'#e2574c'], // 田尾公路花園
  [341,472,346,477,'#9fd45e'], // 蘭嶼青青草原
 ];
+/* ---------- 縣市導覽圖（玩家提供的參考圖，遊戲內可查看） ---------- */
+const REF_COUNTIES=[
+ ['台北市','c18'],['新北市','c14'],['基隆市','c03'],['桃園市','c05'],['新竹市','c07'],
+ ['新竹縣','c22'],['苗栗縣','c06'],['台中市','c10'],['彰化縣','c13'],['南投縣','c04'],
+ ['雲林縣','c09'],['嘉義市','c08'],['嘉義縣','c01'],['台南市','c21'],['高雄市','c20'],
+ ['屏東縣','c15'],['宜蘭縣','c16'],['花蓮縣','c11'],['台東縣','c17'],['澎湖縣','c12'],
+ ['金門縣','c02'],['連江縣','c19']];
+const REF_PORTS=18; // ref/p01.png ~ p18.png
 /* ---------- 座標統一放大（400x520 → 600x780） ---------- */
 { const S=1.5, R=Math.round;
   const pt=o=>{o.tx=R(o.tx*S);o.ty=R(o.ty*S);};
   TOWNS.forEach(pt);STATIONS.forEach(pt);HARBORS.forEach(pt);LANDMARKS.forEach(pt);NPC_DEFS.forEach(pt);
+  EATERIES.forEach(pt);HOTELS.forEach(pt); // v6 漏掉的縮放（修正小吃店/旅館跑錯縣市）
   SPINES.forEach(sp=>{sp.pts=sp.pts.map(([x,y])=>[x*S,y*S]);sp.hw*=S;sp.mw*=S;});
   HIGHWAYS.forEach(h=>{h.pts=h.pts.map(([x,y])=>[x*S,y*S]);});
   for(let i=0;i<RAILS.length;i++)RAILS[i]=[RAILS[i][0]*S,RAILS[i][1]*S];

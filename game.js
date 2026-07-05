@@ -559,9 +559,16 @@ const BUILDING_DRAWS={
   ctx.moveTo(x-6,y-24);ctx.lineTo(x+w/2,y-40);ctx.lineTo(x+w+6,y-24);ctx.closePath();ctx.fill();
   ctx.fillStyle='#7a4a22';rr(x+w/2-10,y+h-26,20,26,4);ctx.fill();
   ctx.fillStyle='#ffe9b0';rr(x+6,y-14,20,16,3);ctx.fill();
-  ctx.font='13px serif';ctx.fillText('🍜',x+w-22,y-2);
+  // 招牌食物大圖案（立牌）
+  ctx.fillStyle='#fff7e0';ctx.beginPath();ctx.arc(x+w-14,y-4,13,0,7);ctx.fill();
+  ctx.strokeStyle='#c9503f';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+w-14,y-4,13,0,7);ctx.stroke();
+  ctx.font='16px serif';ctx.textAlign='center';
+  ctx.fillText(b.icon||'🍜',x+w-14,y+2);
+  ctx.font='15px serif';
+  ctx.fillText(b.icon||'🍜',x+w/2,y-46+Math.sin(tGlobal*2+x)*2); // 屋頂招牌旁飄浮
+  ctx.textAlign='left';
   ctx.fillStyle='#e2574c';ctx.beginPath();ctx.arc(x+2,y-20,5,0,7);ctx.fill();
-  drawRoofSign(x+w/2,y-52,b.label,'#c9503f');},
+  drawRoofSign(x+w/2,y-58,(b.icon||'')+b.label,'#c9503f');},
  hotel(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w);
   ctx.fillStyle='#e8dcc8';rr(x,y-58,w,h+58,6);ctx.fill();
   ctx.strokeStyle='#c8b89a';ctx.lineWidth=1.5;rr(x,y-58,w,h+58,6);ctx.stroke();
@@ -618,7 +625,7 @@ function fitSpot(tx,ty,tw,th){ for(let r=0;r<10;r++)for(let dy=-r;dy<=r;dy++)for
   if(ok)return [nx,ny];}
   return [tx,ty];}
 EATERIES.forEach(e2=>{const [ex,ey]=fitSpot(e2.tx,e2.ty,3,2);
-  addBuild('eatery',ex,ey,3,2,e2.label,{food:e2.food,price:e2.price});});
+  addBuild('eatery',ex,ey,3,2,e2.label,{food:e2.food,price:e2.price,icon:e2.icon});});
 HOTELS.forEach(h3=>{const [hx,hy]=fitSpot(h3.tx,h3.ty,4,3);
   addBuild('hotel',hx,hy,4,3,h3.label);});
 CABLECARS.forEach(c=>{
@@ -2383,7 +2390,11 @@ function drawUI(){
     ctx.strokeStyle='#c9a06a';ctx.lineWidth=3;ctx.strokeRect(x,y,mw3,mh);
     ctx.font='bold 16px '+F;ctx.fillStyle='#5b4023';
     ctx.fillText('🗺️ 地區 '+Object.keys(townsV).length+'/'+TOWNS.length+
-      '　📍 景點印章 '+Object.keys(stamps).length+'/'+STAMP_TOTAL,x,y+mh+34);
+      '　📍 印章 '+Object.keys(stamps).length+'/'+STAMP_TOTAL,x,y+mh+34);
+    ctx.fillStyle='#f0913a';rr(x+mw3-174,y+mh+10,174,34,10);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 15px '+F;
+    ctx.fillText('🖼️ 縣市導覽圖',x+mw3-160,y+mh+33);
+    uiHits.push({x:x+mw3-174,y:y+mh+10,w:174,h:34,cb(){ui=null;openRefView();}});
     drawClose(x+mw3+8,y-8);
     const MKS=[['台北',202,44],['桃園',178,70],['新竹',163,98],['台中',158,174],['彰化',150,200],
       ['嘉義',156,258],['台南',159,328],['高雄',171,360],['墾丁',210,458],['宜蘭',242,74],
@@ -2520,6 +2531,22 @@ addEventListener('beforeunload',()=>{if(started)save();});
 
 /* ================= 啟動 ================= */
 genNpcs(); genWorld();
+// 縣市導覽圖檢視器（玩家提供的手繪參考圖）
+const refView=document.getElementById('refView'), refSel=document.getElementById('refSel'),
+      refImg=document.getElementById('refImg');
+{ REF_COUNTIES.forEach(([n,f])=>{const o=document.createElement('option');
+    o.value='ref/'+f+'.png';o.textContent='🗺️ '+n;refSel.appendChild(o);});
+  for(let i=1;i<=REF_PORTS;i++){const o=document.createElement('option');
+    o.value='ref/p'+String(i).padStart(2,'0')+'.png';o.textContent='⚓ 港口導覽圖 '+i;refSel.appendChild(o);}
+  refSel.onchange=()=>{refImg.src=refSel.value;};
+  document.getElementById('refClose').onclick=()=>{refView.style.display='none';};}
+function openRefView(){
+  const county=lastRegion.split('・')[0].replace('外海','');
+  const hit=REF_COUNTIES.find(([n])=>n.startsWith(county));
+  if(hit)refSel.value='ref/'+hit[1]+'.png';
+  refImg.src=refSel.value||('ref/'+REF_COUNTIES[0][1]+'.png');
+  refView.style.display='flex';
+}
 const hasSave=load();
 const SHIRTS=['#e74c3c','#3f7fd6','#2ea36b','#f2b21c','#9b59b6','#f27ba0'];
 const swd=document.getElementById('swatches');
