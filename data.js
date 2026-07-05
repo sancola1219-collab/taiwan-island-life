@@ -203,6 +203,7 @@ const LANDMARKS=[
  {t:'hotspring',tx:200,ty:65,label:'烏來溫泉'},
  {t:'oldstreet',tx:183,ty:72,label:'大溪老街',lines:['巴洛克式牌樓立面！','大溪豆干和木器最有名了。']},
  {t:'gianttree',tx:196,ty:79,label:'拉拉山神木',lines:['兩千八百歲的紅檜巨木群！','空氣裡都是芬多精～']},
+ {t:'prison',tx:173,ty:75,label:'桃園監獄',lines:['桃園龍潭的大型監獄。','高牆、鐵絲網、瞭望塔…','攻擊路人被抓的話，就會被關到這裡來喔！','奉公守法才是好島民～']},
  {t:'oldstreet',tx:176,ty:103,label:'內灣老街',lines:['山城小鎮的懷舊老街，','野薑花粽是這裡的名物！']},
  {t:'oldstreet',tx:172,ty:109,label:'北埔老街',lines:['客家聚落的百年街屋，','擂茶和柿餅香氣四溢～']},
  {t:'oldstreet',tx:166,ty:132,label:'三義木雕街',lines:['整條街都是木雕工藝！','老師傅的手藝出神入化。']},
