@@ -2157,11 +2157,7 @@ function draw(){
   for(const sb of strawberries)if(inView(sb.x,sb.y))list.push({y:sb.y+5,f:()=>drawStrawberry(sb)});
   for(const l of lamps)if(inView(l.x,l.y))list.push({y:l.y,f:()=>drawLamp(l)});
   for(const b of BUILDINGS){const bx=b.x+b.w/2,by=b.y+b.h;
-    if(inView(bx,by,420))list.push({y:by,f:()=>{
-      const sm=LM_SPRITES[b.label];
-      if(sm){const im=sprImg(sm.f);
-        if(im.complete&&im.naturalWidth){drawLmSprite(b,im,sm.w);return;}}
-      BUILDING_DRAWS[b.t](b);}});}
+    if(inView(bx,by,400))list.push({y:by,f:()=>BUILDING_DRAWS[b.t](b)});}
   for(const n of NPCS)if(inView(n.x,n.y))
     list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
