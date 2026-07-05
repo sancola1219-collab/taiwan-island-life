@@ -23,7 +23,8 @@
 | `ref/c01~c22.png` | 玩家提供的 22 張縣市手繪導覽圖（c 對照表在 data.js REF_COUNTIES）；`p01~p18.png` 港口圖 |
 | `docs/*.jpg` | README 截圖 |
 | `.nojekyll` | 防止 Pages 用 Jekyll 建置（**勿刪**，曾因此疑似 404） |
-| `.claude/launch.json` | 本機預覽伺服器設定（node 靜態 server，port 8765） |
+| `.claude/launch.json` | 本機預覽伺服器設定（game=port 8765；mario=port 8766 指向超級瑪莉專案） |
+| `tools/server.js` | 本機靜態伺服器（`node tools/server.js 8765`，no-store 防快取） |
 
 ## 2. ⚠️ 最重要的座標系統（每個接手者都踩過的雷）
 
@@ -90,7 +91,7 @@
 
 ## 6. 測試與發布流程
 
-**本機跑**：`node <scratchpad>/server.js`（或任何靜態 server 於專案根目錄，port 8765），開 http://localhost:8765。
+**本機跑**：`node tools/server.js 8765`（已收進 repo，回 no-store 防快取），開 http://localhost:8765。
 
 **必跑檢查（瀏覽器 console 貼上）**：
 ```js
