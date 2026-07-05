@@ -69,7 +69,8 @@
 - **夥伴/跟隨**：`partnerState{name:{s,f}}`、`followers[]`、`trail[]`（蛇形跟隨）；對話流程在 `talkTo()`
 - **偶發事件**：`events[]/eventT`；生成在 update()、處理在 interact() 徒手區、繪製在 y-sort
 - **蓋房**：`HOUSE_TYPES`(4型)/`myHomes[]`(上限2)/`homeMenu()/buildHome(ht)`；室內=`ui='home'` 畫在 drawUI
-- **玩具**：`playToy(n)` 四種 mode；**裝備槽=工具列第7格**（`player.toy`，tool===6）
+- **玩具**：`playToy(n)` 四種 mode（self/hold/throw/ground）；**裝備槽=工具列第7格**（`player.toy`，tool===6）。throw 類＝手持玩具做發射動作、只射出小物（`TOY_SHOT` 表），玩具不消耗
+- **犯罪/警察/監獄**（v12）：持武器(`isWeapon()`：斧5/矛…實為 tool 4斧、5矛、6彈弓水槍)攻擊路人 `attackPerson(c)`→掉 coin/道具、路人 `c.flee` 逃跑、`startWanted()`。`player.wanted{phase:grace→chase,car}` 在 update() 追捕；躲進自己家(`ui==='home'`)或跑遠 340px 可逃脫；被追到 `arrest()`→`player.jailed`+`ui='jail'`+傳送桃園監獄(LANDMARKS 型別 `prison`,龍潭)。jail UI 不可 Esc 關（keydown 有 guard），只能服刑到隔天06:00 或繳 5000 保釋。jailed 有存檔、重載仍在獄
 - **互動優先序**（`interact()`，改動要小心）：NPC → 路人 → 營火 → 偶發事件 → 釣魚(工具2) → sailing分支 → 網/鏟/斧/矛/玩具 → 建築 `actNearestBuilding` → 搖樹 → 採茶/草莓/仙人掌 → 拔草 → 上船
 - **建築**：`addBuild()`；尺寸表 `SIZE`；繪製 `BUILDING_DRAWS[t]`；互動 `buildAct(b)` 內的 L 物件；**印章**在 buildAct 開頭 `collectStamp`
 - **UI**：立即模式，`uiHits[]` 收集可點區域（**任何縮放/位移過的按鈕，push 進 uiHits 的座標要自己換算回螢幕座標**，見工具列 uS 錨點縮放寫法）；觸控=pointer events（搖桿/A鍵/雙指縮放/點地移動）；面板關閉 `drawClose()`
