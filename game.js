@@ -1143,7 +1143,7 @@ function tryShake(tr){ tr.shake=0.5;
   } else toast('搖了搖…什麼都沒掉下來。');
 }
 const ATTACK_LOOT=['貝殼','木材','雜草','礦石','橘子'];
-function isWeapon(){return player.tool===4||player.tool===5||(player.tool===6&&['彈弓','水槍'].includes(player.toy));}
+function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(player.tool===6&&['彈弓','水槍'].includes(player.toy));} // 鏟/斧/矛/彈弓水槍
 function attackPerson(c){
   player.swing=0.28; sfx('swing'); c.flee=6;
   puffs.push({x:c.x,y:c.y-16,t:0.4});
@@ -2772,7 +2772,8 @@ function drawUI(){
       '🏠 按 C 蓋自己的家（木材10＋礦石5＋2000元），進門點床就能睡。',
       '🧸 玩具工坊可做 20 種手工玩具，背包點擊就能玩（風箏會飛喔）！',
       '🍜 各縣市有 40 間在地美食小店，老闆還有委託可接。',
-      '⚠️ 持斧頭/木矛/彈弓可攻擊路人搶錢，但他會報警！躲遠或躲進家裡，',
+      '⚠️ 持鏟子/斧頭/木矛/彈弓時按互動鍵＝攻擊人（空手才是對話）！',
+      '　 打人會掉錢可撿，但對方會報警！躲遠或躲進自己家裡，',
       '　 否則警車追到會把你關進桃園監獄（服刑或繳保釋金才能出來）。',
       '',
       'B背包 M地圖 P圖鑑 J任務 C製作 N音樂 (H 或 Esc 關閉)'];
