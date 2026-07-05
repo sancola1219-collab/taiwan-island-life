@@ -1146,12 +1146,12 @@ const ATTACK_LOOT=['貝殼','木材','雜草','礦石','橘子'];
 function isWeapon(){return player.tool===4||player.tool===5||(player.tool===6&&['彈弓','水槍'].includes(player.toy));}
 function attackPerson(c){
   player.swing=0.28; sfx('swing'); c.flee=6;
-  // 掉落金幣或道具供拾取
+  puffs.push({x:c.x,y:c.y-16,t:0.4});
   if(Math.random()<0.6)drops.push({x:c.x+(Math.random()*20-10),y:c.y+8,coin:60+Math.floor(Math.random()*200)});
   else drops.push({x:c.x+(Math.random()*20-10),y:c.y+8,item:ATTACK_LOOT[Math.floor(Math.random()*ATTACK_LOOT.length)]});
-  toast('💥 打了路人一下！他嚇得掉了東西…但生氣地掏出手機！');
+  toast('💥 攻擊了'+(c.name||'路人')+'！他嚇得掉了東西…但生氣地掏出手機報警！');
   if(!player.wanted)startWanted(c.x,c.y);
-  else{player.wanted.phase='grace';player.wanted.t=Math.min(player.wanted.t,4);} // 再犯縮短緩衝
+  else{player.wanted.phase='grace';player.wanted.t=Math.min(player.wanted.t,4);}
 }
 function startWanted(rx,ry){
   player.wanted={phase:'grace',t:8,rx,ry,car:null};
@@ -1169,8 +1169,13 @@ function interact(){
   if(player.balloonRide||player.soak||player.pray||player.ferris)return;
   const p=frontPoint(44);
   if(!player.sailing){
-    if(isWeapon()){ // 持武器/道具攻擊人物
-      for(const c of citizens) if(dist(c.x,c.y,p.x,p.y)<54||dist(c.x,c.y,player.x,player.y)<50){attackPerson(c);return;}}
+    if(isWeapon()){ // 持武器/道具時：對任何人（NPC／路人／店老闆）都是攻擊，不對話
+      let best=null,bd=56;
+      const scan=arr=>{for(const c of arr){const d=Math.min(dist(c.x,c.y,p.x,p.y),dist(c.x,c.y,player.x,player.y));
+        if(d<bd){bd=d;best=c;}}};
+      scan(citizens); scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);
+      if(best){attackPerson(best);return;}
+    }
     for(const n of NPCS) if(dist(n.x,n.y,p.x,p.y)<52||dist(n.x,n.y,player.x,player.y)<50){talkTo(n);return;}
     for(const c of citizens) if(dist(c.x,c.y,p.x,p.y)<48||dist(c.x,c.y,player.x,player.y)<46){
       const dxx=player.x-c.x,dyy=player.y-c.y;
@@ -1564,11 +1569,16 @@ function update(dt){
         n.face=Math.abs(tp.x-ox)>Math.abs(tp.y-n.y)?(tp.x<ox?1:2):(tp.y<n.y?3:0);}
       continue;}
     if(ui==='dialog'&&dialog&&dialog.npc===n)continue;
+    if(n.flee>0){ n.flee-=dt; // 被攻擊後逃跑，冷靜後走回原位
+      const a=Math.atan2(n.y-player.y,n.x-player.x);
+      if(moveActor(n,Math.cos(a),Math.sin(a),115,dt))n.walk+=dt*10; continue;}
     n.ai-=dt;
     if(n.ai<=0){ n.ai=1.5+Math.random()*3;
       if(Math.random()<0.55){n.vx=0;n.vy=0;}
       else{const a=Math.random()*6.283;n.vx=Math.cos(a);n.vy=Math.sin(a);
         if(dist(n.x,n.y,n.hx,n.hy)>n.homeR){n.vx=(n.hx-n.x);n.vy=(n.hy-n.y);}}}
+    // 離家太遠時緩緩走回（被打逃跑後歸位）
+    if(dist(n.x,n.y,n.hx,n.hy)>n.homeR*1.5){n.vx=(n.hx-n.x);n.vy=(n.hy-n.y);}
     if(n.vx||n.vy){ if(moveActor(n,n.vx,n.vy,55,dt))n.walk+=dt*5; else {n.vx=0;n.vy=0;} }
   }
   // 昆蟲生成（含區域限定）
