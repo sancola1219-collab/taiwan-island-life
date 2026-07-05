@@ -255,7 +255,7 @@ const LANDMARKS=[
  {t:'market',tx:250,ty:175,label:'東大門夜市'},
  {t:'hotspring',tx:247,ty:206,label:'瑞穗溫泉'},
  // 台東
- {t:'archbridge',tx:249,ty:249,label:'三仙台八拱橋',lines:['跨海的八拱橋像一條龍！','傳說八仙曾在島上停留喔。']},
+ {t:'archbridge',tx:254,ty:249,label:'三仙台八拱橋',lines:['跨海的八拱橋像一條龍！','傳說八仙曾在島上停留喔。']},
  {t:'balloon',tx:239,ty:257,label:'鹿野高台'},
  {t:'shop',tx:245,ty:284,label:'雜貨店'},
  {t:'hotspring',tx:229,ty:293,label:'知本溫泉'},
