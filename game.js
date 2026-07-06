@@ -864,11 +864,32 @@ function doSell(filter){ let v=0;
     if(!filter||filter.includes(it.cat)){v+=it.p*inv[n];delete inv[n];}}
   if(v>0){money+=v;sfx('cash');toast('💰 賣出獲得 '+fmt(v)+' 元！');save();}
   ui=null;}
+function guideOf(n){ // 物品怎麼取得（任務提示）
+  if(ITEM_GUIDE[n])return ITEM_GUIDE[n];
+  const f=FISHES.find(x=>x.n===n);
+  if(f)return (f.loc==='lake'?'到日月潭湖邊用釣竿釣':
+    f.loc==='deep'?'先到港口買船出海，在船上用釣竿釣（深海限定）':'到海邊用釣竿（工具3）釣')+
+    (f.night?'，晚上機率較高':'');
+  const b2=BUGSPECS.find(x=>x.n===n);
+  if(b2)return (b2.t==='night'?'晚上':'白天')+'拿捕蟲網（工具2）抓'+
+    (b2.rect?'（特定地區限定出沒）':'，草地樹林都有');
+  return '到處逛逛找找看，或問問雜貨店';
+}
+function shopBuyMenu(){
+  const opts=SHOP_BUY.map(([n,pr])=>({label:ITEMS[n].e+n+'（'+fmt(pr)+'元）',cb(){
+    if(money<pr){dlg('雜貨店',['錢不夠喔！'+n+' 一個 '+fmt(pr)+' 元。','自己採集是免費的：'+guideOf(n)]);return;}
+    money-=pr; addItem(n); sfx('cash'); save();
+    toast(ITEMS[n].e+' 買到 '+n+'！（自己採集更省錢喔）');
+    shopBuyMenu();}}));
+  opts.push({label:'回上頁',cb(){openShop();}});
+  openMenu('🛒 購買材料（任務缺什麼來這救急）',opts);
+}
 function openShop(){
   const all=sellValue(null), fb=sellValue(['fish','bug']);
   openMenu('阿吉雜貨店：歡迎光臨！要做什麼呢？',[
     {label:'全部賣掉（'+fmt(all)+'元）',cb(){ all>0?doSell(null):dlg('雜貨店',['你身上沒有可以賣的東西喔！汪！']);}},
     {label:'只賣漁獲和昆蟲（'+fmt(fb)+'元）',cb(){ fb>0?doSell(['fish','bug']):dlg('雜貨店',['咦？你還沒抓到魚或蟲吧！']);}},
+    {label:'🛒 購買材料（芒果/木材/礦石…）',cb(){shopBuyMenu();}},
     {label:'離開',cb(){ui=null;}}]);
 }
 /* ---------- 夥伴系統：每位動物朋友 3 個委託，完成後可結伴同行 ---------- */
@@ -892,6 +913,8 @@ function talkTo(npc){ if(!npc)return;
       else{const nt2=chain[st.s];
         dlg(npc.name,['謝謝你！獎勵請收下～','下一個委託：幫我帶 '+ITEMS[nt2[0]].e+nt2[0]+'×'+nt2[1]+'！']);}}});
     else opts.push({label:'我去準備！（還差 '+(t[1]-have)+' 個）',cb(){ui=null;}});
+    opts.push({label:'❓ '+t[0]+' 要去哪拿？',cb(){
+      dlg(npc.name,['「'+t[0]+'」的取得方式：',guideOf(t[0]),'（缺貨也可以到雜貨店🛒購買材料）']);}});
     opts.push({label:'聊聊',cb(){chatLine(npc);}});
     opts.push({label:'離開',cb(){ui=null;}});
     openMenu(npc.name+'（夥伴委託 '+(st.s+1)+'/3）：請幫我帶 '+it.e+t[0]+'×'+t[1],opts);
@@ -1016,7 +1039,7 @@ function buildAct(b){
         if(have>=t[1]){inv[t[0]]-=t[1];if(inv[t[0]]<=0)delete inv[t[0]];
           money+=t[2];eateryDone[b.label]=1;sfx('jingle');save();
           dlg(b.label,['就是這個！太感謝了！','這是酬勞 '+fmt(t[2])+' 元，招牌菜算你半價！']);}
-        else dlg(b.label,['老闆說：幫我帶 '+ITEMS[t[0]].e+t[0]+'×'+t[1]+' 來，','酬勞 '+fmt(t[2])+' 元！（目前 '+have+'/'+t[1]+'）']);}});
+        else dlg(b.label,['老闆說：幫我帶 '+ITEMS[t[0]].e+t[0]+'×'+t[1]+' 來，','酬勞 '+fmt(t[2])+' 元！（目前 '+have+'/'+t[1]+'）','💡 取得方式：'+guideOf(t[0])]);}});
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('🍜 '+b.label+'：歡迎光臨！',opts);},
    hotel(){ openMenu('🏨 '+b.label+'：要休息嗎？',[
@@ -2677,7 +2700,7 @@ function drawUI(){
     const rows=Math.ceil(partners.length/2), h=Math.min(VH-100,86+rows*44);
     panel(x,y,w,h);
     ctx.fillStyle='#5b4023';ctx.font='bold 22px '+F;
-    ctx.fillText('🤝 夥伴（每位3個委託，全完成可結伴同行）',x+24,y+40);
+    ctx.fillText('🤝 夥伴委託（點任一列看物品去哪拿💡）',x+24,y+40);
     drawClose(x+w-24,y+26);
     partners.forEach((d,i)=>{
       const st=partnerState[d.name]||{s:0,f:false};
@@ -2692,7 +2715,16 @@ function drawUI(){
       else{const t=chainOf(npcIdx(d.name))[st.s];
         txt='需 '+ITEMS[t[0]].e+t[0]+'×'+t[1]+'（'+(inv[t[0]]||0)+'/'+t[1]+'）';}
       ctx.font='bold 14px '+F;ctx.fillStyle='#5b4023';
-      ctx.fillText(icon+' '+d.name+'　'+st.s+'/3　'+txt,gx+12,gy+25);});
+      ctx.fillText(icon+' '+d.name+'　'+st.s+'/3　'+txt,gx+12,gy+25);
+      uiHits.push({x:gx,y:gy,w:w/2-26,h:38,cb:((dd,ss)=>()=>{ // 點列→顯示取得提示與夥伴位置
+        ui=null;
+        if(ss.s>=3){dlg(dd.name,['委託全數完成！','去找'+dd.name+'選「結伴同行」一起環島吧！',
+          'TA 住在「'+(nearestTown(dd.tx,dd.ty).t.c+'・'+nearestTown(dd.tx,dd.ty).t.n)+'」附近。']);return;}
+        const t=chainOf(npcIdx(dd.name))[ss.s];
+        dlg(dd.name+'的委託',['需要 '+ITEMS[t[0]].e+t[0]+'×'+t[1]+'（目前 '+(inv[t[0]]||0)+'/'+t[1]+'）',
+          '💡 取得方式：'+guideOf(t[0]),
+          '交付地點：'+dd.name+' 在「'+(nearestTown(dd.tx,dd.ty).t.c+'・'+nearestTown(dd.tx,dd.ty).t.n)+'」附近',
+          '（缺貨可到雜貨店🛒購買材料救急）']);})(d,st)});});
   }
   if(ui==='home'){ // 我的家室內
     const w=Math.min(540,VW-40),h=350,x=VW/2-w/2,y=Math.max(20,VH/2-h/2-10);

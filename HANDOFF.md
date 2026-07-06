@@ -57,6 +57,7 @@
 | `RACES` | 18 族群服飾配色 | |
 | `TOYS` | 20 玩具 `{n,e,mode:hold/throw/ground/self,mat}` | |
 | `LM_POOL` | 景點類型台詞池（點擊隨機組合） | |
+| `ITEM_GUIDE`+`SHOP_BUY` | 物品取得提示（game.js `guideOf()` 補魚/蟲自動提示）；雜貨店可購清單（賣價2倍） | **TASK_POOL 新增品項時，必須確認 guideOf 有提示且物品實際可取得** |
 | `REF_COUNTIES` | 縣市→ref圖檔對照 | |
 
 ## 4. game.js 系統地圖（找程式碼用函式名搜尋）
