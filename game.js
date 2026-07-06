@@ -231,6 +231,29 @@ const BUILDING_DRAWS={
     ctx.quadraticCurveTo(gx+2,gy-4,gx+5,gy);ctx.stroke();}
   ctx.lineCap='butt';
   drawRoofSign(x+w/2,y-34,'⚓ '+b.label,'#3f6f8f');},
+ giftshop(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#f5c8d8';rr(x,y-30,w,h+30,8);ctx.fill();
+  ctx.fillStyle='#e88aa8';ctx.beginPath();
+  ctx.moveTo(x-8,y-26);ctx.lineTo(cx2,y-50);ctx.lineTo(x+w+8,y-26);ctx.closePath();ctx.fill();
+  // 條紋遮陽棚
+  for(let i=0;i<4;i++){ctx.fillStyle=i%2?'#e2574c':'#fff';
+    ctx.beginPath();ctx.moveTo(x+i*w/4,y-6);ctx.lineTo(x+(i+1)*w/4,y-6);
+    ctx.lineTo(x+(i+1)*w/4,y+6);ctx.arc(x+(i+0.5)*w/4,y+6,w/8,0,Math.PI);ctx.closePath();ctx.fill();}
+  ctx.fillStyle='#fff0f5';rr(x+w/2-14,y+h-30,28,30,4);ctx.fill(); // 門
+  ctx.font='15px serif';ctx.textAlign='center';
+  ctx.fillText('💝',x+16,y-12);ctx.fillText('💍',x+w-16,y-12);ctx.textAlign='left';
+  drawRoofSign(cx2,y-56,'💝 '+b.label,'#d84f8f');},
+ registry(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#e8ecf0';rr(x,y-38,w,h+38,4);ctx.fill(); // 官方建築
+  ctx.fillStyle='#c9ccd2';ctx.fillRect(x-6,y-42,w+12,8);
+  for(let i=0;i<4;i++){ctx.fillStyle='#dfe4ea'; // 柱子
+    ctx.fillRect(x+6+i*(w-16)/3,y-34,6,h+34);}
+  ctx.fillStyle='#b8bdc4';ctx.beginPath(); // 三角楣
+  ctx.moveTo(x-6,y-42);ctx.lineTo(cx2,y-60);ctx.lineTo(x+w+6,y-42);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#c94f43';ctx.font='11px serif';ctx.textAlign='center';
+  ctx.fillText('💒',cx2,y-46);ctx.textAlign='left';
+  ctx.fillStyle='#8a6b4a';rr(cx2-12,y+h-30,24,30,3);ctx.fill();
+  drawRoofSign(cx2,y-72,'💒 '+b.label,'#4a6f8f');},
  bluetears(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
   // 木造觀景台＋欄杆
   ctx.fillStyle='#b8834a';ctx.fillRect(x-4,y+4,w+8,h-4);
@@ -688,7 +711,7 @@ const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],la
   balloon:[4,3],weir:[4,3],station:[5,3],harbor:[3,3],house:[3,2],
   oldstreet:[6,3],highheel:[3,3],rockform:[4,2],archbridge:[6,2],canoe:[3,2],cablecar:[3,3],
   waterfall:[4,3],catvillage:[3,2],ferris:[4,3],rainbowhouse:[4,2],saltmtn:[3,3],person:[3,2],
-  eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2]};
+  eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2],giftshop:[3,3],registry:[4,3]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines,steam:L.steam,isLm:true});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 // 港口自動貼齊海岸線（找最近的「臨陸海面」放置碼頭）
@@ -824,7 +847,7 @@ function startRide(pts,kind,speed,onEnd){
 const spawn=findWalkSafe(294,70); // 台北車站前
 const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   buffSpd:0,buffLuck:0,swing:0,show:null,fishing:null,name:'小島民',shirt:'#e74c3c',
-  boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false};
+  boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false,love:null,wedding:null};
 const TOOLS=[{n:'手',e:'🖐️'},{n:'捕蟲網',e:'🦋'},{n:'釣竿',e:'🎣'},{n:'鏟子',e:'⛏️'},{n:'斧頭',e:'🪓'},{n:'木矛',e:'🔱'}];
 function hasSpear(){return (inv['木矛']||0)>0;}
 function eatFood(n){ const it=ITEMS[n];
@@ -918,6 +941,67 @@ function openShop(){
     {label:'只賣漁獲和昆蟲（'+fmt(fb)+'元）',cb(){ fb>0?doSell(['fish','bug']):dlg('雜貨店',['咦？你還沒抓到魚或蟲吧！']);}},
     {label:'🛒 購買材料（芒果/木材/礦石…）',cb(){shopBuyMenu();}},
     {label:'離開',cb(){ui=null;}}]);
+}
+/* ---------- 結婚系統：路人→交往→結婚→離婚 ---------- */
+// player.love = {name,gender,aff(0-100),stage:'courting'/'dating'/'married',ap:{...},x,y,face,walk}
+function heShe(g){return g==='m'?'他':'她';}
+function apOf(c){return {shirt:c.shirt,outfit:c.outfit,pants:c.pants,tie:c.tie,hair:c.hair||'#3a2a1a',race:c.race};}
+function faceToward(c){const dx=player.x-c.x,dy=player.y-c.y;
+  c.face=Math.abs(dx)>Math.abs(dy)?(dx<0?1:2):(dy<0?3:0);}
+function citizenInteract(c){
+  faceToward(c);
+  if(player.love){ // 已有對象→只能閒聊
+    dlg(c.pname,[CITIZEN_LINES[Math.floor(Math.random()*CITIZEN_LINES.length)]]);return;}
+  const genderTxt=c.gender==='m'?'先生':'小姐';
+  openMenu(c.pname+' '+genderTxt+'（'+(c.race!=null?RACES[c.race].n.split('・')[0]:'路人')+'）',[
+    {label:'認識一下 💗（成為約會對象）',cb(){
+      player.love={name:c.pname,gender:c.gender,aff:15,stage:'courting',ap:apOf(c),
+        x:c.x,y:c.y,face:c.face,walk:0};
+      const idx=citizens.indexOf(c); if(idx>=0)citizens.splice(idx,1); // 變成專屬對象、不再隨機消失
+      sfx('chime'); save();
+      dlg(c.pname,['「好呀，很高興認識你！」','（'+c.pname+' 成為你的約會對象💗）',
+        '多聊天、送禮物提升好感度，好感度夠高就能告白成男女朋友！']);}},
+    {label:'聊聊',cb(){dlg(c.pname,[CITIZEN_LINES[Math.floor(Math.random()*CITIZEN_LINES.length)]]);}},
+    {label:'離開',cb(){ui=null;}}]);
+}
+function giftMenuForLove(){
+  const owned=GIFTS.filter(g=>inv[g.n]>0);
+  if(!owned.length){dlg(player.love.name,['你手上沒有禮物耶…','去「禮品店/珠寶店」買束花或戒指再來吧！']);return;}
+  const L=player.love;
+  const opts=owned.map(g=>({label:g.e+g.n+'（好感+'+g.aff+'）',cb(){
+    inv[g.n]--; if(inv[g.n]<=0)delete inv[g.n];
+    L.aff=Math.min(100,L.aff+g.aff); sfx('jingle'); save();
+    dlg(L.name,['「'+g.e+' 哇…這是要送我的嗎？我好喜歡！」','（'+heShe(L.gender)+'的好感度提升到 '+L.aff+'/100）',
+      L.stage==='courting'&&L.aff>=50?'你們的感情好像可以更進一步了…試試「告白」吧！':
+      L.stage==='dating'&&L.aff>=80?'好感度很高了！到戶政事務所就能結婚囉💒':'']);}}));
+  opts.push({label:'算了',cb(){ui=null;}});
+  openMenu('💝 要送 '+player.love.name+' 什麼禮物？',opts);
+}
+function loveInteract(){
+  const L=player.love; faceToward(L);
+  const opts=[{label:'💝 送禮物',cb(){giftMenuForLove();}}];
+  if(L.stage==='courting'){
+    if(L.aff>=50)opts.push({label:'💗 告白（成為男女朋友）',cb(){
+      L.stage='dating'; L.aff=Math.max(L.aff,55); sfx('jingle'); save();
+      dlg(L.name,['「我願意！」'+L.name+'害羞地點了點頭♥','（你們正式成為男女朋友了！）',
+        '感情再加溫到好感80，就能去戶政事務所💒結婚！']);}});
+    else opts.push({label:'💗 告白（好感需50，目前'+L.aff+'）',cb(){
+      dlg(L.name,['「我們…是不是還不夠了解彼此呀？」','再多送點禮物、多陪陪'+heShe(L.gender)+'吧！']);}});
+  } else if(L.stage==='dating'){
+    opts.push({label:L.aff>=80?'💒 去戶政事務所結婚吧！':'💒 結婚（好感需80，目前'+L.aff+'）',cb(){
+      dlg(L.name,[L.aff>=80?'「我準備好了♥ 我們去登記結婚吧！」':'「再多陪陪我，感情更穩固一點嘛～」',
+        L.aff>=80?'（到台北或台中的「戶政事務所」辦理結婚）':''].filter(Boolean));}});
+  }
+  opts.push({label:'聊聊',cb(){
+    dlg(L.name,[(L.stage==='married'?SPOUSE_LINES:DATE_LINES)[Math.floor(Math.random()*(L.stage==='married'?SPOUSE_LINES:DATE_LINES).length)]]);}});
+  if(L.stage!=='married')opts.push({label:'💔 分手',cb(){
+    openMenu('確定要和 '+L.name+' 分手嗎？',[
+      {label:'狠心分手…',cb(){dlg(L.name,['「為什麼…嗚嗚…」'+L.name+'哭著跑走了。','（你們分手了）']);
+        player.love=null;sfx('sad');save();}},
+      {label:'不，我還愛'+heShe(L.gender),cb(){ui=null;}}]);}});
+  opts.push({label:'離開',cb(){ui=null;}});
+  const badge=L.stage==='married'?'💍配偶':(L.stage==='dating'?'💗男女朋友':'💗約會中');
+  openMenu(L.name+'（'+badge+'・好感'+L.aff+'/100）',opts);
 }
 /* ---------- 夥伴系統：每位動物朋友 3 個委託，完成後可結伴同行 ---------- */
 let partnerState={}, followers=[], trail=[];
@@ -1069,6 +1153,41 @@ function buildAct(b){
         else dlg(b.label,['老闆說：幫我帶 '+ITEMS[t[0]].e+t[0]+'×'+t[1]+' 來，','酬勞 '+fmt(t[2])+' 元！（目前 '+have+'/'+t[1]+'）','💡 取得方式：'+guideOf(t[0])]);}});
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('🍜 '+b.label+'：歡迎光臨！',opts);},
+   giftshop(){ const opts=GIFTS.map(g=>({label:g.e+g.n+'（'+fmt(g.price)+'元）'+(g.ring?' 💍求婚用':' 好感+'+g.aff),cb(){
+       if(money<g.price){dlg(b.label,['錢不夠喔！'+g.n+' 要 '+fmt(g.price)+' 元。']);return;}
+       money-=g.price; addItem(g.n); sfx('cash'); save();
+       toast(g.e+' 買了 '+g.n+'！送給心儀對象吧♥');}}));
+     opts.push({label:'離開',cb(){ui=null;}});
+     openMenu('💝 '+b.label+'：買禮物送給喜歡的人♥',opts);},
+   registry(){ const L=player.love;
+     if(L&&L.stage==='married'){ openMenu('💒 '+b.label+'：'+L.name+' 是你的配偶',[
+       {label:(inv['結婚證書']?'✓已有結婚證書':'補領結婚證書📜'),cb(){
+         if(inv['結婚證書']){dlg(b.label,['你已經有結婚證書了。']);return;}
+         addItem('結婚證書');sfx('jingle');save();dlg(b.label,['補發了一張結婚證書📜。']);}},
+       {label:'💔 辦理離婚（贍養費 5000元）',cb(){
+         openMenu('離婚要付 '+fmt(5000)+' 元贍養費，確定？',[
+           {label:'確定離婚',cb(){ if(money<5000){dlg(b.label,['贍養費不夠…離不了婚喔。']);return;}
+             money-=5000; delete inv['結婚證書']; const nm=L.name; player.love=null; sfx('sad'); save();
+             dlg(b.label,['離婚手續辦好了…','你和 '+nm+' 從此各奔東西。','（婚姻關係已解除）']);}},
+           {label:'再想想',cb(){ui=null;}}]);}},
+       {label:'離開',cb(){ui=null;}}]);
+       return;}
+     if(L&&L.stage==='dating'){
+       const ring=inv['鑽戒']?'鑽戒':inv['戒指']?'戒指':null;
+       openMenu('💒 '+b.label+'：要和 '+L.name+' 結婚嗎？',[
+         {label:(L.aff<80?'好感需80（目前'+L.aff+'）':!ring?'需要一枚戒指💍（去珠寶店買）':'💍 登記結婚（規費 1200元）'),cb(){
+           if(L.aff<80){dlg(b.label,['你們的感情還需要再加溫…','好感度要達到 80 才能結婚喔。']);return;}
+           if(!ring){dlg(b.label,['結婚要準備一枚戒指💍！','到「禮品店/珠寶店」買「戒指」或「鑽戒」再來。']);return;}
+           if(money<1200){dlg(b.label,['登記規費 1200 元不夠喔。']);return;}
+           money-=1200; delete inv[ring]; if((inv[ring]||0)<=0)delete inv[ring];
+           addItem('結婚證書'); L.stage='married'; L.aff=100;
+           player.wedding={t:4}; sfx('jingle'); save();
+           dlg(b.label,['🎉 恭喜！你和 '+L.name+' 正式結為連理！','（獲得結婚證書📜，'+L.name+' 成為你的配偶💍）',
+             '婚後'+heShe(L.gender)+'會一直陪在你身邊，一起環島吧！']);}},
+         {label:'還沒準備好',cb(){ui=null;}}]);
+       return;}
+     dlg(b.label,['這裡是辦理結婚/離婚的戶政事務所。','先在城鎮裡找路人「認識一下」、送禮物培養感情，',
+       '成為男女朋友、好感度達80後，帶著戒指來這裡就能結婚！']);},
    hotel(){ openMenu('🏨 '+b.label+'：要休息嗎？',[
      {label:'住宿一晚（200元）睡到隔天 06:00，疲勞歸零',cb(){doSleep(200,b.label);}},
      {label:'離開',cb(){ui=null;}}]);},
@@ -1242,11 +1361,9 @@ function interact(){
       scan(citizens); scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);
       if(best){attackPerson(best);return;}
     }
+    if(player.love&&(dist(player.love.x,player.love.y,p.x,p.y)<54||dist(player.love.x,player.love.y,player.x,player.y)<52)){loveInteract();return;}
     for(const n of NPCS) if(dist(n.x,n.y,p.x,p.y)<52||dist(n.x,n.y,player.x,player.y)<50){talkTo(n);return;}
-    for(const c of citizens) if(dist(c.x,c.y,p.x,p.y)<48||dist(c.x,c.y,player.x,player.y)<46){
-      const dxx=player.x-c.x,dyy=player.y-c.y;
-      c.face=Math.abs(dxx)>Math.abs(dyy)?(dxx<0?1:2):(dyy<0?3:0);
-      dlg('路人',[CITIZEN_LINES[Math.floor(Math.random()*CITIZEN_LINES.length)]]);return;}
+    for(const c of citizens) if(dist(c.x,c.y,p.x,p.y)<48||dist(c.x,c.y,player.x,player.y)<46){citizenInteract(c);return;}
     for(const cf of campfires) if(dist(cf.x,cf.y,player.x,player.y)<70){openCook();return;}
     for(let i=events.length-1;i>=0;i--){const ev=events[i]; // 處理偶發事件
       if(dist(ev.x,ev.y,player.x,player.y)<95){
@@ -1626,6 +1743,14 @@ function update(dt){
   if(player.moving||player.sailing||player.riding){
     trail.unshift({x:player.x,y:player.y});
     if(trail.length>320)trail.length=320;}
+  // 婚戀對象跟隨玩家（永不消失）
+  if(player.love){ const L=player.love;
+    const tp=trail[Math.min(trail.length-1,12)]||{x:player.x,y:player.y};
+    const d2=dist(L.x,L.y,tp.x,tp.y);
+    if(d2>28){ const k=Math.min(1,dt*(d2>400?12:5)), ox=L.x;
+      L.x+=(tp.x-L.x)*k; L.y+=(tp.y-L.y)*k; L.walk+=dt*9;
+      L.face=Math.abs(tp.x-ox)>Math.abs(tp.y-L.y)?(tp.x<ox?1:2):(tp.y<L.y?3:0);}}
+  if(player.wedding){player.wedding.t-=dt;if(player.wedding.t<=0)player.wedding=null;}
   // NPC
   for(const n of NPCS){
     const fi=followers.indexOf(n.name);
@@ -1709,8 +1834,10 @@ function update(dt){
         else if(outfit==='dress')shirt=['#f27ba0','#c77dff','#f2c94c','#7ec8e8','#e2574c'][Math.floor(Math.random()*5)];
         else{shirt=['#3f7fd6','#2ea36b','#f2b21c','#9b59b6','#f27ba0','#e74c3c','#5a8a9a','#e8ecf2'][Math.floor(Math.random()*8)];
           if(outfit==='jeans')pants='#3f5f8a';}
+        const gender=outfit==='dress'?'f':(Math.random()<0.5?'m':'f');
+        const pname=(gender==='m'?NAME_M:NAME_F)[Math.floor(Math.random()*(gender==='m'?NAME_M:NAME_F).length)];
         citizens.push({x:p2.x,y:p2.y,hx:p2.x,hy:p2.y,homeR:5*TILE,vx:0,vy:0,ai:0,walk:0,face:0,
-          shirt,outfit,pants,tie,
+          shirt,outfit,pants,tie,pname,gender,hair:['#3a2a1a','#2a2a2a','#4a3320','#5a3a2a'][Math.floor(Math.random()*4)],
           race:Math.random()<0.25?Math.floor(Math.random()*RACES.length):null});}}}
   for(const c of citizens){ c.ai-=dt;
     if(c.flee>0){ c.flee-=dt; // 被攻擊後驚慌逃跑
@@ -2328,8 +2455,15 @@ function draw(){
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
   for(const a of animals)if(inView(a.x,a.y))list.push({y:a.y,f:()=>drawAnimal(a)});
   for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>drawActor(c.x,c.y,c.face,c.walk,
-    {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:'#3a2a1a',shirt:c.shirt,race:c.race,
+    {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:c.hair||'#3a2a1a',shirt:c.shirt,race:c.race,
      outfit:c.outfit,pants:c.pants,tie:c.tie})});
+  if(player.love&&inView(player.love.x,player.love.y)){const L=player.love;
+    list.push({y:L.y,f:()=>{ const ap=L.ap;
+      drawActor(L.x,L.y,L.face,L.walk,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
+        hair:ap.hair,shirt:ap.shirt,race:ap.race,outfit:ap.outfit,pants:ap.pants,tie:ap.tie});
+      // 頭上愛心／婚戒標記
+      ctx.font='14px serif';ctx.textAlign='center';
+      ctx.fillText(L.stage==='married'?'💍':'💗',L.x,L.y-52+Math.sin(tGlobal*3)*2);ctx.textAlign='left';}});}
   for(const ow of owners)if(inView(ow.x,ow.y))list.push({y:ow.y,f:()=>drawActor(ow.x,ow.y,0,0,
     {species:ow.species,pal:ow.pal,shirt:ow.pal.fur})});
   for(const s of sealife)if(inView(s.x,s.y,120))list.push({y:s.y,f:()=>drawSealife(s)});
@@ -2504,6 +2638,12 @@ function draw(){
       ctx.beginPath();ctx.moveTo(rx2,ry2);ctx.lineTo(rx2-4,ry2+14);ctx.stroke();}}
   ctx.restore();
   if(flash>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(1,flash)})`;ctx.fillRect(0,0,VW,VH);}
+  if(player.wedding){ ctx.font='26px serif';ctx.textAlign='center'; // 婚禮飄愛心
+    for(let i=0;i<16;i++){const t2=(tGlobal*0.8+i*0.4)%1;
+      ctx.globalAlpha=0.9*(1-t2);
+      ctx.fillText(i%2?'💕':'💗',(i*83%VW),VH-t2*VH);}
+    ctx.globalAlpha=1;ctx.fillStyle='#d84f8f';ctx.font='bold 30px "Microsoft JhengHei"';
+    ctx.fillText('🎉 結婚快樂！🎉',VW/2,VH*0.3);ctx.textAlign='left';}
   drawUI();
 }
 
@@ -2849,6 +2989,8 @@ function drawUI(){
       '🏠 按 C 蓋自己的家（木材10＋礦石5＋2000元），進門點床就能睡。',
       '🧸 玩具工坊可做 20 種手工玩具，背包點擊就能玩（風箏會飛喔）！',
       '🍜 各縣市有 40 間在地美食小店，老闆還有委託可接。',
+      '💗 結婚：找城鎮路人「認識一下」→禮品店買禮物送禮拉好感→告白成男女朋友',
+      '　 →好感80帶戒指到戶政事務所💒結婚（可離婚），配偶會一直陪你環島！',
       '⚠️ 持鏟子/斧頭/木矛/彈弓時按互動鍵＝攻擊人（空手才是對話）！',
       '　 打人會掉錢可撿，但對方會報警！躲遠或躲進自己家裡，',
       '　 否則警車追到會把你關進桃園監獄（服刑或繳保釋金才能出來）。',
@@ -2867,7 +3009,7 @@ const SAVEKEY='twisland_v3';
 function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   name:player.name,shirt:player.shirt,race:player.race,money,inv,dex,boat:player.boat,
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
-  gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,
+  gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   if(!s)return false;
@@ -2877,7 +3019,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   stamps=s.stamps||{};townsV=s.townsV||{};
   partnerState=s.partners||{};followers=s.followers||[];
   gameDay=s.gameDay||1;gameMin=s.gameMin??8*60;player.tired=s.tired||0;player.jailed=!!s.jailed;
-  eateryDone=s.eateryDone||{};player.toy=s.toy||null;
+  eateryDone=s.eateryDone||{};player.toy=s.toy||null;player.love=s.love||null;
   myHomes=s.myHomes||(s.myHome?[{tx:s.myHome.tx,ty:s.myHome.ty,type:'cabin'}]:[]);
   for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0];
     addBuild('myhome',mh.tx,mh.ty,ht.tw,ht.th,(s.name||'小島民')+'的'+ht.n,{htype:ht.id});}
