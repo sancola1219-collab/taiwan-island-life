@@ -902,6 +902,8 @@ let ui=null, menu=null, dialog=null, toasts=[], banner=null, lastRegion='', uiHi
 let zoom=1, zoomT=1;
 function camPos(){ const VWz=VW/zoom, VHz=VH/zoom;
   return {cx:clamp(player.x-VWz/2,0,MW*TILE-VWz),cy:clamp(player.y-VHz/2,0,MH*TILE-VHz),VWz,VHz};}
+// 搭乘交通工具中（火車/纜車/熱氣球/摩天輪/船）——夥伴與配偶會一起同乘、不在地上飛
+function boarding(){return player.riding||player.balloonRide||player.ferris||player.sailing;}
 function toast(t){toasts.push({t,life:3});}
 function dlg(name,lines,onDone){ ui='dialog';
   dialog={name,lines:lines.map(l=>l.replace(/\{name\}/g,player.name)),i:0,ch:0,onDone,npc:null}; }
@@ -1514,9 +1516,11 @@ function endPointer(e){
   if(joy&&joy.id===e.pointerId)joy=null;
   if(moveHold&&moveHold.id===e.pointerId){
     if(tapInfo&&performance.now()-tapInfo.t<260&&Math.hypot(e.clientX-tapInfo.x,e.clientY-tapInfo.y)<10){
+      // 手機：右側功能列與底部工具列是 UI 保留區，該處輕點不觸發互動（交給 A 鍵）
+      const inUIzone=touchUI&&(e.clientX>VW-64||e.clientY>VH-96);
       const cam=camPos();
       const wx=cam.cx+e.clientX/zoom, wy=cam.cy+e.clientY/zoom;
-      if(dist(wx,wy,player.x,player.y)<110)interact();
+      if(!inUIzone&&dist(wx,wy,player.x,player.y)<110)interact();
     }
     moveHold=null; tapInfo=null;}
 }
@@ -1743,18 +1747,20 @@ function update(dt){
   if(player.moving||player.sailing||player.riding){
     trail.unshift({x:player.x,y:player.y});
     if(trail.length>320)trail.length=320;}
-  // 婚戀對象跟隨玩家（永不消失）
+  // 婚戀對象跟隨玩家（永不消失；搭乘交通工具時一起上車，緊跟不亂飛）
   if(player.love){ const L=player.love;
-    const tp=trail[Math.min(trail.length-1,12)]||{x:player.x,y:player.y};
-    const d2=dist(L.x,L.y,tp.x,tp.y);
-    if(d2>28){ const k=Math.min(1,dt*(d2>400?12:5)), ox=L.x;
-      L.x+=(tp.x-L.x)*k; L.y+=(tp.y-L.y)*k; L.walk+=dt*9;
-      L.face=Math.abs(tp.x-ox)>Math.abs(tp.y-L.y)?(tp.x<ox?1:2):(tp.y<L.y?3:0);}}
+    if(boarding()){ L.x=player.x; L.y=player.y; } // 同乘：貼齊玩家、繪製時隱藏
+    else{ const tp=trail[Math.min(trail.length-1,12)]||{x:player.x,y:player.y};
+      const d2=dist(L.x,L.y,tp.x,tp.y);
+      if(d2>28){ const k=Math.min(1,dt*(d2>400?12:5)), ox=L.x;
+        L.x+=(tp.x-L.x)*k; L.y+=(tp.y-L.y)*k; L.walk+=dt*9;
+        L.face=Math.abs(tp.x-ox)>Math.abs(tp.y-L.y)?(tp.x<ox?1:2):(tp.y<L.y?3:0);} }}
   if(player.wedding){player.wedding.t-=dt;if(player.wedding.t<=0)player.wedding=null;}
   // NPC
   for(const n of NPCS){
     const fi=followers.indexOf(n.name);
     if(fi>=0){ // 結伴同行：跟在玩家身後排成一列
+      if(boarding()){ n.x=player.x; n.y=player.y; continue; } // 同乘交通工具：貼齊玩家、隱藏
       const tp=trail[Math.min(trail.length-1,(fi+1)*15)]||{x:player.x,y:player.y};
       const d2=dist(n.x,n.y,tp.x,tp.y);
       if(d2>30){ const k=Math.min(1,dt*(d2>400?12:5));
@@ -2450,14 +2456,15 @@ function draw(){
   for(const l of lamps)if(inView(l.x,l.y))list.push({y:l.y,f:()=>drawLamp(l)});
   for(const b of BUILDINGS){const bx=b.x+b.w/2,by=b.y+b.h;
     if(inView(bx,by,400))list.push({y:by,f:()=>BUILDING_DRAWS[b.t](b)});}
-  for(const n of NPCS)if(inView(n.x,n.y))
-    list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});
+  for(const n of NPCS)if(inView(n.x,n.y)){
+    if(boarding()&&followers.includes(n.name))continue; // 同乘時隱藏夥伴（避免在地上飛）
+    list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});}
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
   for(const a of animals)if(inView(a.x,a.y))list.push({y:a.y,f:()=>drawAnimal(a)});
   for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>drawActor(c.x,c.y,c.face,c.walk,
     {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:c.hair||'#3a2a1a',shirt:c.shirt,race:c.race,
      outfit:c.outfit,pants:c.pants,tie:c.tie})});
-  if(player.love&&inView(player.love.x,player.love.y)){const L=player.love;
+  if(player.love&&!boarding()&&inView(player.love.x,player.love.y)){const L=player.love;
     list.push({y:L.y,f:()=>{ const ap=L.ap;
       drawActor(L.x,L.y,L.face,L.walk,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
         hair:ap.hair,shirt:ap.shirt,race:ap.race,outfit:ap.outfit,pants:ap.pants,tie:ap.tie});
@@ -2752,7 +2759,8 @@ function drawUI(){
     icons.forEach(([em,mode],i)=>{ const iy=iy0+i*step;
       ctx.globalAlpha=0.85;panel(VW-52,iy,42,42,.85);ctx.globalAlpha=1;
       ctx.font='20px serif';ctx.fillText(em,VW-45,iy+29);
-      uiHits.push({x:VW-52,y:iy,w:42,h:42,cb:((m)=>()=>{
+      // 點擊區加大：填滿整格高度、延伸到螢幕右緣，減少手機誤觸
+      uiHits.push({x:VW-60,y:iy-(step-42)/2,w:60,h:step,cb:((m)=>()=>{
         if(m==='craft'){if(!ui)openCraft();else ui=null;}
         else if(m==='save'){save();toast('💾 已存檔！');}
         else ui=(ui===m?null:m);
