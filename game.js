@@ -1177,13 +1177,19 @@ function tryDig(){ const p=frontPoint(30);
   toast('這裡沒有可以挖的痕跡。附近找找 ✕ 記號吧。'); return true;}
 function tryAxe(){ const p=frontPoint(40);
   for(const r of rocks){ if(dist(r.x,r.y,p.x,p.y)<50){ r.hit=0.3; sfx('thud');
+    if(r.left==null)r.left=3;
+    if(r.left<=0){toast('這顆石頭已經敲空了…過一陣子再來吧。');return true;}
+    r.left--; if(r.left<=0)r.regenT=240; // 敲空後4分鐘再生
     const q=Math.random();
     if(q<0.5)caught('礦石','敲出');
     else if(q<0.8){const v=100+Math.floor(Math.random()*200);money+=v;sfx('cash');toast('💰 敲出 '+v+' 元！');save();}
     else toast('鏘…什麼都沒有。');
     return true;} }
   for(const tr of trees){ if(dist(tr.x,tr.y-4,p.x,p.y)<50){ tr.shake=0.4;
-    if(Math.random()<0.4)caught('木材','砍下'); else toast('咚…只削下一點樹皮。');
+    if(tr.woodLeft==null)tr.woodLeft=2;
+    if(tr.woodLeft<=0){toast('這棵樹的樹皮都被削光了…讓它休息一下吧。');return true;}
+    tr.woodLeft--; if(tr.woodLeft<=0)tr.woodT=240;
+    if(Math.random()<0.5)caught('木材','砍下'); else toast('咚…只削下一點樹皮。');
     return true;} }
   toast('附近沒有岩石或樹木。'); return true;}
 function tryShake(tr){ tr.shake=0.5;
@@ -1199,9 +1205,14 @@ function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(p
 function attackPerson(c){
   player.swing=0.28; sfx('swing'); c.flee=6;
   puffs.push({x:c.x,y:c.y-16,t:0.4});
-  if(Math.random()<0.6)drops.push({x:c.x+(Math.random()*20-10),y:c.y+8,coin:60+Math.floor(Math.random()*200)});
-  else drops.push({x:c.x+(Math.random()*20-10),y:c.y+8,item:ATTACK_LOOT[Math.floor(Math.random()*ATTACK_LOOT.length)]});
-  toast('💥 攻擊了'+(c.name||'路人')+'！他嚇得掉了東西…但生氣地掏出手機報警！');
+  if(c.robAt!=null&&tGlobal-c.robAt<120){ // 同一人2分鐘內再打不掉東西（但照樣報警）
+    toast('💢 他身上已經沒東西了…而且更生氣地報警！');
+  }else{
+    c.robAt=tGlobal;
+    if(Math.random()<0.6)drops.push({x:c.x+(Math.random()*20-10),y:c.y+8,coin:60+Math.floor(Math.random()*200)});
+    else drops.push({x:c.x+(Math.random()*20-10),y:c.y+8,item:ATTACK_LOOT[Math.floor(Math.random()*ATTACK_LOOT.length)]});
+    toast('💥 攻擊了'+(c.name||'路人')+'！他嚇得掉了東西…但生氣地掏出手機報警！');
+  }
   if(!player.wanted)startWanted(c.x,c.y);
   else{player.wanted.phase='grace';player.wanted.t=Math.min(player.wanted.t,4);}
 }
@@ -1211,6 +1222,9 @@ function startWanted(rx,ry){
 }
 function arrest(){
   player.wanted=null; player.jailed=true; player.fishing=null;
+  // 清除所有乘坐/占用狀態，避免被捕後卡死
+  player.riding=null; player.balloonRide=null; player.ferris=null;
+  player.soak=null; player.pray=null; player.sailing=false; zoomT=1;
   const pr=BUILDINGS.find(b=>b.t==='prison');
   if(pr){player.x=(pr.tx+pr.tw/2)*TILE;player.y=(pr.ty+pr.th/2)*TILE;}
   flash=1; sfx('sad'); ui='jail'; save();
@@ -1592,7 +1606,9 @@ function update(dt){
         player.show={emoji:ITEMS[d.item].e,text:'撿到了 '+d.item,t:1.4}; save();} } }
   for(const tr of trees){ tr.shake=Math.max(0,tr.shake-dt);
     if(!tr.has&&tr.fruit){tr.regrow-=dt;if(tr.regrow<=0)tr.has=true;} }
-  for(const r of rocks)r.hit=Math.max(0,(r.hit||0)-dt);
+  for(const r of rocks){r.hit=Math.max(0,(r.hit||0)-dt);
+    if(r.regenT>0){r.regenT-=dt;if(r.regenT<=0)r.left=3;}}
+  for(const tr of trees)if(tr.woodT>0){tr.woodT-=dt;if(tr.woodT<=0)tr.woodLeft=2;}
   for(const tb of teaBushes)if(!tb.ready){tb.t-=dt;if(tb.t<=0)tb.ready=true;}
   for(const ca of cacti)if(!ca.ready){ca.t-=dt;if(ca.t<=0)ca.ready=true;}
   for(const sb of strawberries)if(!sb.ready){sb.t-=dt;if(sb.t<=0)sb.ready=true;}
