@@ -1363,7 +1363,8 @@ function interact(){
       scan(citizens); scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);
       if(best){attackPerson(best);return;}
     }
-    if(player.love&&(dist(player.love.x,player.love.y,p.x,p.y)<54||dist(player.love.x,player.love.y,player.x,player.y)<52)){loveInteract();return;}
+    // 男女朋友/配偶：只有「面向對方」才互動（TA 常跟在身後，避免背對時誤觸、蓋掉點任務）
+    if(player.love&&dist(player.love.x,player.love.y,p.x,p.y)<58){loveInteract();return;}
     for(const n of NPCS) if(dist(n.x,n.y,p.x,p.y)<52||dist(n.x,n.y,player.x,player.y)<50){talkTo(n);return;}
     for(const c of citizens) if(dist(c.x,c.y,p.x,p.y)<48||dist(c.x,c.y,player.x,player.y)<46){citizenInteract(c);return;}
     for(const cf of campfires) if(dist(cf.x,cf.y,player.x,player.y)<70){openCook();return;}
