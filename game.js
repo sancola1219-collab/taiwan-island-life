@@ -231,6 +231,33 @@ const BUILDING_DRAWS={
     ctx.quadraticCurveTo(gx+2,gy-4,gx+5,gy);ctx.stroke();}
   ctx.lineCap='butt';
   drawRoofSign(x+w/2,y-34,'⚓ '+b.label,'#3f6f8f');},
+ bluetears(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  // 木造觀景台＋欄杆
+  ctx.fillStyle='#b8834a';ctx.fillRect(x-4,y+4,w+8,h-4);
+  ctx.strokeStyle='#96682f';ctx.lineWidth=2;
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(x-4,y+10+i*10);ctx.lineTo(x+w+4,y+10+i*10);ctx.stroke();}
+  ctx.strokeStyle='#8a6a3a';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(x-4,y+4);ctx.lineTo(x+w+4,y+4);ctx.stroke();
+  for(let i=0;i<=4;i++){ctx.beginPath();ctx.moveTo(x-4+(w+8)*i/4,y+4);ctx.lineTo(x-4+(w+8)*i/4,y-8);ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(x-4,y-8);ctx.lineTo(x+w+4,y-8);ctx.stroke();
+  // 小燈籠
+  ctx.fillStyle=isNight()?'#ffd97a':'#e8e0c8';ctx.beginPath();ctx.arc(x+w+6,y-12,4,0,7);ctx.fill();
+  // 夜晚：掃描附近真正的海面格，湧現藍眼淚
+  if(isNight()){
+    if(!b.seaPts){ b.seaPts=[];
+      for(let dy=-9;dy<=9;dy++)for(let dx=-9;dx<=9;dx++){
+        const tx2=b.tx+1+dx, ty2=b.ty+1+dy;
+        if(Math.hypot(dx,dy)<=9&&T(tx2,ty2)===SEA)
+          b.seaPts.push([(tx2+0.5)*TILE,(ty2+0.5)*TILE,Math.hypot(dx,dy)]);}
+      b.seaPts.sort((p,q)=>p[2]-q[2]); b.seaPts=b.seaPts.slice(0,16);}
+    b.seaPts.forEach((pt2,k)=>{
+      const gx=pt2[0]+Math.sin(tGlobal*0.7+k*2)*10, gy=pt2[1]+Math.cos(tGlobal*0.9+k)*8;
+      const tw2=0.35+0.5*Math.abs(Math.sin(tGlobal*1.6+k*1.3));
+      const g=ctx.createRadialGradient(gx,gy,1,gx,gy,11+4*Math.sin(tGlobal+k));
+      g.addColorStop(0,`rgba(120,235,255,${tw2})`);g.addColorStop(1,'rgba(120,235,255,0)');
+      ctx.fillStyle=g;ctx.fillRect(gx-16,gy-16,32,32);
+      ctx.fillStyle=`rgba(210,250,255,${tw2})`;ctx.fillRect(gx-1.2,gy-1.2,2.4,2.4);});}
+  drawRoofSign(cx2,y-26,'💧 '+b.label,'#2f6f9f');},
  person(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
   // 溫馨的木牌＋花圃
   ctx.fillStyle='#8a6b3a';ctx.fillRect(cx2-3,y-18,6,h+18);
@@ -661,7 +688,7 @@ const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],la
   balloon:[4,3],weir:[4,3],station:[5,3],harbor:[3,3],house:[3,2],
   oldstreet:[6,3],highheel:[3,3],rockform:[4,2],archbridge:[6,2],canoe:[3,2],cablecar:[3,3],
   waterfall:[4,3],catvillage:[3,2],ferris:[4,3],rainbowhouse:[4,2],saltmtn:[3,3],person:[3,2],
-  eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4]};
+  eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines,steam:L.steam,isLm:true});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 // 港口自動貼齊海岸線（找最近的「臨陸海面」放置碼頭）
@@ -1046,6 +1073,8 @@ function buildAct(b){
      {label:'住宿一晚（200元）睡到隔天 06:00，疲勞歸零',cb(){doSleep(200,b.label);}},
      {label:'離開',cb(){ui=null;}}]);},
    myhome(){ ui='home'; },
+   bluetears(){ if(isNight())dlg(b.label,['哇——海面泛起夢幻的淡藍色螢光！','這是夜光蟲（渦鞭毛藻）受海浪擾動發出的光，','每年4～6月、無光害的夜晚最容易看見。','世界級的自然奇景，快拍下來！📸']);
+     else dlg(b.label,['白天看只是普通的海面…','「藍眼淚」是夜光蟲受海浪或船隻擾動發出的藍光，','要等晚上（無光害的夜晚機率最高）再來，','就能看到海面發光的奇景喔！']);},
   };
   if(L[b.t]){L[b.t]();return true;}
   if(b.lines){ // 景點台詞：每次點擊隨機組合（專屬 2 句＋通用 1 句）
