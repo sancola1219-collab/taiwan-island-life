@@ -884,7 +884,7 @@ const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   buffSpd:0,buffLuck:0,swing:0,show:null,fishing:null,name:'小島民',shirt:'#e74c3c',
   boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false,love:null,wedding:null,
   gender:'m',hairStyle:0,hair:'#4a2f1d',headAcc:null,bodyAcc:null,shoes:null,
-  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[]};
+  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0};
 // ---- 服裝（男女各20套；col=主色, style=版型, deco=花紋/配件, tie=領帶色）----
 const CLOTHES_M=[
  {n:'白T恤',col:'#eef2f6',style:'tee'},{n:'海軍條紋衫',col:'#3f6fd6',style:'shirt',deco:'stripe'},
@@ -1163,7 +1163,7 @@ function accList(b,slot){
       if(!owned){ if(money<a.price){dlg(b.label,['錢不夠！'+a.n+' 要 '+fmt(a.price)+' 元。']);return;}
         money-=a.price;player.ownAcc.push(a.id);sfx('cash');}
       if(slot==='head')player.headAcc=a.id;else player.bodyAcc=a.id;
-      save();toast(a.e+' 配戴了'+a.n+'！');accList(b,slot);}});});
+      player.sparkle=5;save();toast(a.e+' 配戴了'+a.n+'！✨');accList(b,slot);}});});
   opts.push({label:'回上頁',cb(){shopEquipMenu(b,'acc');}});
   openMenu((slot==='head'?'👒 頭上飾品':'📿 身上飾品')+'（'+items.length+'種）',opts);
 }
@@ -1183,7 +1183,7 @@ function shopEquipMenu(b,kind){
       opts.push({label:s.n+(eq?' ✓穿著中':owned?' 已擁有·點穿上':'　'+fmt(PRICE)+'元'),cb(){
         if(!owned){ if(money<PRICE){dlg(b.label,['錢不夠！鞋子一雙 '+fmt(PRICE)+' 元。']);return;}
           money-=PRICE;player.ownShoes.push({key,n:s.n,col:s.col,style:s.style});sfx('cash');}
-        player.shoes={key,col:s.col,style:s.style};save();toast('👟 穿上「'+s.n+'」！');shopEquipMenu(b,'shoe');}});});
+        player.shoes={key,col:s.col,style:s.style};player.sparkle=5;save();toast('👟 穿上「'+s.n+'」！✨');shopEquipMenu(b,'shoe');}});});
     opts.push({label:'離開',cb(){ui=null;}});
     openMenu('👟 '+b.label+'：'+(player.gender==='m'?'男款':'女款')+' 10 種鞋（一雙'+fmt(PRICE)+'元）',opts);
   }
@@ -1199,7 +1199,7 @@ function clothMenu(b,page){
       if(!owned){ if(money<PRICE){dlg(b.label,['錢不夠！這套 '+fmt(PRICE)+' 元。']);return;}
         money-=PRICE;player.ownClothes.push(key);sfx('cash');}
       player.shirt=c.col;player.outfit=c.style;player.deco=c.deco||null;player.tie=c.tie||null;
-      save();toast('👗 換上「'+c.n+'」！');clothMenu(b,page);}};});
+      player.sparkle=5;save();toast('👗 換上「'+c.n+'」！✨');clothMenu(b,page);}};});
   opts.push(page===0?{label:'下一頁 ▶（11~20套）',cb(){clothMenu(b,1);}}:{label:'◀ 上一頁（1~10套）',cb(){clothMenu(b,0);}});
   opts.push({label:'離開',cb(){ui=null;}});
   openMenu('👗 '+b.label+'：'+(player.gender==='m'?'男裝':'女裝')+' 20套（'+(page+1)+'/2頁・一套'+fmt(800)+'元）',opts);
@@ -1941,6 +1941,7 @@ function update(dt){
         L.x+=(tp.x-L.x)*k; L.y+=(tp.y-L.y)*k; L.walk+=dt*9;
         L.face=Math.abs(tp.x-ox)>Math.abs(tp.y-L.y)?(tp.x<ox?1:2):(tp.y<L.y?3:0);} }}
   if(player.wedding){player.wedding.t-=dt;if(player.wedding.t<=0)player.wedding=null;}
+  if(player.sparkle>0)player.sparkle=Math.max(0,player.sparkle-dt);
   // NPC
   for(const n of NPCS){
     const fi=followers.indexOf(n.name);
@@ -2141,41 +2142,98 @@ function update(dt){
 }
 
 /* ================= 角色繪製（立體感） ================= */
+function drawSparkle(x,y,t){ // 換新裝：全身亮晶晶（t 為剩餘秒數，共5秒）
+  const a=Math.min(1,t/1); // 最後1秒淡出
+  ctx.save();
+  // 柔和金色光暈
+  const g=ctx.createRadialGradient(x,y-24,4,x,y-24,34);
+  g.addColorStop(0,`rgba(255,240,180,${0.28*a})`);g.addColorStop(1,'rgba(255,240,180,0)');
+  ctx.fillStyle=g;ctx.fillRect(x-40,y-64,80,80);
+  // 環繞閃爍的星星（四角星＋圓點）
+  for(let i=0;i<9;i++){
+    const ang=tGlobal*2.2+i*(6.283/9);
+    const rad=20+8*Math.sin(tGlobal*3+i*1.7);
+    const sx=x+Math.cos(ang)*rad, sy=y-26+Math.sin(ang)*rad*0.9;
+    const tw=Math.abs(Math.sin(tGlobal*5+i*2));
+    const sz=(1.6+2.4*tw)*a;
+    ctx.fillStyle=`rgba(255,255,${180+Math.floor(60*tw)},${(0.5+0.5*tw)*a})`;
+    // 四角星
+    ctx.beginPath();
+    ctx.moveTo(sx,sy-sz*2);ctx.lineTo(sx+sz*0.5,sy-sz*0.5);ctx.lineTo(sx+sz*2,sy);
+    ctx.lineTo(sx+sz*0.5,sy+sz*0.5);ctx.lineTo(sx,sy+sz*2);ctx.lineTo(sx-sz*0.5,sy+sz*0.5);
+    ctx.lineTo(sx-sz*2,sy);ctx.lineTo(sx-sz*0.5,sy-sz*0.5);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
+}
 function drawShoe(cx,ty,s){ // s={col,style}
-  const col=s.col||'#4a3428';
+  const col=s.col||'#4a3428', hi=tint(col,34), dk=tint(col,-30);
   ctx.fillStyle=col;
-  if(s.style==='boot'){rr(cx-3,ty-2,7,14,3);ctx.fill();}
-  else if(s.style==='heel'){rr(cx-3,ty,7,8,2);ctx.fill();
-    ctx.fillRect(cx+2,ty+8,2,5);ctx.fillStyle=col;ctx.fillRect(cx-3,ty+7,10,3);}
-  else if(s.style==='sandal'){ctx.fillRect(cx-3,ty+6,10,3);
-    ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-2,ty+6);ctx.lineTo(cx+2,ty+2);ctx.stroke();}
-  else if(s.style==='sneaker'){rr(cx-3,ty+2,10,8,3);ctx.fill();
-    ctx.fillStyle='#fff';ctx.fillRect(cx-3,ty+8,10,2);ctx.fillRect(cx,ty+3,2,4);}
-  else if(s.style==='dress'){rr(cx-3,ty+3,11,7,3);ctx.fill();
-    ctx.fillStyle=tint(col,30);ctx.fillRect(cx-2,ty+3,4,2);}
-  else {rr(cx-3,ty+3,9,7,3);ctx.fill();} // flat
+  if(s.style==='boot'){ // 靴子：筒身＋鞋底＋光澤
+    rr(cx-3,ty-3,7,15,3);ctx.fill();
+    ctx.fillStyle=hi;rr(cx-2,ty-2,2,12,1);ctx.fill(); // 高光帶
+    ctx.fillStyle=dk;rr(cx-4,ty+11,10,3,1.5);ctx.fill(); // 鞋底
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(cx-1,ty-1,1.4,4);}
+  else if(s.style==='heel'){ // 高跟鞋：鞋身＋細跟＋鞋底紅
+    ctx.fillStyle=col;rr(cx-3,ty,8,8,2);ctx.fill();
+    ctx.fillStyle=hi;ctx.beginPath();ctx.moveTo(cx-2,ty+1);ctx.lineTo(cx+4,ty+1);ctx.lineTo(cx+3,ty+4);ctx.closePath();ctx.fill();
+    ctx.fillStyle=dk;ctx.fillRect(cx+3,ty+8,2,6); // 跟
+    ctx.fillStyle='#c94f43';rr(cx-3,ty+7,10,2,1);ctx.fill();} // 紅底
+  else if(s.style==='sandal'){ // 涼鞋：鞋底＋交叉帶
+    ctx.fillStyle=tint(col,-10);rr(cx-3,ty+7,11,3,1.5);ctx.fill();
+    ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(cx-2,ty+7);ctx.lineTo(cx+3,ty+1);ctx.moveTo(cx+4,ty+7);ctx.lineTo(cx-1,ty+1);ctx.stroke();ctx.lineCap='butt';}
+  else if(s.style==='sneaker'){ // 運動鞋：鞋身＋白鞋底＋鞋帶
+    ctx.fillStyle=col;rr(cx-3,ty+2,11,8,3);ctx.fill();
+    ctx.fillStyle=hi;rr(cx-2,ty+3,9,2,1);ctx.fill();
+    ctx.fillStyle='#f5f5f5';rr(cx-4,ty+9,12,3,1.5);ctx.fill(); // 白鞋底
+    ctx.strokeStyle='#fff';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx-1,ty+4);ctx.lineTo(cx+3,ty+4);ctx.moveTo(cx-1,ty+6);ctx.lineTo(cx+3,ty+6);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx+5,ty+7,1.4,0,7);ctx.fill();} // 標誌
+  else if(s.style==='dress'){ // 皮鞋：亮面＋鞋底
+    ctx.fillStyle=col;rr(cx-3,ty+3,12,7,3);ctx.fill();
+    ctx.fillStyle=hi;ctx.beginPath();ctx.ellipse(cx+2,ty+5,5,2,0,0,7);ctx.fill(); // 亮面
+    ctx.fillStyle=dk;rr(cx-3,ty+9,12,2,1);ctx.fill();}
+  else { // 娃娃鞋/平底：圓頭＋小蝴蝶結
+    ctx.fillStyle=col;rr(cx-3,ty+3,10,7,4);ctx.fill();
+    ctx.fillStyle=hi;ctx.beginPath();ctx.ellipse(cx+1,ty+4.5,4,1.6,0,0,7);ctx.fill();
+    ctx.fillStyle=tint(col,-20);ctx.beginPath();ctx.arc(cx+1,ty+4,1.6,0,7);ctx.fill();}
 }
 function drawAcc(id,x,hy,y,bob,face){ const A=ACCESSORIES.find(a=>a.id===id); if(!A)return;
   const ex=face===1?-4:face===2?4:0;
   switch(id){
    case 'cap': ctx.fillStyle='#3f6fd6';ctx.beginPath();ctx.arc(x,hy-6,15,Math.PI,0);ctx.fill();
-     ctx.fillRect(x+ex,hy-7,17,4);break;
+     ctx.fillStyle='#356bd0';ctx.fillRect(x+ex,hy-7,17,4); // 帽簷
+     ctx.fillStyle='rgba(255,255,255,.28)';ctx.beginPath();ctx.arc(x-4,hy-9,9,Math.PI*1.1,Math.PI*1.55);ctx.fill(); // 高光
+     ctx.fillStyle='#e8ecf2';ctx.beginPath();ctx.arc(x,hy-16,1.8,0,7);ctx.fill();break; // 頂鈕
    case 'strawhat': ctx.fillStyle='#e0c070';ctx.beginPath();ctx.ellipse(x,hy-6,22,7,0,0,7);ctx.fill();
-     ctx.beginPath();ctx.arc(x,hy-9,11,Math.PI,0);ctx.fill();
+     ctx.fillStyle='#d4b25a';ctx.beginPath();ctx.ellipse(x,hy-5,22,4,0,0,Math.PI);ctx.fill(); // 帽緣陰影
+     ctx.fillStyle='#e6ca82';ctx.beginPath();ctx.arc(x,hy-9,11,Math.PI,0);ctx.fill();
+     ctx.strokeStyle='#c9a84a';ctx.lineWidth=0.8;for(let k=-2;k<=2;k++){ctx.beginPath();ctx.ellipse(x,hy-6,8+k*3,3+k,0,Math.PI,0);ctx.stroke();} // 編織紋
      ctx.fillStyle='#c94f43';ctx.fillRect(x-11,hy-9,22,3);break;
-   case 'tophat': ctx.fillStyle='#2a2a2a';ctx.fillRect(x-13,hy-8,26,4);ctx.fillRect(x-9,hy-24,18,17);
-     ctx.fillStyle='#c94f43';ctx.fillRect(x-9,hy-11,18,3);break;
+   case 'tophat': ctx.fillStyle='#2a2a2a';ctx.fillRect(x-13,hy-8,26,4);
+     const th=ctx.createLinearGradient(x-9,0,x+9,0);th.addColorStop(0,'#1a1a1a');th.addColorStop(.5,'#3a3a3a');th.addColorStop(1,'#1a1a1a');
+     ctx.fillStyle=th;ctx.fillRect(x-9,hy-24,18,17);
+     ctx.fillStyle='#c94f43';ctx.fillRect(x-9,hy-11,18,3);
+     ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(x-6,hy-23,2,15);break;
    case 'party': ctx.fillStyle='#f2c94c';ctx.beginPath();ctx.moveTo(x-9,hy-8);ctx.lineTo(x,hy-26);ctx.lineTo(x+9,hy-8);ctx.closePath();ctx.fill();
      ctx.fillStyle='#e2574c';ctx.beginPath();ctx.arc(x,hy-26,3,0,7);ctx.fill();break;
-   case 'crown': ctx.fillStyle='#f2c94c';ctx.beginPath();ctx.moveTo(x-12,hy-8);ctx.lineTo(x-12,hy-18);
+   case 'crown': { const cg=ctx.createLinearGradient(x,hy-20,x,hy-8);cg.addColorStop(0,'#ffe89a');cg.addColorStop(1,'#e0a824');
+     ctx.fillStyle=cg;ctx.beginPath();ctx.moveTo(x-12,hy-8);ctx.lineTo(x-12,hy-18);
      ctx.lineTo(x-6,hy-13);ctx.lineTo(x,hy-20);ctx.lineTo(x+6,hy-13);ctx.lineTo(x+12,hy-18);ctx.lineTo(x+12,hy-8);ctx.closePath();ctx.fill();
-     ctx.fillStyle='#e2574c';ctx.beginPath();ctx.arc(x,hy-13,2,0,7);ctx.fill();break;
+     ctx.fillStyle='#c98a1a';ctx.fillRect(x-12,hy-9,24,2); // 底環
+     const jw=['#e2574c','#3f8fd6','#3f8f5a'];[[-8,-13],[0,-15],[8,-13]].forEach((p,i)=>{ // 三顆寶石
+       ctx.fillStyle=jw[i];ctx.beginPath();ctx.arc(x+p[0],hy+p[1],1.8,0,7);ctx.fill();
+       ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.arc(x+p[0]-0.6,hy+p[1]-0.6,0.7,0,7);ctx.fill();});
+     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x-2,hy-19,0.9,0,7);ctx.fill();break; }
    case 'glasses': ctx.strokeStyle='#2a2a2a';ctx.lineWidth=1.8;
      ctx.strokeRect(x-11+ex,hy-1,8,7);ctx.strokeRect(x+3+ex,hy-1,8,7);
      ctx.beginPath();ctx.moveTo(x-3+ex,hy+2);ctx.lineTo(x+3+ex,hy+2);ctx.stroke();break;
    case 'sunglasses': ctx.fillStyle='#1a1a1a';
      rr(x-11+ex,hy-1,8,7,2);ctx.fill();rr(x+3+ex,hy-1,8,7,2);ctx.fill();
-     ctx.fillRect(x-3+ex,hy,6,2);break;
+     ctx.fillRect(x-3+ex,hy,6,2);
+     ctx.fillStyle='rgba(150,200,255,.6)';ctx.beginPath(); // 鏡面反光
+     ctx.moveTo(x-10+ex,hy);ctx.lineTo(x-6+ex,hy);ctx.lineTo(x-9+ex,hy+4);ctx.closePath();
+     ctx.moveTo(x+4+ex,hy);ctx.lineTo(x+8+ex,hy);ctx.lineTo(x+5+ex,hy+4);ctx.closePath();ctx.fill();break;
    case 'flower': ctx.fillStyle='#f27ba0';for(let i=0;i<5;i++){const a=i/5*6.28;
      ctx.beginPath();ctx.arc(x+13+Math.cos(a)*3,hy-11+Math.sin(a)*3,2.4,0,7);ctx.fill();}
      ctx.fillStyle='#f2c94c';ctx.beginPath();ctx.arc(x+13,hy-11,1.8,0,7);ctx.fill();break;
@@ -2194,9 +2252,14 @@ function drawAcc(id,x,hy,y,bob,face){ const A=ACCESSORIES.find(a=>a.id===id); if
      ctx.beginPath();ctx.arc(x,hy-4,15,Math.PI*1.15,Math.PI*1.85);ctx.stroke();
      ctx.fillStyle='#e2574c';ctx.fillRect(x-17,hy-5,5,8);ctx.fillRect(x+12,hy-5,5,8);break;
    // 身上飾品
-   case 'necklace': ctx.strokeStyle='#f2c94c';ctx.lineWidth=2;
-     ctx.beginPath();ctx.arc(x,y-24+bob,7,0.2,Math.PI-0.2);ctx.stroke();
-     ctx.fillStyle='#7ec8e8';ctx.beginPath();ctx.arc(x,y-18+bob,2.5,0,7);ctx.fill();break;
+   case 'necklace': ctx.strokeStyle='#e0b840';ctx.lineWidth=1.5;
+     ctx.beginPath();ctx.arc(x,y-24+bob,8,0.2,Math.PI-0.2);ctx.stroke();
+     ctx.fillStyle='#f2c94c';for(let k=-2;k<=2;k++){const ang=Math.PI/2+k*0.42; // 金珠鍊
+       ctx.beginPath();ctx.arc(x+Math.cos(ang)*8,y-24+bob+Math.sin(ang)*8,1.3,0,7);ctx.fill();}
+     const gm=ctx.createRadialGradient(x-1,y-19+bob,0.5,x,y-18+bob,3.2); // 墜飾寶石
+     gm.addColorStop(0,'#bfeaff');gm.addColorStop(1,'#3f9fd6');
+     ctx.fillStyle=gm;ctx.beginPath();ctx.arc(x,y-18+bob,3,0,7);ctx.fill();
+     ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.arc(x-1,y-19+bob,0.9,0,7);ctx.fill();break;
    case 'scarf': ctx.fillStyle='#c94f43';ctx.fillRect(x-12,y-22+bob,24,5);
      ctx.fillRect(x+4,y-22+bob,5,12);break;
    case 'bowtie': ctx.fillStyle='#c94f43';ctx.beginPath();
@@ -2204,11 +2267,21 @@ function drawAcc(id,x,hy,y,bob,face){ const A=ACCESSORIES.find(a=>a.id===id); if
      ctx.moveTo(x,y-22+bob);ctx.lineTo(x+6,y-25+bob);ctx.lineTo(x+6,y-19+bob);ctx.closePath();ctx.fill();break;
    case 'backpack': ctx.fillStyle='#3f8f5a';rr(x-14,y-24+bob,6,16,3);ctx.fill();
      ctx.strokeStyle='#2a6a3a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-9,y-22+bob);ctx.lineTo(x-4,y-20+bob);ctx.stroke();break;
-   case 'cape': ctx.fillStyle='#8a2f4a';ctx.beginPath();
+   case 'cape': { const cp=ctx.createLinearGradient(x-16,0,x+16,0);
+     cp.addColorStop(0,'#6a2038');cp.addColorStop(.5,'#a03a58');cp.addColorStop(1,'#6a2038');
+     ctx.fillStyle=cp;ctx.beginPath();
      ctx.moveTo(x-13,y-25+bob);ctx.lineTo(x+13,y-25+bob);ctx.lineTo(x+16,y-4+bob);
-     ctx.lineTo(x-16,y-4+bob);ctx.closePath();ctx.fill();break;
-   case 'wings': ctx.fillStyle='rgba(180,220,255,.75)';
-     ctx.beginPath();ctx.ellipse(x-15,y-16+bob,7,12,0.5,0,7);ctx.ellipse(x+15,y-16+bob,7,12,-0.5,0,7);ctx.fill();break;
+     ctx.lineTo(x-16,y-4+bob);ctx.closePath();ctx.fill();
+     ctx.strokeStyle='rgba(0,0,0,.18)';ctx.lineWidth=1; // 摺皺
+     for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(x+k*8,y-24+bob);ctx.lineTo(x+k*10,y-4+bob);ctx.stroke();}
+     ctx.fillStyle='#e0c060';ctx.fillRect(x-13,y-26+bob,26,2);break; } // 金領邊
+   case 'wings': for(const side of [-1,1]){
+     const wg=ctx.createLinearGradient(x+side*10,y-26+bob,x+side*20,y-6+bob);
+     wg.addColorStop(0,'rgba(255,255,255,.9)');wg.addColorStop(1,'rgba(150,200,255,.55)');
+     ctx.fillStyle=wg;ctx.beginPath();ctx.ellipse(x+side*15,y-16+bob,7,12,side*0.5,0,7);ctx.fill();
+     ctx.strokeStyle='rgba(120,170,220,.7)';ctx.lineWidth=1; // 羽紋
+     for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(x+side*12,y-22+bob+k*6);
+       ctx.lineTo(x+side*20,y-18+bob+k*6);ctx.stroke();}}break;
    case 'medal': ctx.strokeStyle='#c94f43';ctx.lineWidth=2;
      ctx.beginPath();ctx.moveTo(x-4,y-25+bob);ctx.lineTo(x,y-18+bob);ctx.moveTo(x+4,y-25+bob);ctx.lineTo(x,y-18+bob);ctx.stroke();
      ctx.fillStyle='#f2c94c';ctx.beginPath();ctx.arc(x,y-15+bob,4,0,7);ctx.fill();break;
@@ -2257,6 +2330,11 @@ function drawActor(x,y,face,walk,o){
     if(o.outfit==='tee'){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=2;
       ctx.beginPath();ctx.moveTo(x-11,y-10+bob);ctx.lineTo(x+11,y-10+bob);ctx.stroke();}
   }
+  // 衣料光澤（軀幹左上柔和高光，提升細膩度）
+  if(sp==='human'){ ctx.save();
+    ctx.fillStyle='rgba(255,255,255,.14)';
+    ctx.beginPath();ctx.ellipse(x-6,y-22+bob,4,7,-0.3,0,7);ctx.fill();
+    ctx.restore();}
   // 服裝花紋／配件（deco）
   if(sp==='human'&&o.deco){ const d=o.deco, top=y-27+bob;
     ctx.save();
@@ -2929,6 +3007,7 @@ function draw(){
       const w=ctx.measureText(s.text).width;
       ctx.fillStyle='rgba(255,251,233,.95)';rr(player.x-w/2-10,player.y-66,w+20,24,10);ctx.fill();
       ctx.fillStyle='#5b4023';ctx.fillText(s.text,player.x,player.y-49);ctx.textAlign='left';}
+    if(player.sparkle>0)drawSparkle(player.x,player.y,player.sparkle);
   }});
   for(const b of bugs)if(inView(b.x,b.y))list.push({y:b.y+(b.spec.fly?60:0),f:()=>{
     const fy=b.spec.fly?Math.sin(b.ph)*6-14:0;
