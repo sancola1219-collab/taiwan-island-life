@@ -745,6 +745,13 @@ const BUILDINGS=[];
 function addBuild(t,tx,ty,tw,th,label,extra){
   const b={t,tx,ty,tw,th,label,x:tx*TILE,y:ty*TILE,w:tw*TILE,h:th*TILE,...extra};
   BUILDINGS.push(b);return b;}
+// 建築整體縮放（維持美術比例；只縮小非豁免類型）；以底部中心為錨點
+const BSCALE=0.62, SCALE_EXEMPT=new Set(['ferris','t101','cablecar','house','myhome']);
+function drawBuild(b){ const d=BUILDING_DRAWS[b.t]; if(!d)return;
+  const s=b.scale||1;
+  if(s===1){ d(b); return; }
+  const cx=b.x+b.w/2, by=b.y+b.h;
+  ctx.save(); ctx.translate(cx,by); ctx.scale(s,s); ctx.translate(-cx,-by); d(b); ctx.restore(); }
 const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],lantern:[3,2],
   hotspring:[4,3],gate:[4,2],opera:[6,3],windmill:[2,2],buddha:[3,3],temple:[6,4],fort:[5,4],
   redtower:[4,3],pagodas:[6,3],tower85:[3,3],gianttree:[3,3],peak:[2,2],lighthouse:[2,2],
@@ -797,6 +804,8 @@ CABLECARS.forEach(c=>{
           {wall:WALLS[Math.floor(rand()*WALLS.length)],roof:ROOFS[Math.floor(rand()*ROOFS.length)]});
         placed++;}
     }}}
+// 除了摩天輪/台北101/貓纜(與民宅/自宅)外，所有設施建設整體縮小
+for(const b of BUILDINGS)if(!SCALE_EXEMPT.has(b.t))b.scale=BSCALE;
 
 /* ================= 世界物件 ================= */
 const trees=[],rocks=[],weeds=[],flowers=[],drops=[],bugs=[],digs=[],teaBushes=[],cacti=[],strawberries=[],lamps=[],lanterns=[];
@@ -1041,8 +1050,10 @@ function genNpcs(){ NPCS=NPC_DEFS.map(d=>{ const p=findWalkSafe(d.tx,d.ty);
 function solidAt(px,py){
   const t=T(Math.floor(px/TILE),Math.floor(py/TILE));
   if(!WALKABLE[t])return true;
-  for(const b of BUILDINGS)
-    if(px>b.x-4&&px<b.x+b.w+4&&py>b.y-4&&py<b.y+b.h)return true;
+  for(const b of BUILDINGS){ const s=b.scale||1;
+    if(s===1){ if(px>b.x-4&&px<b.x+b.w+4&&py>b.y-4&&py<b.y+b.h)return true; }
+    else{ const cx=b.x+b.w/2, by=b.y+b.h, hw=b.w*s/2, hh=b.h*s;
+      if(px>cx-hw-4&&px<cx+hw+4&&py>by-hh-4&&py<by)return true; } }
   return false;
 }
 function hitObstacle(px,py){
@@ -3048,7 +3059,7 @@ function draw(){
   for(const sb of strawberries)if(inView(sb.x,sb.y))list.push({y:sb.y+5,f:()=>drawStrawberry(sb)});
   for(const l of lamps)if(inView(l.x,l.y))list.push({y:l.y,f:()=>drawLamp(l)});
   for(const b of BUILDINGS){const bx=b.x+b.w/2,by=b.y+b.h;
-    if(inView(bx,by,400))list.push({y:by,f:()=>BUILDING_DRAWS[b.t](b)});}
+    if(inView(bx,by,400))list.push({y:by,f:()=>drawBuild(b)});}
   for(const n of NPCS)if(inView(n.x,n.y)){
     if(boarding()&&followers.includes(n.name))continue; // 同乘時隱藏夥伴（避免在地上飛）
     list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});}
