@@ -883,6 +883,7 @@ const spawn=findWalkSafe(294,70); // 台北車站前
 const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   buffSpd:0,buffLuck:0,swing:0,show:null,fishing:null,name:'小島民',shirt:'#e74c3c',
   boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false,love:null,wedding:null,
+  crimes:0,notoriousUntil:0,patrolT:0,
   gender:'m',hairStyle:0,hair:'#4a2f1d',headAcc:null,bodyAcc:null,shoes:null,
   ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0};
 // ---- 服裝（男女各20套；col=主色, style=版型, deco=花紋/配件, tie=領帶色）----
@@ -1518,6 +1519,12 @@ function attackPerson(c){
     else drops.push({x:c.x+(Math.random()*20-10),y:c.y+8,item:ATTACK_LOOT[Math.floor(Math.random()*ATTACK_LOOT.length)]});
     toast('💥 攻擊了'+(c.name||'路人')+'！他嚇得掉了東西…但生氣地掏出手機報警！');
   }
+  // 累計傷人次數；超過10次列為通緝犯，連續2天不定時派警車
+  player.crimes=(player.crimes||0)+1;
+  if(player.crimes>10&&player.notoriousUntil<gameDay+2){
+    player.notoriousUntil=gameDay+2; player.patrolT=20+Math.random()*40;
+    toast('🚨🚨 你已傷害路人超過10次，被列為【通緝犯】！未來2天警方將不定時派車追捕！');
+  }
   if(!player.wanted)startWanted(c.x,c.y);
   else{player.wanted.phase='grace';player.wanted.t=Math.min(player.wanted.t,4);}
 }
@@ -2074,6 +2081,18 @@ function update(dt){
         if(d<64){arrest();} }
       if(wt.t<=0){ if(hidden||d>340){player.wanted=null;toast('🏃 甩掉警察了！以後別亂來囉～');}
         else arrest(); } }
+  }
+  // 通緝犯：2天內不定時自動派警車追捕（即使沒再犯案）
+  if(player.notoriousUntil>gameDay&&!player.jailed&&started){
+    player.patrolT-=dt;
+    if(player.patrolT<=0&&!player.wanted&&!player.sailing&&!player.riding&&!player.balloonRide&&ui!=='home'){
+      player.patrolT=45+Math.random()*75; // 下一次巡邏間隔
+      startWanted(player.x,player.y);
+      toast('🚨 通緝犯！警方巡邏發現你的行蹤——快逃！');
+    }
+  } else if(player.notoriousUntil&&player.notoriousUntil<=gameDay){
+    player.notoriousUntil=0; player.crimes=0; // 刑期結束、洗白
+    toast('✅ 通緝時效已過，你不再是通緝犯了（傷人紀錄歸零）。');
   }
   // 街頭偶發事件（吵架/野狗/失火）
   eventT-=dt;
@@ -3163,7 +3182,12 @@ function drawUI(){
   if(player.buffSpd>0){panel(VW-158,by,144,30,.85);ctx.fillStyle='#3f7fd6';
     ctx.fillText('🧋 加速 '+Math.ceil(player.buffSpd)+'s',VW-146,by+21);by+=36;}
   if(player.buffLuck>0){panel(VW-158,by,144,30,.85);ctx.fillStyle='#c9803a';
-    ctx.fillText('🍗 幸運 '+Math.ceil(player.buffLuck)+'s',VW-146,by+21);}
+    ctx.fillText('🍗 幸運 '+Math.ceil(player.buffLuck)+'s',VW-146,by+21);by+=36;}
+  if(player.notoriousUntil>gameDay){ // 通緝犯狀態（閃爍紅底）
+    const bl=0.6+0.4*Math.sin(tGlobal*4);
+    ctx.fillStyle=`rgba(226,69,60,${bl})`;rr(VW-158,by,144,30,8);ctx.fill();
+    ctx.strokeStyle='#a02a24';ctx.lineWidth=2;rr(VW-158,by,144,30,8);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.fillText('🚨 通緝犯 剩'+Math.max(0,Math.ceil(player.notoriousUntil-gameDay-gameMin/1440))+'天',VW-148,by+21);}
   ctx.restore();
   // 工具列（底部中央錨點縮放，第7格＝裝備的玩具）
   ctx.save();ctx.translate(VW/2*(1-uS),VH*(1-uS));ctx.scale(uS,uS);
@@ -3455,6 +3479,7 @@ function drawUI(){
       '⚠️ 持鏟子/斧頭/木矛/彈弓時按互動鍵＝攻擊人（空手才是對話）！',
       '　 打人會掉錢可撿，但對方會報警！躲遠或躲進自己家裡，',
       '　 否則警車追到會把你關進桃園監獄（服刑或繳保釋金才能出來）。',
+      '🚨 傷害路人超過10次會被列為【通緝犯】，連續2天警方不定時派車追捕！',
       '',
       'B背包 M地圖 P圖鑑 J任務 C製作 N音樂 (H 或 Esc 關閉)'];
     panel(x,y,w,lines.length*27+46);
@@ -3473,6 +3498,7 @@ function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   outfit:player.outfit,deco:player.deco,tie:player.tie,ownClothes:player.ownClothes,money,inv,dex,boat:player.boat,
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
+  crimes:player.crimes,notoriousUntil:player.notoriousUntil,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   if(!s)return false;
@@ -3487,6 +3513,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   partnerState=s.partners||{};followers=s.followers||[];
   gameDay=s.gameDay||1;gameMin=s.gameMin??8*60;player.tired=s.tired||0;player.jailed=!!s.jailed;
   eateryDone=s.eateryDone||{};player.toy=s.toy||null;player.love=s.love||null;
+  player.crimes=s.crimes||0;player.notoriousUntil=s.notoriousUntil||0;player.patrolT=20;
   myHomes=s.myHomes||(s.myHome?[{tx:s.myHome.tx,ty:s.myHome.ty,type:'cabin'}]:[]);
   for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0];
     addBuild('myhome',mh.tx,mh.ty,ht.tw,ht.th,(s.name||'小島民')+'的'+ht.n,{htype:ht.id});}
