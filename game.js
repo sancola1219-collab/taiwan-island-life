@@ -875,6 +875,7 @@ const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   gender:'m',hairStyle:0,hair:'#4a2f1d',headAcc:null,bodyAcc:null,shoes:null,
   ownAcc:[],ownShoes:[]};
 const HAIR_COLORS=['#2a2018','#4a2f1d','#6a4a2a','#8a5a3a','#a06a2a','#c98a4a','#d8b06a','#7a3a2a','#3a3a44','#b03a5a'];
+const HAIR_COLOR_NAMES=['黑色','深棕','棕色','淺棕','栗子棕','亞麻棕','金色','紅棕','藍黑','玫瑰紅'];
 // ---- 飾品（20種；slot: head 戴頭上 / body 戴身上）----
 const ACCESSORIES=[
  {id:'cap',n:'棒球帽',e:'🧢',slot:'head',price:400},
@@ -1283,9 +1284,9 @@ function buildAct(b){
          opts.push({label:'回上頁',cb(){buildAct(b);}});
          openMenu('選一個髮型（200元）',opts);}},
        {label:'🎨 換髮色（10色）',cb(){
-         const opts=HAIR_COLORS.map((c,i)=>({label:(c===player.hair?'✓ ':'')+'髮色 '+(i+1),cb(){
+         const opts=HAIR_COLORS.map((c,i)=>({label:(c===player.hair?'✓ ':'')+(HAIR_COLOR_NAMES[i]||('髮色'+(i+1))),cb(){
            if(money<200){dlg(b.label,['染髮 200 元喔！']);return;}
-           money-=200;player.hair=c;sfx('chime');save();toast('🎨 換了新髮色！');salonReopen(b);}}));
+           money-=200;player.hair=c;sfx('chime');save();toast('🎨 換上「'+(HAIR_COLOR_NAMES[i]||'新')+'」髮色！');salonReopen(b);}}));
          opts.push({label:'回上頁',cb(){buildAct(b);}});
          openMenu('選一個髮色（200元）',opts);}},
        {label:'離開',cb(){ui=null;}}]);},
