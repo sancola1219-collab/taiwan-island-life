@@ -3616,18 +3616,21 @@ function drawUI(){
       ctx.fillText('背包空空的…去釣魚、抓蟲、搖樹吧！',x+34,y+88);}
   }
   if(ui==='map'){
-    const mh=Math.min(VH-150,620), mw3=mh*(MW/MH), x=VW/2-mw3/2, y=60;
-    panel(x-20,y-20,mw3+40,mh+70);
+    // 縮小地圖：整塊(地圖＋下方按鈕)置中於工具列上方，X 一定點得到
+    let mh=Math.min(VH-200,480); let mw3=mh*(MW/MH);
+    if(mw3>VW-110){mw3=VW-110;mh=mw3*(MH/MW);}
+    const x=VW/2-mw3/2, y=Math.max(40,(VH-86-(mh+50))/2+8);
+    panel(x-18,y-16,mw3+36,mh+58);
     ctx.drawImage(mini,x,y,mw3,mh);
     ctx.strokeStyle='#c9a06a';ctx.lineWidth=3;ctx.strokeRect(x,y,mw3,mh);
-    ctx.font='bold 16px '+F;ctx.fillStyle='#5b4023';
+    ctx.font='bold 14px '+F;ctx.fillStyle='#5b4023';
     ctx.fillText('🗺️ 地區 '+Object.keys(townsV).length+'/'+TOWNS.length+
-      '　📍 印章 '+Object.keys(stamps).length+'/'+STAMP_TOTAL,x,y+mh+34);
-    ctx.fillStyle='#f0913a';rr(x+mw3-174,y+mh+10,174,34,10);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='bold 15px '+F;
-    ctx.fillText('🖼️ 縣市導覽圖',x+mw3-160,y+mh+33);
-    uiHits.push({x:x+mw3-174,y:y+mh+10,w:174,h:34,cb(){ui=null;openRefView();}});
-    drawClose(x+mw3+8,y-8);
+      '　📍 印章 '+Object.keys(stamps).length+'/'+STAMP_TOTAL,x,y+mh+28);
+    ctx.fillStyle='#f0913a';rr(x+mw3-150,y+mh+8,150,30,9);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 14px '+F;
+    ctx.fillText('🖼️ 縣市導覽圖',x+mw3-138,y+mh+29);
+    uiHits.push({x:x+mw3-150,y:y+mh+8,w:150,h:30,cb(){ui=null;openRefView();}});
+    drawClose(Math.min(x+mw3+6,VW-24),Math.max(24,y-4));
     const MKS=[['台北',202,44],['桃園',178,70],['新竹',163,98],['台中',158,174],['彰化',150,200],
       ['嘉義',156,258],['台南',159,328],['高雄',171,360],['墾丁',210,458],['宜蘭',242,74],
       ['花蓮',257,171],['台東',245,282],['日月潭',186,220],['玉山',206,262],['阿里山',184,260],
