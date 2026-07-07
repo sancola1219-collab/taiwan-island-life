@@ -1729,11 +1729,13 @@ function interact(){
   const p=frontPoint(44);
   if(!player.sailing){
     if(isWeapon()){ // 持武器/道具時：對任何人（NPC／路人／店老闆）都是攻擊，不對話
-      let best=null,bd=56;
-      const scan=arr=>{for(const c of arr){const d=Math.min(dist(c.x,c.y,p.x,p.y),dist(c.x,c.y,player.x,player.y));
+      const gun=(player.tool===6&&isGun(player.toy)); // 槍：射程更遠、只對路人
+      let best=null,bd=gun?190:56;
+      const scan=arr=>{for(const c of arr){if(c.dead)continue;const d=Math.min(dist(c.x,c.y,p.x,p.y),dist(c.x,c.y,player.x,player.y));
         if(d<bd){bd=d;best=c;}}};
-      scan(citizens); scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);
+      scan(citizens); if(!gun){scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);}
       if(best){attackPerson(best);return;}
+      if(gun){ player.swing=0.28; sfx('swing'); toast('🔫 砰！附近沒有路人可射擊——再靠近城鎮一點吧。'); return; }
     }
     // 男女朋友/配偶：只有「面向對方」才互動（TA 常跟在身後，避免背對時誤觸、蓋掉點任務）
     if(player.love&&dist(player.love.x,player.love.y,p.x,p.y)<58){loveInteract();return;}
@@ -1776,7 +1778,8 @@ function interact(){
         puffs.push({x:a.x,y:a.y-14,t:0.5});
         animals.splice(i,1);sfx('thud');toast('捕到了'+a.spec.n+'！掉出了生肉 🥩');return;}}
     return;}
-  if(player.tool===6){ // 玩具槽：按互動鍵遊玩
+  if(player.tool===6){ // 玩具槽：按互動鍵遊玩（槍已在上面 isWeapon 分支處理）
+    if(isGun(player.toy)){toast('🔫 面對路人、靠近一點再按開火！');return;}
     if(player.toy&&inv[player.toy])playToy(player.toy);
     else toast('打開背包🎒點一個玩具裝備到這格！（先按 C 到玩具工坊製作）');
     return;}
@@ -3574,34 +3577,35 @@ function drawUI(){
     }
   }
   if(ui==='bag'){
-    const w=Math.min(720,VW-60),x=VW/2-w/2,y=70,h=VH-200;
+    const w=Math.min(720,VW-40),x=VW/2-w/2,y=48,h=VH-144; // 佔滿高度、底部留給工具列
     panel(x,y,w,h);
-    ctx.fillStyle='#5b4023';ctx.font='bold 24px '+F;ctx.fillText('🎒 背包',x+28,y+42);
-    ctx.font='15px '+F;ctx.fillStyle='#9a805c';
-    ctx.fillText('點擊食物🍗可食用　到雜貨店可賣出',x+140,y+42);
-    drawClose(x+w-24,y+26);
+    ctx.fillStyle='#5b4023';ctx.font='bold 22px '+F;ctx.fillText('🎒 背包',x+22,y+34);
+    ctx.font='12px '+F;ctx.fillStyle='#9a805c';
+    ctx.fillText('點食物🍗可吃·點玩具/槍可裝備·雜貨店可賣',x+108,y+34);
+    drawClose(x+w-24,y+22);
     const names=Object.keys(inv);
     let total=0; names.forEach(n=>total+=(ITEMS[n]?ITEMS[n].p:0)*inv[n]);
-    ctx.font='bold 17px '+F;ctx.fillStyle='#3f8f5a';
-    ctx.fillText('總價值：'+fmt(total)+' 元',x+w-200,y+42);
-    const cols=Math.floor((w-40)/104);
-    const rows=Math.max(1,Math.floor((h-54)/104));
+    ctx.font='bold 14px '+F;ctx.fillStyle='#3f8f5a';ctx.textAlign='right';
+    ctx.fillText('總價值 '+fmt(total)+' 元',x+w-46,y+34);ctx.textAlign='left';
+    const cell=VH<430?52:VH<560?68:86, pitch=cell+10, ic=cell/94; // 依螢幕高度縮放格子
+    const cols=Math.max(1,Math.floor((w-40)/pitch));
+    const rows=Math.max(1,Math.floor((h-54)/pitch));
     const hidden=names.length-cols*rows;
-    if(hidden>0){ctx.font='13px '+F;ctx.fillStyle='#9a805c';
-      ctx.fillText('…還有 '+hidden+' 種物品未顯示',x+24,y+h-14);}
     names.slice(0,cols*rows).forEach((n,i)=>{
-      const gx=x+24+(i%cols)*104, gy=y+64+Math.floor(i/cols)*104;
-      ctx.fillStyle=ITEMS[n].hu?'#e8f5d6':'#fff3d6';rr(gx,gy,94,94,12);ctx.fill();
-      ctx.font='30px serif';ctx.textAlign='center';ctx.fillText(ITEMS[n].e,gx+47,gy+40);
-      ctx.font='bold 13px '+F;ctx.fillStyle='#5b4023';ctx.fillText(n,gx+47,gy+62);
-      ctx.font='12px '+F;ctx.fillStyle='#9a805c';
-      ctx.fillText('×'+inv[n]+'　'+(ITEMS[n].hu?'🍗+'+ITEMS[n].hu:ITEMS[n].p+'元'),gx+47,gy+80);ctx.textAlign='left';
-      uiHits.push({x:gx,y:gy,w:94,h:94,cb:((nm)=>()=>{
+      const gx=x+20+(i%cols)*pitch, gy=y+48+Math.floor(i/cols)*pitch, cx=gx+cell/2;
+      ctx.fillStyle=ITEMS[n].hu?'#e8f5d6':'#fff3d6';rr(gx,gy,cell,cell,10);ctx.fill();
+      ctx.font=Math.round(28*ic)+'px serif';ctx.textAlign='center';ctx.fillText(ITEMS[n].e,cx,gy+cell*0.40);
+      ctx.font='bold '+Math.max(10,Math.round(13*ic))+'px '+F;ctx.fillStyle='#5b4023';ctx.fillText(n,cx,gy+cell*0.66);
+      ctx.font=Math.max(9,Math.round(12*ic))+'px '+F;ctx.fillStyle='#9a805c';
+      ctx.fillText('×'+inv[n]+(ITEMS[n].hu?' 🍗'+ITEMS[n].hu:' '+ITEMS[n].p+'元'),cx,gy+cell*0.86);ctx.textAlign='left';
+      uiHits.push({x:gx,y:gy,w:cell,h:cell,cb:((nm)=>()=>{
         if(ITEMS[nm].toy){player.toy=nm;player.tool=6;ui=null;sfx('blip');save();
           toast(ITEMS[nm].e+' 裝備了'+nm+'！按互動鍵（或Ⓐ）就能玩');}
         else eatFood(nm);})(n)});});
-    if(!names.length){ctx.font='17px '+F;ctx.fillStyle='#9a805c';
-      ctx.fillText('背包空空的…去釣魚、抓蟲、搖樹吧！',x+34,y+100);}
+    if(hidden>0){ctx.font='12px '+F;ctx.fillStyle='#9a805c';ctx.textAlign='center';
+      ctx.fillText('…還有 '+hidden+' 種未顯示（賣掉或吃掉一些就會出現）',x+w/2,y+h-8);ctx.textAlign='left';}
+    if(!names.length){ctx.font='16px '+F;ctx.fillStyle='#9a805c';
+      ctx.fillText('背包空空的…去釣魚、抓蟲、搖樹吧！',x+34,y+88);}
   }
   if(ui==='map'){
     const mh=Math.min(VH-150,620), mw3=mh*(MW/MH), x=VW/2-mw3/2, y=60;
