@@ -931,8 +931,39 @@ const CLOTHES_F=[
  {n:'紫衣仙子',col:'#8a5ab0',style:'robe',deco:'shawl'},{n:'墨衣刀姬',col:'#2a2a34',style:'robe',deco:'wuxia'},
  {n:'青衣劍女',col:'#2f8a7a',style:'robe',deco:'wuxia'},
 ];
-const HAIR_COLORS=['#2a2018','#4a2f1d','#6a4a2a','#8a5a3a','#a06a2a','#c98a4a','#d8b06a','#7a3a2a','#3a3a44','#b03a5a'];
-const HAIR_COLOR_NAMES=['黑色','深棕','棕色','淺棕','栗子棕','亞麻棕','金色','紅棕','藍黑','玫瑰紅'];
+const HAIR_COLORS=['#3a2a1e','#5a3a22','#7a4a28','#8a5a34','#a86e34','#c99150','#d8b46e','#6a3a2a','#2f2f38','#a83a56','#4a3560','#caa24a'];
+const HAIR_COLOR_NAMES=['深棕黑','深棕','棕色','淺棕','栗子棕','亞麻棕','金色','紅棕','藍黑','玫瑰紅','紫羅蘭','金棕'];
+// 產生一位路人（男短髮／女長髮、隨機服裝髮型髮色）
+function makeCitizen(x,y){
+  const gender=Math.random()<0.5?'m':'f';
+  let outfit;
+  if(gender==='f')outfit=['tee','shirt','dress','dress','office','skirt'][Math.floor(Math.random()*6)];
+  else outfit=['tee','shirt','suit','office','jeans','tee'][Math.floor(Math.random()*6)];
+  if(outfit==='skirt')outfit='dress';
+  let shirt,pants=null,tie=null;
+  if(outfit==='suit'){shirt=['#3a4458','#4a3a58','#2f3f4f','#3a2f2a'][Math.floor(Math.random()*4)];
+    pants='#2f3a48';tie=['#c94f43','#3f6fd6','#c9a03a','#3f8f5a'][Math.floor(Math.random()*4)];}
+  else if(outfit==='office'){shirt=['#e8ecf2','#dce8f0','#f0e8dc','#f5e0e8'][Math.floor(Math.random()*4)];
+    tie=['#c94f43','#3f8f5a','#5a4a8a','#c98a3a'][Math.floor(Math.random()*4)];}
+  else if(outfit==='dress')shirt=['#f27ba0','#c77dff','#f2c94c','#7ec8e8','#e2574c','#8fd48f','#ff9e50','#f5b8d0'][Math.floor(Math.random()*8)];
+  else{shirt=['#3f7fd6','#2ea36b','#f2b21c','#9b59b6','#f27ba0','#e74c3c','#5a8a9a','#e8ecf2','#f0913a','#3fb0a0'][Math.floor(Math.random()*10)];
+    if(outfit==='jeans')pants='#3f5f8a';}
+  const pname=(gender==='m'?NAME_M:NAME_F)[Math.floor(Math.random()*(gender==='m'?NAME_M:NAME_F).length)];
+  return {x,y,hx:x,hy:y,homeR:6*TILE,vx:0,vy:0,ai:0,walk:0,face:0,talk:0,chatCd:0,buddy:null,line:'',
+    shirt,outfit,pants,tie,pname,gender,
+    hairStyle:Math.floor(Math.random()*10),hair:HAIR_COLORS[Math.floor(Math.random()*HAIR_COLORS.length)],
+    race:Math.random()<0.18?Math.floor(Math.random()*RACES.length):null};
+}
+// 路人聊天泡泡
+function drawChatBubble(x,y,line){
+  const t=line||'…'; ctx.font='11px "Microsoft JhengHei",sans-serif';
+  const w=ctx.measureText(t).width+14, h=20, bx=x-w/2, by=y-66;
+  ctx.fillStyle='rgba(255,255,255,.95)';ctx.strokeStyle='#c9a86a';ctx.lineWidth=2;
+  rr(bx,by,w,h,8);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x-4,by+h-1);ctx.lineTo(x+4,by+h-1);ctx.lineTo(x,by+h+6);ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,.95)';ctx.fill();
+  ctx.fillStyle='#5b4023';ctx.textAlign='center';ctx.fillText(t,x,by+14);ctx.textAlign='left';
+}
 // ---- 飾品（20種；slot: head 戴頭上 / body 戴身上）----
 const ACCESSORIES=[
  {id:'cap',n:'棒球帽',e:'🧢',slot:'head',price:400},
@@ -1358,7 +1389,7 @@ function buildAct(b){
            money-=200;player.hairStyle=i;sfx('chime');save();toast('💇 換上「'+nm+'」！');salonReopen(b);}}));
          opts.push({label:'回上頁',cb(){buildAct(b);}});
          openMenu('選一個髮型（200元）',opts);}},
-       {label:'🎨 換髮色（10色）',cb(){
+       {label:'🎨 換髮色（'+HAIR_COLORS.length+'色）',cb(){
          const opts=HAIR_COLORS.map((c,i)=>({label:(c===player.hair?'✓ ':'')+(HAIR_COLOR_NAMES[i]||('髮色'+(i+1))),cb(){
            if(money<200){dlg(b.label,['染髮 200 元喔！']);return;}
            money-=200;player.hair=c;sfx('chime');save();toast('🎨 換上「'+(HAIR_COLOR_NAMES[i]||'新')+'」髮色！');salonReopen(b);}}));
@@ -2039,41 +2070,43 @@ function update(dt){
       if(a.vx||a.vy){if(moveActor(a,a.vx,a.vy,a.spec.spd*0.5,dt))a.walk+=dt*6;else{a.vx=0;a.vy=0;}}}}
   // 市鎮民眾
   citizenT-=dt;
-  if(citizenT<=0){citizenT=2;
+  if(citizenT<=0){citizenT=1.2;
     for(let i=citizens.length-1;i>=0;i--)if(dist(citizens[i].x,citizens[i].y,player.x,player.y)>1500)citizens.splice(i,1);
     const ntC=nearestTown(player.x/TILE,player.y/TILE);
-    if(citizens.length<9&&ntC.d<11&&!player.sailing){ // 路人數量×2以上
-      const p2=findWalkSafe(ntC.t.tx+Math.floor(Math.random()*14-7),ntC.t.ty+Math.floor(Math.random()*14-7));
-      if(dist(p2.x,p2.y,player.x,player.y)>180){
-        // 先決定性別：短髮=男、長髮=女
-        const gender=Math.random()<0.5?'m':'f';
-        // 服裝（女生偏好洋裝，男生不穿洋裝）
-        let outfit;
-        if(gender==='f')outfit=['tee','shirt','dress','dress','office','skirt'][Math.floor(Math.random()*6)];
-        else outfit=['tee','shirt','suit','office','jeans','tee'][Math.floor(Math.random()*6)];
-        if(outfit==='skirt')outfit='dress';
-        let shirt,pants=null,tie=null;
-        if(outfit==='suit'){shirt=['#3a4458','#4a3a58','#2f3f4f','#3a2f2a'][Math.floor(Math.random()*4)];
-          pants='#2f3a48';tie=['#c94f43','#3f6fd6','#c9a03a','#3f8f5a'][Math.floor(Math.random()*4)];}
-        else if(outfit==='office'){shirt=['#e8ecf2','#dce8f0','#f0e8dc','#f5e0e8'][Math.floor(Math.random()*4)];
-          tie=['#c94f43','#3f8f5a','#5a4a8a','#c98a3a'][Math.floor(Math.random()*4)];}
-        else if(outfit==='dress')shirt=['#f27ba0','#c77dff','#f2c94c','#7ec8e8','#e2574c','#8fd48f','#ff9e50','#f5b8d0'][Math.floor(Math.random()*8)];
-        else{shirt=['#3f7fd6','#2ea36b','#f2b21c','#9b59b6','#f27ba0','#e74c3c','#5a8a9a','#e8ecf2','#f0913a','#3fb0a0'][Math.floor(Math.random()*10)];
-          if(outfit==='jeans')pants='#3f5f8a';}
-        const pname=(gender==='m'?NAME_M:NAME_F)[Math.floor(Math.random()*(gender==='m'?NAME_M:NAME_F).length)];
-        citizens.push({x:p2.x,y:p2.y,hx:p2.x,hy:p2.y,homeR:6*TILE,vx:0,vy:0,ai:0,walk:0,face:0,
-          shirt,outfit,pants,tie,pname,gender,
-          hairStyle:Math.floor(Math.random()*10),hair:HAIR_COLORS[Math.floor(Math.random()*HAIR_COLORS.length)],
-          race:Math.random()<0.18?Math.floor(Math.random()*RACES.length):null});}}}
-  for(const c of citizens){ c.ai-=dt;
-    if(c.flee>0){ c.flee-=dt; // 被攻擊後驚慌逃跑
+    // 路人數量×2以上（上限18），每次補幾個、有機率成雙結伴
+    if(citizens.length<18&&ntC.d<11&&!player.sailing){
+      const spawnN=Math.min(3,18-citizens.length);
+      for(let s=0;s<spawnN;s++){
+        const p2=findWalkSafe(ntC.t.tx+Math.floor(Math.random()*16-8),ntC.t.ty+Math.floor(Math.random()*16-8));
+        if(dist(p2.x,p2.y,player.x,player.y)<180)continue;
+        const c1=makeCitizen(p2.x,p2.y);
+        citizens.push(c1);
+        // 40% 機率生成一位結伴同行的夥伴（走在一起、會聊天）
+        if(Math.random()<0.4&&citizens.length<18){
+          const buddy=makeCitizen(p2.x+18,p2.y+6);
+          buddy.buddy=c1; c1.buddy=buddy; citizens.push(buddy);
+        }
+      }
+    }
+  }
+  for(const c of citizens){ c.ai-=dt; if(c.talk>0)c.talk-=dt; if(c.chatCd>0)c.chatCd-=dt;
+    if(c.flee>0){ c.flee-=dt; c.talk=0; // 被攻擊後驚慌逃跑
       const a=Math.atan2(c.y-player.y,c.x-player.x);
       if(moveActor(c,Math.cos(a),Math.sin(a),120,dt))c.walk+=dt*10; continue;}
+    // 結伴：偶爾停下面對面聊天，冒出對話泡泡
+    if(c.buddy&&citizens.includes(c.buddy)){
+      const bd=c.buddy, dd=dist(c.x,c.y,bd.x,bd.y);
+      if(c.talk>0){ c.vx=0;c.vy=0; c.face=bd.x<c.x?1:2; continue; } // 聊天中站定面對夥伴
+      if(dd<64&&c.chatCd<=0&&Math.random()<0.03){ c.talk=bd.talk=2.4; c.chatCd=bd.chatCd=8;
+        c.line=bd.line=CHAT_LINES[Math.floor(Math.random()*CHAT_LINES.length)]; continue; }
+      if(dd>80){ c.vx=bd.x-c.x; c.vy=bd.y-c.y; // 落後太多就靠向夥伴
+        if(moveActor(c,c.vx,c.vy,50,dt))c.walk+=dt*5; continue; }
+    }
     if(c.ai<=0){c.ai=1.5+Math.random()*3;
       if(Math.random()<0.5){c.vx=0;c.vy=0;}
       else{const g2=Math.random()*6.283;c.vx=Math.cos(g2);c.vy=Math.sin(g2);
         if(dist(c.x,c.y,c.hx,c.hy)>c.homeR){c.vx=c.hx-c.x;c.vy=c.hy-c.y;}}}
-    if(c.vx||c.vy){if(moveActor(c,c.vx,c.vy,50,dt))c.walk+=dt*5;else{c.vx=0;c.vy=0;}}}
+    if(c.vx||c.vy){if(moveActor(c,c.vx,c.vy,50,dt)){c.walk+=dt*5;c.face=c.vx<-0.1?1:c.vx>0.1?2:c.face;}else{c.vx=0;c.vy=0;}}}
   // 海上生物（鯨魚、飛魚、海豚）
   seaT-=dt;
   if(seaT<=0){seaT=1.6;
@@ -2498,8 +2531,11 @@ function drawActor(x,y,face,walk,o){
         ctx.fillRect(x-17,hy-2,34,12);}
       else if(hs===3){ // 雙馬尾
         ctx.beginPath();ctx.ellipse(x-17,hy+8,5,14,0.2,0,7);ctx.ellipse(x+17,hy+8,5,14,-0.2,0,7);ctx.fill();}
-      else if(hs===4){ctx.beginPath();ctx.moveTo(x-16,hy-4);ctx.quadraticCurveTo(x-18,y+2+bob,x-8,y+2+bob); // 單側長髮
-        ctx.lineTo(x+16,y-2+bob);ctx.quadraticCurveTo(x+18,hy+6,x+16,hy-4);ctx.closePath();ctx.fill();}
+      else if(hs===4){ // 側撥長髮：兩側垂簾，其一撥到肩前（臉部保留）
+        ctx.beginPath();ctx.moveTo(x-15,hy-3);ctx.quadraticCurveTo(x-20,hy+16,x-16,y-3+bob);
+        ctx.quadraticCurveTo(x-10,y+1+bob,x-8,hy+4);ctx.lineTo(x-8,hy-2);ctx.closePath();ctx.fill();
+        ctx.beginPath();ctx.moveTo(x+15,hy-3);ctx.quadraticCurveTo(x+21,hy+14,x+13,y+2+bob);
+        ctx.quadraticCurveTo(x+7,y-2+bob,x+8,hy+2);ctx.lineTo(x+8,hy-2);ctx.closePath();ctx.fill();}
       else if(hs===5){ctx.beginPath();ctx.ellipse(x,hy+2,15,12,0,0,Math.PI);ctx.fill();} // 丸子頭(短後髮)
       else if(hs===6){ctx.beginPath();ctx.moveTo(x-16,hy-2);ctx.lineTo(x-15,y-6+bob); // 公主切
         ctx.lineTo(x-8,y-6+bob);ctx.lineTo(x-9,hy+4);ctx.lineTo(x+9,hy+4);ctx.lineTo(x+8,y-6+bob);
@@ -2548,6 +2584,11 @@ function drawActor(x,y,face,walk,o){
         ctx.arc(x-13+k*4.3,hy-11+(k%2?1:-1)*1.5,3.6,0,7);ctx.fill();}ctx.fillRect(x-15,hy-10,30,4);}
       else {ctx.fillRect(x-15,hy-12,30,5);} // 超短平頭
     }
+    // 髮絲光澤（讓頭髮有亮面、不會糊成一坨）
+    ctx.save();ctx.globalAlpha=.55;ctx.fillStyle=tint(o.hair,60);
+    ctx.beginPath();ctx.ellipse(x-6,hy-9,4.6,2.3,-0.6,0,7);ctx.fill();
+    ctx.globalAlpha=.3;
+    ctx.beginPath();ctx.ellipse(x+4,hy-7,2.8,1.5,-0.5,0,7);ctx.fill();ctx.restore();
     // 族群服飾（衣飾帶＋頭帶/花環）
     if(o.race!=null&&RACES[o.race]){ const R=RACES[o.race];
       ctx.fillStyle=R.acc;ctx.fillRect(x-13,y-19+bob,26,4);
@@ -2993,9 +3034,10 @@ function draw(){
     list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});}
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
   for(const a of animals)if(inView(a.x,a.y))list.push({y:a.y,f:()=>drawAnimal(a)});
-  for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>drawActor(c.x,c.y,c.face,c.walk,
+  for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>{ drawActor(c.x,c.y,c.face,c.walk,
     {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:c.hair||'#3a2a1a',shirt:c.shirt,race:c.race,
-     outfit:c.outfit,pants:c.pants,tie:c.tie,gender:c.gender,hairStyle:c.hairStyle})});
+     outfit:c.outfit,pants:c.pants,tie:c.tie,gender:c.gender,hairStyle:c.hairStyle});
+     if(c.talk>0)drawChatBubble(c.x,c.y,c.line); }});
   if(player.love&&!boarding()&&inView(player.love.x,player.love.y)){const L=player.love;
     list.push({y:L.y,f:()=>{ const ap=L.ap;
       drawActor(L.x,L.y,L.face,L.walk,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
