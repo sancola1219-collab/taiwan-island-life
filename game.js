@@ -1273,6 +1273,9 @@ function buildAct(b){
      openMenu('💝 '+b.label+'：買禮物送給喜歡的人♥',opts);},
    salon(){ const names=player.gender==='m'?HAIR_NAMES_M:HAIR_NAMES_F;
      openMenu('💇 '+b.label+'：換造型（每次200元）',[
+       {label:'⚧ 切換男女造型（目前：'+(player.gender==='m'?'男生・短髮':'女生・長髮')+'）',cb(){
+         player.gender=player.gender==='m'?'f':'m'; player.hairStyle=0; sfx('chime'); save();
+         toast('切換成「'+(player.gender==='m'?'男生・短髮':'女生・長髮')+'」造型！');salonReopen(b);}},
        {label:'✂️ 換髮型（'+names.length+'種）',cb(){
          const opts=names.map((nm,i)=>({label:(i===player.hairStyle?'✓ ':'')+nm,cb(){
            if(money<200){dlg(b.label,['剪髮 200 元喔！']);return;}
@@ -3345,27 +3348,7 @@ document.getElementById('nameIn').value=player.name;
 { const rs2=document.getElementById('raceSel');
   RACES.forEach((r,i)=>{const o=document.createElement('option');o.value=i;o.textContent=r.n;rs2.appendChild(o);});
   rs2.value=player.race||0; }
-// 性別 → 髮型 → 髮色 選擇器
-const gPick=document.getElementById('genderPick'), hPick=document.getElementById('hairPick'),
-      hcPick=document.getElementById('hairColPick');
-function buildHairPicks(){
-  const names=player.gender==='m'?HAIR_NAMES_M:HAIR_NAMES_F;
-  hPick.innerHTML='';
-  names.forEach((nm,i)=>{const el=document.createElement('div');
-    el.className='pk'+(i===player.hairStyle?' sel':'');el.textContent=nm;
-    el.onclick=()=>{player.hairStyle=i;[...hPick.children].forEach(e=>e.classList.remove('sel'));el.classList.add('sel');};
-    hPick.appendChild(el);});
-}
-[['m','♂ 男生'],['f','♀ 女生']].forEach(([g,lbl])=>{const el=document.createElement('div');
-  el.className='pk'+(g===player.gender?' sel':'');el.textContent=lbl;
-  el.onclick=()=>{player.gender=g;player.hairStyle=0;
-    [...gPick.children].forEach(e=>e.classList.remove('sel'));el.classList.add('sel');buildHairPicks();};
-  gPick.appendChild(el);});
-HAIR_COLORS.forEach(c=>{const el=document.createElement('div');el.className='sw'+(c===player.hair?' sel':'');
-  el.style.background=c;el.onclick=()=>{player.hair=c;
-    [...hcPick.children].forEach(e=>e.classList.remove('sel'));el.classList.add('sel');};
-  hcPick.appendChild(el);});
-buildHairPicks();
+// （開場不再選性別/髮型；預設後可到髮型店更換造型）
 if(hasSave)document.getElementById('startBtn').textContent='繼續遊戲！';
 document.getElementById('startBtn').onclick=()=>{
   player.name=(document.getElementById('nameIn').value.trim()||'小島民').slice(0,8);
