@@ -514,14 +514,20 @@ const BUILDING_DRAWS={
   heart(cx2-10,cy2-8,26);heart(cx2+14,cy2+14,26);
   ctx.lineCap='butt';
   drawRoofSign(cx2,y-14,'💕 '+b.label,'#3f6f8f');},
- house(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w);
-  ctx.fillStyle='#c98a6a';rr(x,y-24,w,h+24,4);ctx.fill();
-  ctx.strokeStyle='#b87a5a';ctx.lineWidth=1;
-  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x,y-18+i*14);ctx.lineTo(x+w,y-18+i*14);ctx.stroke();}
-  ctx.fillStyle='#8a8078';ctx.beginPath();
-  ctx.moveTo(x-8,y-22);ctx.lineTo(x+w/2,y-44);ctx.lineTo(x+w+8,y-22);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#6a4a3a';rr(x+w/2-12,y+h-32,24,32,3);ctx.fill();
-  ctx.fillStyle='#ffe9b0';rr(x+8,y-8,20,16,3);ctx.fill();rr(x+w-28,y-8,20,16,3);ctx.fill();},
+ house(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  // 小巧民宅（約人高）：牆＋斜屋頂＋門窗＋小招牌
+  ctx.fillStyle=b.wall||'#ecd6b2';rr(x,y-13,w,h+13,4);ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.1)';ctx.lineWidth=1;rr(x,y-13,w,h+13,4);ctx.stroke();
+  ctx.fillStyle=b.roof||'#c9705f';ctx.beginPath(); // 斜屋頂
+  ctx.moveTo(x-6,y-11);ctx.lineTo(cx2,y-30);ctx.lineTo(x+w+6,y-11);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.moveTo(x-6,y-11);ctx.lineTo(cx2,y-30);ctx.lineTo(x+w+6,y-11);ctx.stroke();
+  ctx.fillStyle='#7a4a22';rr(cx2-7,y+h-17,14,17,3);ctx.fill(); // 門
+  ctx.fillStyle='#f2c94c';ctx.beginPath();ctx.arc(cx2+3,y+h-8,1.3,0,7);ctx.fill(); // 門把
+  ctx.fillStyle=isNight()?'#ffe6a0':'#cfe3f5'; // 窗
+  rr(x+5,y-7,11,10,2);ctx.fill();rr(x+w-16,y-7,11,10,2);ctx.fill();
+  ctx.strokeStyle='#b88a5a';ctx.lineWidth=1;
+  ctx.strokeRect(x+5,y-7,11,10);ctx.strokeRect(x+w-16,y-7,11,10);
+  drawRoofSign(cx2,y-40,b.label||'🏠 民宅','#c9705f');},
  oldstreet(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w);
   const cols=['#c98a6a','#d8a878','#b87a5a'];
   for(let i=0;i<3;i++){const sx=x+i*w/3,sw=w/3,lift=(i%2)*8;
@@ -742,7 +748,7 @@ function addBuild(t,tx,ty,tw,th,label,extra){
 const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],lantern:[3,2],
   hotspring:[4,3],gate:[4,2],opera:[6,3],windmill:[2,2],buddha:[3,3],temple:[6,4],fort:[5,4],
   redtower:[4,3],pagodas:[6,3],tower85:[3,3],gianttree:[3,3],peak:[2,2],lighthouse:[2,2],
-  balloon:[4,3],weir:[4,3],station:[5,3],harbor:[3,3],house:[3,2],
+  balloon:[4,3],weir:[4,3],station:[5,3],harbor:[3,3],house:[2,1],
   oldstreet:[6,3],highheel:[3,3],rockform:[4,2],archbridge:[6,2],canoe:[3,2],cablecar:[3,3],
   waterfall:[4,3],catvillage:[3,2],ferris:[4,3],rainbowhouse:[4,2],saltmtn:[3,3],person:[3,2],
   eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2],giftshop:[3,3],registry:[4,3],
@@ -773,16 +779,23 @@ CABLECARS.forEach(c=>{
   addBuild('cablecar',Math.round(c.a[0])-1,Math.round(c.a[1])-1,3,3,c.a[2],{line:c,end:'a'});
   addBuild('cablecar',Math.round(c.b[0])-1,Math.round(c.b[1])-1,3,3,c.b[2],{line:c,end:'b'});
 });
-// 三合院民宅（各鄉鎮周邊）
+// 民宅（各鄉鎮周邊散佈多間小房子，約人身大小、附門牌招牌）
 { rs=SEED+7;
-  const offs=[[-7,-2],[6,-3],[-5,4],[7,3]];
+  const SURNAMES=['陳','林','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','廖','賴','周','徐'];
+  const WALLS=['#ecd6b2','#e6dcc4','#e8cfa8','#f0e2c8','#dfe4d0','#efd9c4'];
+  const ROOFS=['#c9705f','#b8604f','#a86a8a','#6f8a9a','#8a6a4a','#c98a3a'];
+  const offs=[[-8,-3],[-6,3],[-3,-5],[3,-5],[7,-2],[8,3],[-8,2],[5,4],[-4,5],[2,5],[-9,-1],[9,0]];
   for(const tw of TOWNS){ let placed=0;
-    for(const [ox,oy] of offs){ if(placed>=1)break;
+    for(const [ox,oy] of offs){ if(placed>=5)break;
       const hx=tw.tx+ox+Math.floor(rand()*3)-1, hy=tw.ty+oy+Math.floor(rand()*3)-1;
       let ok=true;
-      for(let dy=-1;dy<=2;dy++)for(let dx=-1;dx<=3;dx++)if(T(hx+dx,hy+dy)!==GRASS)ok=false;
-      for(const b of BUILDINGS)if(Math.abs(b.tx-hx)<6&&Math.abs(b.ty-hy)<5)ok=false;
-      if(ok){addBuild('house',hx,hy,3,2,'');placed++;}
+      for(let dy=-1;dy<=1&&ok;dy++)for(let dx=-1;dx<=2&&ok;dx++){const t=T(hx+dx,hy+dy);
+        if(!(t===GRASS||t===FIELD||t===PATH))ok=false;}
+      if(ok)for(const b of BUILDINGS)if(hx<b.tx+b.tw+1&&hx+3>b.tx&&hy<b.ty+b.th+2&&hy+3>b.ty){ok=false;break;}
+      if(ok){ const nm=SURNAMES[Math.floor(rand()*SURNAMES.length)];
+        addBuild('house',hx,hy,2,1,'🏠 '+nm+'宅',
+          {wall:WALLS[Math.floor(rand()*WALLS.length)],roof:ROOFS[Math.floor(rand()*ROOFS.length)]});
+        placed++;}
     }}}
 
 /* ================= 世界物件 ================= */
@@ -2522,11 +2535,18 @@ function drawActor(x,y,face,walk,o){
     if(long){ // 女生：長髮（垂到肩下），5種變化
       // 後方長髮（先畫，在頭後）
       ctx.fillStyle=tint(o.hair,-10);
-      if(hs===0){ctx.beginPath();ctx.moveTo(x-16,hy-2);ctx.quadraticCurveTo(x-20,hy+18,x-14,y-4+bob);
-        ctx.lineTo(x+14,y-4+bob);ctx.quadraticCurveTo(x+20,hy+18,x+16,hy-2);ctx.closePath();ctx.fill();}
-      else if(hs===1){ctx.beginPath();ctx.moveTo(x-15,hy);ctx.quadraticCurveTo(x-24,hy+10,x-18,y-6+bob); // 波浪
-        ctx.quadraticCurveTo(x-12,y-2+bob,x-10,y-8+bob);ctx.lineTo(x+10,y-8+bob);
-        ctx.quadraticCurveTo(x+12,y-2+bob,x+18,y-6+bob);ctx.quadraticCurveTo(x+24,hy+10,x+15,hy);ctx.closePath();ctx.fill();}
+      if(hs===0){ // 直長髮：兩側順直垂下、臉部保留
+        ctx.beginPath();ctx.moveTo(x-15,hy-5);ctx.quadraticCurveTo(x-19,hy+8,x-16,y-2+bob);
+        ctx.lineTo(x-9,y-2+bob);ctx.quadraticCurveTo(x-10,hy+4,x-9,hy+1);ctx.closePath();ctx.fill();
+        ctx.beginPath();ctx.moveTo(x+15,hy-5);ctx.quadraticCurveTo(x+19,hy+8,x+16,y-2+bob);
+        ctx.lineTo(x+9,y-2+bob);ctx.quadraticCurveTo(x+10,hy+4,x+9,hy+1);ctx.closePath();ctx.fill();}
+      else if(hs===1){ // 大波浪：兩側波浪垂下、臉部保留
+        ctx.beginPath();ctx.moveTo(x-15,hy-3);ctx.quadraticCurveTo(x-23,hy+7,x-15,hy+14);
+        ctx.quadraticCurveTo(x-22,hy+21,x-13,y+bob);ctx.lineTo(x-8,y-1+bob);
+        ctx.quadraticCurveTo(x-12,hy+8,x-9,hy+1);ctx.closePath();ctx.fill();
+        ctx.beginPath();ctx.moveTo(x+15,hy-3);ctx.quadraticCurveTo(x+23,hy+7,x+15,hy+14);
+        ctx.quadraticCurveTo(x+22,hy+21,x+13,y+bob);ctx.lineTo(x+8,y-1+bob);
+        ctx.quadraticCurveTo(x+12,hy+8,x+9,hy+1);ctx.closePath();ctx.fill();}
       else if(hs===2){ctx.beginPath();ctx.ellipse(x,hy+6,18,15,0,0,Math.PI);ctx.fill(); // 妹妹頭/中長
         ctx.fillRect(x-17,hy-2,34,12);}
       else if(hs===3){ // 雙馬尾
