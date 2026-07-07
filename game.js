@@ -898,6 +898,16 @@ const CLOTHES_M=[
  {n:'機能外套',col:'#5a6a8a',style:'top',deco:'zip'},{n:'夏威夷花襯衫',col:'#3fb0a0',style:'shirt',deco:'dots'},
  {n:'工裝吊帶褲',col:'#5a4a3a',style:'top',deco:'overall'},{n:'學生制服',col:'#4a4a6a',style:'office',tie:'#8a2f2a'},
  {n:'消防制服',col:'#d84f2a',style:'top',deco:'belt'},{n:'紅色唐裝',col:'#8a2f2a',style:'trad',deco:'trad'},
+ // 唐朝古裝（男10）
+ {n:'唐圓領袍',col:'#3f6a8a',style:'robe',deco:'wuxia'},{n:'文官朝服',col:'#8a2f3a',style:'robe',deco:'goldtrim'},
+ {n:'武將戰袍',col:'#7a2a24',style:'robe',deco:'wuxia'},{n:'書生青衫',col:'#5a7a6a',style:'robe',deco:'trad'},
+ {n:'帝王龍袍',col:'#e0a824',style:'robe',deco:'goldtrim'},{n:'錦衣華服',col:'#c94f8f',style:'robe',deco:'goldtrim'},
+ {n:'俠士勁裝',col:'#3a3a44',style:'robe',deco:'wuxia'},{n:'道士鶴氅',col:'#e8ecf0',style:'robe',deco:'trad'},
+ {n:'將軍金甲',col:'#b8942a',style:'robe',deco:'armor'},{n:'紫袍官人',col:'#6a4a8a',style:'robe',deco:'goldtrim'},
+ // 布袋戲風格戲服（男5・原創武俠造型）
+ {n:'白衣刀客',col:'#f4f4ee',style:'robe',deco:'wuxia'},{n:'黑袍劍客',col:'#26262e',style:'robe',deco:'wuxia'},
+ {n:'血衣魔尊',col:'#8a1f2a',style:'robe',deco:'wuxia'},{n:'青袍儒俠',col:'#2f6a5a',style:'robe',deco:'wuxia'},
+ {n:'金甲戰神',col:'#d0a838',style:'robe',deco:'armor'},
 ];
 const CLOTHES_F=[
  {n:'碎花洋裝',col:'#f27ba0',style:'dress',deco:'dots'},{n:'水藍洋裝',col:'#7ec8e8',style:'dress'},
@@ -910,6 +920,16 @@ const CLOTHES_F=[
  {n:'黃色罩衫',col:'#ffcf40',style:'tank'},{n:'波點洋裝',col:'#9b59b6',style:'dress',deco:'dots'},
  {n:'護士服',col:'#f2f2f2',style:'dress',deco:'apron'},{n:'空姐制服',col:'#3a4a7a',style:'office',tie:'#c94f43'},
  {n:'民族風長裙',col:'#b06a2a',style:'dress',deco:'trad'},{n:'公主禮服',col:'#ffd0e8',style:'dress',deco:'sparkle'},
+ // 唐朝古裝（女10）
+ {n:'齊胸襦裙',col:'#f0a0c0',style:'robe',deco:'shawl'},{n:'貴妃華服',col:'#e0559b',style:'robe',deco:'goldtrim'},
+ {n:'仕女羅裙',col:'#a0c0e0',style:'robe',deco:'shawl'},{n:'紅衣舞裙',col:'#e2453c',style:'robe',deco:'shawl'},
+ {n:'綠衣襦裙',col:'#5aa06a',style:'robe',deco:'shawl'},{n:'宮裝鳳袍',col:'#e0a824',style:'robe',deco:'goldtrim'},
+ {n:'青衣女俠',col:'#3f7a8a',style:'robe',deco:'wuxia'},{n:'紗衣霓裳',col:'#d0b8e8',style:'robe',deco:'shawl'},
+ {n:'錦繡宮裙',col:'#c94f8f',style:'robe',deco:'goldtrim'},{n:'白衣仙裙',col:'#f4f4fa',style:'robe',deco:'shawl'},
+ // 布袋戲風格戲服（女5・原創武俠造型）
+ {n:'紅顏俠女',col:'#c9354a',style:'robe',deco:'wuxia'},{n:'白衣素女',col:'#f4f4ee',style:'robe',deco:'shawl'},
+ {n:'紫衣仙子',col:'#8a5ab0',style:'robe',deco:'shawl'},{n:'墨衣刀姬',col:'#2a2a34',style:'robe',deco:'wuxia'},
+ {n:'青衣劍女',col:'#2f8a7a',style:'robe',deco:'wuxia'},
 ];
 const HAIR_COLORS=['#2a2018','#4a2f1d','#6a4a2a','#8a5a3a','#a06a2a','#c98a4a','#d8b06a','#7a3a2a','#3a3a44','#b03a5a'];
 const HAIR_COLOR_NAMES=['黑色','深棕','棕色','淺棕','栗子棕','亞麻棕','金色','紅棕','藍黑','玫瑰紅'];
@@ -1190,9 +1210,10 @@ function shopEquipMenu(b,kind){
   }
 }
 function clothMenu(b,page){
-  page=page||0;
   const list=player.gender==='m'?CLOTHES_M:CLOTHES_F, PRICE=800;
-  const per=10, start=page*per, slice=list.slice(start,start+per);
+  const per=10, pages=Math.ceil(list.length/per);
+  page=((page||0)%pages+pages)%pages;
+  const start=page*per, slice=list.slice(start,start+per);
   const opts=slice.map((c,j)=>{ const i=start+j, key=player.gender+i;
     const owned=player.ownClothes.includes(key);
     const worn=player.outfit===c.style&&player.shirt===c.col&&player.deco===(c.deco||null);
@@ -1201,9 +1222,10 @@ function clothMenu(b,page){
         money-=PRICE;player.ownClothes.push(key);sfx('cash');}
       player.shirt=c.col;player.outfit=c.style;player.deco=c.deco||null;player.tie=c.tie||null;
       player.sparkle=5;save();toast('👗 換上「'+c.n+'」！✨');clothMenu(b,page);}};});
-  opts.push(page===0?{label:'下一頁 ▶（11~20套）',cb(){clothMenu(b,1);}}:{label:'◀ 上一頁（1~10套）',cb(){clothMenu(b,0);}});
+  opts.push({label:'▶ 下一頁',cb(){clothMenu(b,page+1);}});
   opts.push({label:'離開',cb(){ui=null;}});
-  openMenu('👗 '+b.label+'：'+(player.gender==='m'?'男裝':'女裝')+' 20套（'+(page+1)+'/2頁・一套'+fmt(800)+'元）',opts);
+  const catName=start<20?'現代裝':start<30?'唐朝古裝':'布袋戲戲服';
+  openMenu('👗 '+b.label+'：'+(player.gender==='m'?'男裝':'女裝')+' '+list.length+'套（'+(page+1)+'/'+pages+'頁・'+catName+'・一套'+fmt(800)+'元）',opts);
 }
 /* ================= 建築互動 ================= */
 function buildAct(b){
@@ -2327,7 +2349,22 @@ function drawActor(x,y,face,walk,o){
   g.addColorStop(0,tint(bodyC,28));g.addColorStop(1,tint(bodyC,-16));
   ctx.fillStyle=g;
   const isDress=(o.outfit==='dress'||o.outfit==='trad');
-  if(isDress){
+  if(o.outfit==='robe'){ // 古裝長袍：寬袖＋垂地曳裾
+    ctx.beginPath(); // 主袍身（比洋裝更寬、更長）
+    ctx.moveTo(x-10,y-27+bob);ctx.lineTo(x+10,y-27+bob);
+    ctx.lineTo(x+18,y-2+bob);ctx.lineTo(x-18,y-2+bob);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.5;ctx.stroke();
+    // 寬大廣袖（垂袖）
+    ctx.fillStyle=tint(bodyC,-8);
+    ctx.beginPath();ctx.moveTo(x-11,y-25+bob);ctx.quadraticCurveTo(x-24,y-20+bob,x-22,y-8+bob);
+    ctx.lineTo(x-13,y-9+bob);ctx.quadraticCurveTo(x-13,y-18+bob,x-11,y-25+bob);ctx.fill();
+    ctx.beginPath();ctx.moveTo(x+11,y-25+bob);ctx.quadraticCurveTo(x+24,y-20+bob,x+22,y-8+bob);
+    ctx.lineTo(x+13,y-9+bob);ctx.quadraticCurveTo(x+13,y-18+bob,x+11,y-25+bob);ctx.fill();
+    // 交領斜襟
+    ctx.fillStyle=tint(bodyC,24);
+    ctx.beginPath();ctx.moveTo(x-9,y-27+bob);ctx.lineTo(x+3,y-24+bob);ctx.lineTo(x-1,y-8+bob);
+    ctx.lineTo(x-11,y-10+bob);ctx.closePath();ctx.fill();
+  }else if(isDress){
     ctx.beginPath();ctx.moveTo(x-9,y-27+bob);ctx.lineTo(x+9,y-27+bob);
     ctx.lineTo(x+15,y-5+bob);ctx.lineTo(x-15,y-5+bob);ctx.closePath();ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.5;ctx.stroke();
@@ -2390,6 +2427,31 @@ function drawActor(x,y,face,walk,o){
     else if(d==='sparkle'){ctx.fillStyle='rgba(255,255,255,.85)';
       for(let k=0;k<5;k++){const sx=x-10+((k*97)%20),sy=top+3+((k*53)%16);
         ctx.fillRect(sx,sy,1.5,1.5);ctx.fillRect(sx-1,sy+0.5,3.5,0.6);ctx.fillRect(sx+0.5,sy-1,0.6,3.5);}}
+    else if(d==='wuxia'){ // 武俠戲服：斜襟＋腰帶＋垂綬
+      ctx.fillStyle=tint(bodyC,30);ctx.beginPath(); // 斜襟
+      ctx.moveTo(x-9,top);ctx.lineTo(x+3,top+2);ctx.lineTo(x-1,y-6+bob);ctx.lineTo(x-12,y-8+bob);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#3a2a20';ctx.fillRect(x-13,y-14+bob,26,4); // 腰帶
+      ctx.fillStyle='#e0c060';ctx.fillRect(x-3,y-14+bob,6,4); // 帶扣
+      ctx.fillStyle=tint(bodyC,-20);ctx.fillRect(x-2,y-10+bob,4,9); // 垂綬
+      ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-8,top+2);ctx.lineTo(x-12,y-8+bob);ctx.stroke();}
+    else if(d==='goldtrim'){ // 錦繡金邊
+      ctx.strokeStyle='#f0d060';ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.moveTo(x-9,top);ctx.lineTo(x-1,y-4+bob);ctx.stroke(); // 前襟金線
+      ctx.fillStyle='#f0d060';ctx.fillRect(x-18,y-4+bob,36,2); // 下擺金邊
+      for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(x-6+k*6,top+6,1.2,0,7);ctx.fill();} // 金釦/紋飾
+      ctx.fillStyle='#c0142a';ctx.fillRect(x-13,y-14+bob,26,3);} // 織帶腰
+    else if(d==='armor'){ // 戰甲：胸甲＋肩吞＋鱗片
+      ctx.fillStyle=tint(bodyC,-14);rr(x-11,top+2,22,15,3);ctx.fill();
+      ctx.strokeStyle=tint(bodyC,-40);ctx.lineWidth=0.8;
+      for(let r2=0;r2<3;r2++)for(let c2=0;c2<4;c2++)ctx.strokeRect(x-10+c2*5,top+4+r2*4,5,4); // 鱗甲
+      ctx.fillStyle=tint(bodyC,34);ctx.beginPath();ctx.arc(x-11,top+3,4,0,7);ctx.arc(x+11,top+3,4,0,7);ctx.fill(); // 肩吞
+      ctx.fillStyle='#c0142a';ctx.fillRect(x-13,y-13+bob,26,3);
+      ctx.fillStyle='#e0c060';ctx.beginPath();ctx.arc(x,top+9,2,0,7);ctx.fill();} // 護心鏡
+    else if(d==='shawl'){ // 披帛：肩上飄帶＋高腰裙線
+      ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(x-14,y-18+bob);ctx.quadraticCurveTo(x,y-28+bob,x+14,y-18+bob);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x+13,y-19+bob);ctx.quadraticCurveTo(x+18,y-6+bob,x+13,y+2+bob);ctx.stroke();ctx.lineCap='butt';
+      ctx.fillStyle=tint(bodyC,-24);ctx.fillRect(x-15,y-16+bob,30,2);} // 高腰裙帶
     ctx.restore();
   }
   // 手臂（走路擺動）
