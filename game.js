@@ -266,6 +266,17 @@ const BUILDING_DRAWS={
   ctx.fillStyle='#fff';rr(x+8,y-12,20,16,3);ctx.fill();rr(x+w-28,y-12,20,16,3);ctx.fill();
   ctx.fillStyle='#e2574c';ctx.font='13px serif';ctx.fillText('👟',x+10,y);ctx.fillText('👠',x+w-24,y);
   drawRoofSign(cx2,y-54,'👟 '+b.label,'#4a6f8f');},
+ clothshop(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#f0e0ec';rr(x,y-32,w,h+32,8);ctx.fill();
+  ctx.fillStyle='#c06a9a';ctx.beginPath();ctx.moveTo(x-8,y-28);ctx.lineTo(cx2,y-52);ctx.lineTo(x+w+8,y-28);ctx.closePath();ctx.fill();
+  // 櫥窗（兩個假人剪影）
+  ctx.fillStyle='#fff6fb';rr(x+6,y-16,22,20,4);ctx.fill();rr(x+w-28,y-16,22,20,4);ctx.fill();
+  ctx.fillStyle='#c06a9a';ctx.beginPath();ctx.arc(x+17,y-8,4,0,7);ctx.fill();ctx.fillRect(x+13,y-4,8,10);
+  ctx.fillStyle='#7ec8e8';ctx.beginPath();ctx.arc(x+w-17,y-8,4,0,7);ctx.fill();
+  ctx.beginPath();ctx.moveTo(x+w-21,y-4);ctx.lineTo(x+w-13,y-4);ctx.lineTo(x+w-11,y+6);ctx.lineTo(x+w-23,y+6);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#8a5a3a';rr(cx2-11,y+h-28,22,28,3);ctx.fill();
+  ctx.font='14px serif';ctx.textAlign='center';ctx.fillText('👗',cx2,y-34);ctx.textAlign='left';
+  drawRoofSign(cx2,y-58,'👗 '+b.label,'#c06a9a');},
  registry(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
   ctx.fillStyle='#e8ecf0';rr(x,y-38,w,h+38,4);ctx.fill(); // 官方建築
   ctx.fillStyle='#c9ccd2';ctx.fillRect(x-6,y-42,w+12,8);
@@ -735,7 +746,7 @@ const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],la
   oldstreet:[6,3],highheel:[3,3],rockform:[4,2],archbridge:[6,2],canoe:[3,2],cablecar:[3,3],
   waterfall:[4,3],catvillage:[3,2],ferris:[4,3],rainbowhouse:[4,2],saltmtn:[3,3],person:[3,2],
   eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2],giftshop:[3,3],registry:[4,3],
-  salon:[3,3],accshop:[3,3],shoeshop:[3,3]};
+  salon:[3,3],accshop:[3,3],shoeshop:[3,3],clothshop:[4,3]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines,steam:L.steam,isLm:true});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 // 港口自動貼齊海岸線（找最近的「臨陸海面」放置碼頭）
@@ -873,7 +884,32 @@ const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   buffSpd:0,buffLuck:0,swing:0,show:null,fishing:null,name:'小島民',shirt:'#e74c3c',
   boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false,love:null,wedding:null,
   gender:'m',hairStyle:0,hair:'#4a2f1d',headAcc:null,bodyAcc:null,shoes:null,
-  ownAcc:[],ownShoes:[]};
+  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[]};
+// ---- 服裝（男女各20套；col=主色, style=版型, deco=花紋/配件, tie=領帶色）----
+const CLOTHES_M=[
+ {n:'白T恤',col:'#eef2f6',style:'tee'},{n:'海軍條紋衫',col:'#3f6fd6',style:'shirt',deco:'stripe'},
+ {n:'黑色西裝',col:'#2f3540',style:'suit',tie:'#c94f43'},{n:'商務襯衫',col:'#dce8f0',style:'office',tie:'#3f6fd6'},
+ {n:'牛仔外套',col:'#4a6a9a',style:'top',deco:'zip'},{n:'紅色帽T',col:'#c94f43',style:'top',deco:'hood'},
+ {n:'運動外套',col:'#2ea36b',style:'top',deco:'zip'},{n:'黃色POLO衫',col:'#f2b21c',style:'shirt',deco:'collar'},
+ {n:'格紋襯衫',col:'#a0522d',style:'shirt',deco:'check'},{n:'藍色背心',col:'#7ec8e8',style:'tank'},
+ {n:'皮夾克',col:'#2a2a2a',style:'top',deco:'zip'},{n:'駝色毛衣',col:'#c0925a',style:'top',deco:'knit'},
+ {n:'廚師服',col:'#f2f2f2',style:'top',deco:'apron'},{n:'藍染和服',col:'#3a4a8a',style:'trad',deco:'trad'},
+ {n:'機能外套',col:'#5a6a8a',style:'top',deco:'zip'},{n:'夏威夷花襯衫',col:'#3fb0a0',style:'shirt',deco:'dots'},
+ {n:'工裝吊帶褲',col:'#5a4a3a',style:'top',deco:'overall'},{n:'學生制服',col:'#4a4a6a',style:'office',tie:'#8a2f2a'},
+ {n:'消防制服',col:'#d84f2a',style:'top',deco:'belt'},{n:'紅色唐裝',col:'#8a2f2a',style:'trad',deco:'trad'},
+];
+const CLOTHES_F=[
+ {n:'碎花洋裝',col:'#f27ba0',style:'dress',deco:'dots'},{n:'水藍洋裝',col:'#7ec8e8',style:'dress'},
+ {n:'白色婚紗',col:'#f8f8ff',style:'dress',deco:'sparkle'},{n:'紅色連衣裙',col:'#e2574c',style:'dress'},
+ {n:'橘條紋上衣',col:'#f0913a',style:'shirt',deco:'stripe'},{n:'紫針織衫',col:'#c98ab0',style:'top',deco:'knit'},
+ {n:'學院背心裙',col:'#5a4a8a',style:'dress',deco:'collar'},{n:'紅色旗袍',col:'#c94f43',style:'trad',deco:'trad'},
+ {n:'粉色和服',col:'#d86a9a',style:'trad',deco:'trad'},{n:'青綠運動服',col:'#3fb0a0',style:'top',deco:'zip'},
+ {n:'吊帶裙',col:'#6a8a5a',style:'dress',deco:'overall'},{n:'粉蓬蓬裙',col:'#f5b8d0',style:'dress'},
+ {n:'襯衫洋裝',col:'#e8ecf2',style:'dress',deco:'collar'},{n:'駝色大衣',col:'#a5744a',style:'top',deco:'belt'},
+ {n:'黃色罩衫',col:'#ffcf40',style:'tank'},{n:'波點洋裝',col:'#9b59b6',style:'dress',deco:'dots'},
+ {n:'護士服',col:'#f2f2f2',style:'dress',deco:'apron'},{n:'空姐制服',col:'#3a4a7a',style:'office',tie:'#c94f43'},
+ {n:'民族風長裙',col:'#b06a2a',style:'dress',deco:'trad'},{n:'公主禮服',col:'#ffd0e8',style:'dress',deco:'sparkle'},
+];
 const HAIR_COLORS=['#2a2018','#4a2f1d','#6a4a2a','#8a5a3a','#a06a2a','#c98a4a','#d8b06a','#7a3a2a','#3a3a44','#b03a5a'];
 const HAIR_COLOR_NAMES=['黑色','深棕','棕色','淺棕','栗子棕','亞麻棕','金色','紅棕','藍黑','玫瑰紅'];
 // ---- 飾品（20種；slot: head 戴頭上 / body 戴身上）----
@@ -1152,6 +1188,22 @@ function shopEquipMenu(b,kind){
     openMenu('👟 '+b.label+'：'+(player.gender==='m'?'男款':'女款')+' 10 種鞋（一雙'+fmt(PRICE)+'元）',opts);
   }
 }
+function clothMenu(b,page){
+  page=page||0;
+  const list=player.gender==='m'?CLOTHES_M:CLOTHES_F, PRICE=800;
+  const per=10, start=page*per, slice=list.slice(start,start+per);
+  const opts=slice.map((c,j)=>{ const i=start+j, key=player.gender+i;
+    const owned=player.ownClothes.includes(key);
+    const worn=player.outfit===c.style&&player.shirt===c.col&&player.deco===(c.deco||null);
+    return {label:(worn?'✓ ':'')+c.n+(worn?' 穿著中':owned?'（已擁有·點穿上）':'　'+fmt(PRICE)+'元'),cb(){
+      if(!owned){ if(money<PRICE){dlg(b.label,['錢不夠！這套 '+fmt(PRICE)+' 元。']);return;}
+        money-=PRICE;player.ownClothes.push(key);sfx('cash');}
+      player.shirt=c.col;player.outfit=c.style;player.deco=c.deco||null;player.tie=c.tie||null;
+      save();toast('👗 換上「'+c.n+'」！');clothMenu(b,page);}};});
+  opts.push(page===0?{label:'下一頁 ▶（11~20套）',cb(){clothMenu(b,1);}}:{label:'◀ 上一頁（1~10套）',cb(){clothMenu(b,0);}});
+  opts.push({label:'離開',cb(){ui=null;}});
+  openMenu('👗 '+b.label+'：'+(player.gender==='m'?'男裝':'女裝')+' 20套（'+(page+1)+'/2頁・一套'+fmt(800)+'元）',opts);
+}
 /* ================= 建築互動 ================= */
 function buildAct(b){
   if(b.isLm&&b.label)collectStamp(b.label);
@@ -1292,6 +1344,7 @@ function buildAct(b){
        {label:'離開',cb(){ui=null;}}]);},
    accshop(){ shopEquipMenu(b,'acc'); },
    shoeshop(){ shopEquipMenu(b,'shoe'); },
+   clothshop(){ clothMenu(b); },
    registry(){ const L=player.love;
      if(L&&L.stage==='married'){ openMenu('💒 '+b.label+'：'+L.name+' 是你的配偶',[
        {label:(inv['結婚證書']?'✓已有結婚證書':'補領結婚證書📜'),cb(){
@@ -2181,10 +2234,15 @@ function drawActor(x,y,face,walk,o){
   g=ctx.createLinearGradient(x,y-28+bob,x,y-5+bob);
   g.addColorStop(0,tint(bodyC,28));g.addColorStop(1,tint(bodyC,-16));
   ctx.fillStyle=g;
-  if(o.outfit==='dress'){
+  const isDress=(o.outfit==='dress'||o.outfit==='trad');
+  if(isDress){
     ctx.beginPath();ctx.moveTo(x-9,y-27+bob);ctx.lineTo(x+9,y-27+bob);
     ctx.lineTo(x+15,y-5+bob);ctx.lineTo(x-15,y-5+bob);ctx.closePath();ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.5;ctx.stroke();
+  }else if(o.outfit==='tank'){ // 背心：窄肩帶
+    rr(x-11,y-24+bob,22,18,7);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.5;rr(x-11,y-24+bob,22,18,7);ctx.stroke();
+    ctx.fillStyle=tint(bodyC,-14);ctx.fillRect(x-9,y-27+bob,3,4);ctx.fillRect(x+6,y-27+bob,3,4);
   }else{
     rr(x-13,y-27+bob,26,21,9);ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.5;rr(x-13,y-27+bob,26,21,9);ctx.stroke();}
@@ -2198,6 +2256,44 @@ function drawActor(x,y,face,walk,o){
       ctx.lineTo(x+1,y-11+bob);ctx.lineTo(x-1,y-11+bob);ctx.closePath();ctx.fill();}
     if(o.outfit==='tee'){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=2;
       ctx.beginPath();ctx.moveTo(x-11,y-10+bob);ctx.lineTo(x+11,y-10+bob);ctx.stroke();}
+  }
+  // 服裝花紋／配件（deco）
+  if(sp==='human'&&o.deco){ const d=o.deco, top=y-27+bob;
+    ctx.save();
+    if(d==='stripe'){ctx.fillStyle=tint(bodyC,-34);
+      for(let k=0;k<4;k++)ctx.fillRect(x-13,top+3+k*5,26,2);}
+    else if(d==='dots'){ctx.fillStyle='rgba(255,255,255,.7)';
+      for(let k=0;k<6;k++)ctx.beginPath(),ctx.arc(x-9+(k%3)*9,top+5+Math.floor(k/3)*8,1.8,0,7),ctx.fill();}
+    else if(d==='check'){ctx.strokeStyle=tint(bodyC,-34);ctx.lineWidth=1.2;
+      for(let k=-1;k<=2;k++){ctx.beginPath();ctx.moveTo(x-13,top+4+k*5);ctx.lineTo(x+13,top+4+k*5);ctx.stroke();}
+      for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(x+k*8,top);ctx.lineTo(x+k*8,top+21);ctx.stroke();}}
+    else if(d==='zip'){ctx.strokeStyle=tint(bodyC,-40);ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(x,top+1);ctx.lineTo(x,top+20);ctx.stroke();
+      ctx.fillStyle='#d8d8d8';ctx.fillRect(x-1,top+3,2,3);}
+    else if(d==='hood'){ctx.fillStyle=tint(bodyC,-18); // 帽子在後頸
+      ctx.beginPath();ctx.arc(x,top-1,9,Math.PI*0.15,Math.PI*0.85);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-3,top+6);ctx.lineTo(x-3,top+13);
+      ctx.moveTo(x+3,top+6);ctx.lineTo(x+3,top+13);ctx.stroke();}
+    else if(d==='knit'){ctx.strokeStyle=tint(bodyC,-22);ctx.lineWidth=1;
+      for(let k=0;k<5;k++){ctx.beginPath();
+        for(let xx=-12;xx<=12;xx+=4)ctx.lineTo(x+xx,top+4+k*4+((xx/4)%2?1.5:-1.5));ctx.stroke();}}
+    else if(d==='apron'){ctx.fillStyle='rgba(255,255,255,.85)';
+      rr(x-8,top+3,16,18,3);ctx.fill();ctx.strokeStyle='#d8d8d8';ctx.lineWidth=1;ctx.strokeRect(x-8,top+3,16,18);}
+    else if(d==='belt'){ctx.fillStyle=tint(bodyC,-45);ctx.fillRect(x-14,y-13+bob,28,4);
+      ctx.fillStyle='#e0c060';ctx.fillRect(x-2,y-13+bob,4,4);}
+    else if(d==='overall'){ctx.fillStyle=tint(bodyC,-30); // 吊帶
+      ctx.fillRect(x-8,top,3,21);ctx.fillRect(x+5,top,3,21);ctx.fillStyle='#e0c060';
+      ctx.fillRect(x-8,top+7,3,2);ctx.fillRect(x+5,top+7,3,2);}
+    else if(d==='trad'){ctx.fillStyle=tint(bodyC,26); // 交領斜襟
+      ctx.beginPath();ctx.moveTo(x-9,top);ctx.lineTo(x+2,top+3);ctx.lineTo(x-2,y-6+bob);ctx.lineTo(x-13,y-8+bob);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#e0554a';ctx.fillRect(x-2,top+2,4,y-6+bob-(top+2));}
+    else if(d==='collar'){ctx.fillStyle='#fff';
+      ctx.beginPath();ctx.moveTo(x-7,top);ctx.lineTo(x-2,top+6);ctx.lineTo(x-2,top);ctx.closePath();
+      ctx.moveTo(x+7,top);ctx.lineTo(x+2,top+6);ctx.lineTo(x+2,top);ctx.closePath();ctx.fill();}
+    else if(d==='sparkle'){ctx.fillStyle='rgba(255,255,255,.85)';
+      for(let k=0;k<5;k++){const sx=x-10+((k*97)%20),sy=top+3+((k*53)%16);
+        ctx.fillRect(sx,sy,1.5,1.5);ctx.fillRect(sx-1,sy+0.5,3.5,0.6);ctx.fillRect(sx+0.5,sy-1,0.6,3.5);}}
+    ctx.restore();
   }
   // 手臂（走路擺動）
   const swA=o.sailing?0:Math.sin(walk)*4;
@@ -2765,7 +2861,7 @@ function draw(){
     if(player.balloonRide){
       if(player.balloonRide.kind==='view'){ // 101 觀景台：人在原地，鏡頭拉高
         drawActor(player.x,player.y,0,0,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
-          hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes});
+          hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,outfit:player.outfit,deco:player.deco,tie:player.tie});
       } else drawBalloonRideSprite(player.x,player.y,player.balloonRide);
       return;}
     if(player.soak){ // 泡湯：只露出頭，冒蒸氣
@@ -2785,7 +2881,7 @@ function draw(){
     if(player.pray){ // 雙手合十拜拜（微微鞠躬）
       const bow=Math.max(0,Math.sin(player.pray.t*2.5))*3;
       drawActor(player.x,player.y+bow,3,0,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
-        hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes});
+        hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,outfit:player.outfit,deco:player.deco,tie:player.tie});
       ctx.font='19px serif';ctx.textAlign='center';
       ctx.fillText('🙏',player.x,player.y-6+bow);ctx.textAlign='left';
       for(let i=0;i<2;i++){const ph=(tGlobal*0.7+i*0.5)%1; // 裊裊香煙
@@ -2800,10 +2896,10 @@ function draw(){
       const wob=Math.sin(tGlobal*2.2)*2;
       drawBoat(player.x,player.y+wob,player.face,player.moving);
       drawActor(player.x,player.y-8+wob,player.face,0,
-        {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:player.hair,shirt:player.shirt,sailing:true,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes});
+        {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:player.hair,shirt:player.shirt,sailing:true,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,outfit:player.outfit,deco:player.deco,tie:player.tie});
     } else {
       drawActor(player.x,player.y,player.face,player.moving?player.walk:0,
-        {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes});
+        {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,outfit:player.outfit,deco:player.deco,tie:player.tie});
     }
     if(player.playT){const p3=player.playT; ctx.textAlign='center';
       if(p3.act==='shoot'){ // 手持玩具做發射動作（玩具留在手上，只射出小東西）
@@ -3222,7 +3318,7 @@ function drawUI(){
     ctx.fillStyle=isNight()?'#ffd97a':'#e8e0c8';ctx.beginPath();ctx.arc(x+278,y+176,10,0,7);ctx.fill();
     ctx.fillStyle='#8a6b3a';ctx.fillRect(x+274,y+182,8,8);
     drawActor(x+320,y+160,0,0,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
-      hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes});
+      hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,outfit:player.outfit,deco:player.deco,tie:player.tie});
     ctx.font='13px '+F;ctx.fillStyle='#9a805c';
     ctx.fillText('睡一覺 → 隔天早上 06:00，疲勞歸零、體力大補（✕ 出門）',x+24,y+h-14);
   }
@@ -3294,7 +3390,8 @@ function drawUI(){
 const SAVEKEY='twisland_v3';
 function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   name:player.name,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,hair:player.hair,
-  headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,ownAcc:player.ownAcc,ownShoes:player.ownShoes,money,inv,dex,boat:player.boat,
+  headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,ownAcc:player.ownAcc,ownShoes:player.ownShoes,
+  outfit:player.outfit,deco:player.deco,tie:player.tie,ownClothes:player.ownClothes,money,inv,dex,boat:player.boat,
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
@@ -3304,6 +3401,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   player.gender=s.gender||'m';player.hairStyle=s.hairStyle||0;player.hair=s.hair||'#4a2f1d';
   player.headAcc=s.headAcc||null;player.bodyAcc=s.bodyAcc||null;player.shoes=s.shoes||null;
   player.ownAcc=s.ownAcc||[];player.ownShoes=s.ownShoes||[];
+  player.outfit=s.outfit||'tee';player.deco=s.deco||null;player.tie=s.tie||null;player.ownClothes=s.ownClothes||[];
   money=s.money??800;inv=s.inv||{};dex=s.dex||{};
   player.hp=s.hp??100;player.hunger=s.hunger??100;
   stamps=s.stamps||{};townsV=s.townsV||{};

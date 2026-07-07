@@ -294,6 +294,9 @@ const LANDMARKS=[
  {t:'accshop',tx:188,ty:358,label:'高雄流行飾品'},
  {t:'shoeshop',tx:205,ty:39,label:'東區鞋櫃'},
  {t:'shoeshop',tx:157,ty:186,label:'台中鞋舖'},
+ {t:'clothshop',tx:185,ty:49,label:'西門服飾店'},
+ {t:'clothshop',tx:169,ty:184,label:'台中服飾館'},
+ {t:'clothshop',tx:192,ty:367,label:'高雄流行服飾'},
  // v4 新增（依玩家提供的地圖照片）
  {t:'waterfall',tx:221,ty:48,label:'十分瀑布',lines:['台灣的尼加拉瀑布！','水簾垂下的彩虹好美～']},
  {t:'catvillage',tx:227,ty:34,label:'猴硐貓村',lines:['喵喵喵～整個村子都是貓！','貓橋上有好多貓咪在打盹。']},
