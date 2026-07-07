@@ -277,6 +277,17 @@ const BUILDING_DRAWS={
   ctx.fillStyle='#8a5a3a';rr(cx2-11,y+h-28,22,28,3);ctx.fill();
   ctx.font='14px serif';ctx.textAlign='center';ctx.fillText('👗',cx2,y-34);ctx.textAlign='left';
   drawRoofSign(cx2,y-58,'👗 '+b.label,'#c06a9a');},
+ weaponshop(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#2b2b30';rr(x,y-34,w,h+34,6);ctx.fill(); // 黑色店面
+  ctx.strokeStyle='#4a1f1f';ctx.lineWidth=2;rr(x,y-34,w,h+34,6);ctx.stroke();
+  ctx.fillStyle='#1a1a1e';ctx.beginPath();ctx.moveTo(x-8,y-30);ctx.lineTo(cx2,y-52);ctx.lineTo(x+w+8,y-30);ctx.closePath();ctx.fill(); // 屋頂
+  ctx.fillStyle='#8a1f1f';for(let i=0;i<Math.floor(w/14);i++){ctx.beginPath(); // 紅遮陽棚
+    ctx.moveTo(x+i*14,y-18);ctx.lineTo(x+i*14+14,y-18);ctx.lineTo(x+i*14+7,y-10);ctx.closePath();ctx.fill();}
+  ctx.fillStyle='#3a3a42';rr(x+6,y-14,20,16,2);ctx.fill(); // 鐵窗
+  ctx.strokeStyle='#6a6a72';ctx.lineWidth=1;for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(x+6+k*7,y-14);ctx.lineTo(x+6+k*7,y+2);ctx.stroke();}
+  ctx.fillStyle='#111';rr(cx2+2,y+h-26,20,26,3);ctx.fill(); // 黑門
+  ctx.font='15px serif';ctx.textAlign='center';ctx.fillText('🔫',x+w-16,y-2);ctx.textAlign='left';
+  drawRoofSign(cx2,y-58,'🔫 '+b.label,'#8a1f1f');},
  registry(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
   ctx.fillStyle='#e8ecf0';rr(x,y-38,w,h+38,4);ctx.fill(); // 官方建築
   ctx.fillStyle='#c9ccd2';ctx.fillRect(x-6,y-42,w+12,8);
@@ -759,7 +770,7 @@ const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],la
   oldstreet:[6,3],highheel:[3,3],rockform:[4,2],archbridge:[6,2],canoe:[3,2],cablecar:[3,3],
   waterfall:[4,3],catvillage:[3,2],ferris:[4,3],rainbowhouse:[4,2],saltmtn:[3,3],person:[3,2],
   eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2],giftshop:[3,3],registry:[4,3],
-  salon:[3,3],accshop:[3,3],shoeshop:[3,3],clothshop:[4,3]};
+  salon:[3,3],accshop:[3,3],shoeshop:[3,3],clothshop:[4,3],weaponshop:[3,3]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines,steam:L.steam,isLm:true});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 // 港口自動貼齊海岸線（找最近的「臨陸海面」放置碼頭）
@@ -909,7 +920,7 @@ const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false,love:null,wedding:null,
   crimes:0,notoriousUntil:0,patrolT:0,
   gender:'m',hairStyle:0,hair:'#4a2f1d',headAcc:null,bodyAcc:null,shoes:null,
-  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0,honor:0};
+  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0,honor:0,ownGuns:[],murderRap:false};
 // ---- 服裝（男女各20套；col=主色, style=版型, deco=花紋/配件, tie=領帶色）----
 const CLOTHES_M=[
  {n:'白T恤',col:'#eef2f6',style:'tee'},{n:'海軍條紋衫',col:'#3f6fd6',style:'shirt',deco:'stripe'},
@@ -1031,6 +1042,21 @@ function drawFestival(f){ const b=f.b, gx=b.x+b.w/2, gy=b.y+b.h, top=gy-b.h*0.62
   ctx.fillText(f.emoji+' '+f.name,gx,top-12);ctx.textAlign='left';
   for(let i=0;i<7;i++)drawSpectator(gx-66+i*22, gy+30+(i%2)*10, i); // 圍觀群眾
   drawDragon(gx-24, gy+16, tGlobal); drawLion(gx+42, gy+14, tGlobal); }
+// 被擊倒的路人（橫躺・XX眼・淡血泊，數秒後消失）
+function drawCorpse(c){ const x=c.x,y=c.y;
+  ctx.save(); if(c.deadT<1.2)ctx.globalAlpha=Math.max(0,c.deadT/1.2);
+  ctx.fillStyle='rgba(0,0,0,.16)';ctx.beginPath();ctx.ellipse(x,y+4,20,7,0,0,7);ctx.fill();
+  ctx.fillStyle='rgba(150,20,20,.32)';ctx.beginPath();ctx.ellipse(x+2,y+3,17,6,0,0,7);ctx.fill(); // 血泊
+  ctx.fillStyle=c.shirt||'#c0392b';rr(x-14,y-8,24,14,7);ctx.fill(); // 身體橫躺
+  ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.5;rr(x-14,y-8,24,14,7);ctx.stroke();
+  ctx.fillStyle=c.pants||'#3a3428';rr(x+8,y-6,12,5,2);ctx.fill();rr(x+8,y+1,12,5,2);ctx.fill(); // 腿
+  ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x-6,y-12,3.4,0,7);ctx.fill(); // 攤開的手
+  ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x-18,y-4,9,0,7);ctx.fill(); // 頭
+  ctx.fillStyle=c.hair||'#3a2a1a';ctx.beginPath();ctx.arc(x-20,y-6,9,Math.PI*0.55,Math.PI*1.95);ctx.fill(); // 頭髮
+  ctx.strokeStyle='#5a3020';ctx.lineWidth=1.6; // XX 眼
+  for(const ox of [-3,3]){ctx.beginPath();ctx.moveTo(x-18+ox-2,y-6);ctx.lineTo(x-18+ox+2,y-2);
+    ctx.moveTo(x-18+ox+2,y-6);ctx.lineTo(x-18+ox-2,y-2);ctx.stroke();}
+  ctx.restore(); }
 // ---- 飾品（20種；slot: head 戴頭上 / body 戴身上）----
 const ACCESSORIES=[
  {id:'cap',n:'棒球帽',e:'🧢',slot:'head',price:400},
@@ -1477,6 +1503,14 @@ function buildAct(b){
    accshop(){ shopEquipMenu(b,'acc'); },
    shoeshop(){ shopEquipMenu(b,'shoe'); },
    clothshop(){ clothMenu(b); },
+   weaponshop(){ const opts=GUNS.map(gun=>{ const owned=(player.ownGuns||[]).includes(gun.n), eq=(player.toy===gun.n);
+       return {label:gun.e+gun.n+(eq?' ✓持用中':owned?' 已擁有·點裝備':'　'+fmt(gun.price)+'元'),cb(){
+         if(!owned){ if(money<gun.price){dlg(b.label,['錢不夠…「'+gun.n+'」要 '+fmt(gun.price)+' 元。','這種東西可不便宜。']);return;}
+           money-=gun.price; player.ownGuns=player.ownGuns||[]; player.ownGuns.push(gun.n); sfx('cash'); }
+         player.toy=gun.n; player.tool=6; save(); ui=null;
+         toast('🔫 裝備「'+gun.n+'」（切到第7格📱側邊「'+gun.n+'」對路人開火）。⚠️殺人是重罪：會被關，出獄只剩500元、名譽歸零！'); }}; });
+     opts.push({label:'離開',cb(){ui=null;}});
+     openMenu('🔫 '+b.label+'（黑市軍火・後果自負）',opts); },
    registry(){ const L=player.love;
      if(L&&L.stage==='married'){ openMenu('💒 '+b.label+'：'+L.name+' 是你的配偶',[
        {label:(inv['結婚證書']?'✓已有結婚證書':'補領結婚證書📜'),cb(){
@@ -1638,8 +1672,24 @@ function tryShake(tr){ tr.shake=0.5;
   } else toast('搖了搖…什麼都沒掉下來。');
 }
 const ATTACK_LOOT=['貝殼','木材','雜草','礦石','橘子'];
-function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(player.tool===6&&['彈弓','水槍'].includes(player.toy));} // 鏟/斧/矛/彈弓水槍
+function isGun(n){ return typeof GUNS!=='undefined'&&GUNS.some(g=>g.n===n); }
+function heldEmoji(n){ if(!n)return '🎁'; if(ITEMS[n])return ITEMS[n].e; const g=isGun(n)&&GUNS.find(x=>x.n===n); return g?g.e:'🎁'; }
+function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(player.tool===6&&(['彈弓','水槍'].includes(player.toy)||isGun(player.toy)));} // 鏟/斧/矛/彈弓水槍/槍枝
+// 開槍擊殺路人：倒地→數秒後移除→補生維持人數平衡；觸發兇殺通緝＋出獄重罰
+function killCitizen(c){
+  player.swing=0.28; sfx('swing');
+  puffs.push({x:c.x,y:c.y-20,t:0.5}); puffs.push({x:c.x+6,y:c.y-14,t:0.6});
+  drops.push({x:c.x+(Math.random()*16-8),y:c.y+8,coin:80+Math.floor(Math.random()*220)});
+  c.dead=true; c.deadT=6; c.vx=0; c.vy=0; c.flee=0; c.talk=0;
+  if(c.buddy){ c.buddy.buddy=null; c.buddy.flee=6; c.buddy.talk=0; } c.buddy=null;
+  toast('🔫💥 你開槍擊倒了'+(c.pname||'路人')+'！他倒在路上…目擊的路人驚慌報警！');
+  player.crimes=(player.crimes||0)+3; player.murderRap=true;
+  player.notoriousUntil=Math.max(player.notoriousUntil||0,gameDay+2); player.patrolT=12+Math.random()*18;
+  if(!player.wanted)startWanted(c.x,c.y);
+  player.wanted.phase='grace'; player.wanted.t=Math.min(player.wanted.t,5); save();
+}
 function attackPerson(c){
+  if(player.tool===6&&isGun(player.toy)&&citizens.includes(c)){ killCitizen(c); return; } // 持槍對路人→擊殺
   player.swing=0.28; sfx('swing'); c.flee=6;
   puffs.push({x:c.x,y:c.y-16,t:0.4});
   if(c.robAt!=null&&tGlobal-c.robAt<120){ // 同一人2分鐘內再打不掉東西（但照樣報警）
@@ -2163,7 +2213,9 @@ function update(dt){
   // 市鎮民眾
   citizenT-=dt;
   if(citizenT<=0){citizenT=1.2;
-    for(let i=citizens.length-1;i>=0;i--)if(dist(citizens[i].x,citizens[i].y,player.x,player.y)>1500)citizens.splice(i,1);
+    for(let i=citizens.length-1;i>=0;i--){ const c=citizens[i];
+      if(c.dead&&c.deadT<=0){citizens.splice(i,1);continue;} // 屍體移除→之後自動補生維持人數
+      if(dist(c.x,c.y,player.x,player.y)>1500)citizens.splice(i,1); }
     const ntC=nearestTown(player.x/TILE,player.y/TILE);
     // 路人數量×2以上（上限18），每次補幾個、有機率成雙結伴
     if(citizens.length<18&&ntC.d<11&&!player.sailing){
@@ -2181,7 +2233,8 @@ function update(dt){
       }
     }
   }
-  for(const c of citizens){ c.ai-=dt; if(c.talk>0)c.talk-=dt; if(c.chatCd>0)c.chatCd-=dt;
+  for(const c of citizens){ if(c.dead){ c.deadT-=dt; continue; } // 已被擊倒（屍體）不再行動
+    c.ai-=dt; if(c.talk>0)c.talk-=dt; if(c.chatCd>0)c.chatCd-=dt;
     if(c.flee>0){ c.flee-=dt; c.talk=0; // 被攻擊後驚慌逃跑
       const a=Math.atan2(c.y-player.y,c.x-player.x);
       if(moveActor(c,Math.cos(a),Math.sin(a),120,dt))c.walk+=dt*10; continue;}
@@ -2365,6 +2418,7 @@ function drawShoe(cx,ty,s){ // s={col,style}
     ctx.fillStyle=tint(col,-20);ctx.beginPath();ctx.arc(cx+1,ty+4,1.6,0,7);ctx.fill();}
 }
 function drawAcc(id,x,hy,y,bob,face){ const A=ACCESSORIES.find(a=>a.id===id); if(!A)return;
+  if(face===3&&['glasses','sunglasses','necklace','bowtie','medal','lei'].includes(id))return; // 正面才顯示的飾品
   const ex=face===1?-4:face===2?4:0;
   switch(id){
    case 'cap': ctx.fillStyle='#3f6fd6';ctx.beginPath();ctx.arc(x,hy-6,15,Math.PI,0);ctx.fill();
@@ -2458,6 +2512,7 @@ function drawAcc(id,x,hy,y,bob,face){ const A=ACCESSORIES.find(a=>a.id===id); if
 function drawActor(x,y,face,walk,o){
   const sp=o.species, pal=o.pal||{fur:o.skin||'#f5c99b'};
   const fur=pal.fur, bob=Math.sin(walk)*1.8, step=Math.sin(walk);
+  const back=(face===3); // 面向後方（往上走）：顯示背面
   // 柔和陰影
   let g=ctx.createRadialGradient(x,y+2,2,x,y+2,18);
   g.addColorStop(0,'rgba(0,0,0,.26)');g.addColorStop(1,'rgba(0,0,0,0)');
@@ -2500,7 +2555,7 @@ function drawActor(x,y,face,walk,o){
   }else{
     rr(x-13,y-27+bob,26,21,9);ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.5;rr(x-13,y-27+bob,26,21,9);ctx.stroke();}
-  if(sp==='human'&&o.outfit){ // 一般服裝配件
+  if(sp==='human'&&o.outfit&&!back){ // 一般服裝配件（正面才有領口/領帶）
     if(o.outfit==='suit'||o.outfit==='office'||o.outfit==='shirt'){ // 白領
       ctx.fillStyle='#fff';
       ctx.beginPath();ctx.moveTo(x-6,y-27+bob);ctx.lineTo(x,y-20+bob);ctx.lineTo(x+6,y-27+bob);ctx.closePath();ctx.fill();}
@@ -2611,7 +2666,20 @@ function drawActor(x,y,face,walk,o){
     g.addColorStop(0,tint(o.hair,30));g.addColorStop(1,o.hair);
     ctx.fillStyle=g; ctx.strokeStyle=o.hair;
     const long=o.gender==='f', hs=o.hairStyle||0;
-    if(long){ // 女生：長髮（垂到肩下），5種變化
+    if(back){ // 背面：整顆頭覆蓋髮色（看不到臉）
+      ctx.fillStyle=o.hair;ctx.beginPath();ctx.arc(x,hy,17,0,7);ctx.fill();
+      if(long){ ctx.fillStyle=tint(o.hair,-8); // 長髮垂到上背
+        ctx.beginPath();ctx.moveTo(x-16,hy-1);ctx.quadraticCurveTo(x-19,hy+18,x-13,y-2+bob);
+        ctx.lineTo(x+13,y-2+bob);ctx.quadraticCurveTo(x+19,hy+18,x+16,hy-1);
+        ctx.quadraticCurveTo(x,hy+9,x-16,hy-1);ctx.closePath();ctx.fill();
+        if(hs===3){ctx.beginPath();ctx.ellipse(x-16,hy+9,5,15,0.2,0,7);ctx.ellipse(x+16,hy+9,5,15,-0.2,0,7);ctx.fill();} // 雙馬尾
+        if(hs===9){ctx.beginPath();ctx.ellipse(x+2,hy+12,6,16,0,0,7);ctx.fill();} // 高馬尾
+        if(hs===5){ctx.beginPath();ctx.arc(x,hy-15,6,0,7);ctx.fill();} // 丸子
+      } else { ctx.fillStyle=tint(o.hair,-14); // 男生後腦髮際線
+        ctx.beginPath();ctx.arc(x,hy+3,16,0.2,Math.PI-0.2);ctx.fill(); }
+      ctx.strokeStyle=tint(o.hair,28);ctx.lineWidth=1.3; // 髮旋
+      ctx.beginPath();ctx.arc(x-1,hy-2,4,0.4,4.6);ctx.stroke();
+    } else if(long){ // 女生：長髮（垂到肩下），5種變化
       // 後方長髮（先畫，在頭後）
       ctx.fillStyle=tint(o.hair,-10);
       if(hs===0){ // 直長髮：兩側順直垂下、臉部保留
@@ -3135,7 +3203,9 @@ function draw(){
     list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});}
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
   for(const a of animals)if(inView(a.x,a.y))list.push({y:a.y,f:()=>drawAnimal(a)});
-  for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>{ drawActor(c.x,c.y,c.face,c.walk,
+  for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>{
+     if(c.dead){ drawCorpse(c); return; }
+     drawActor(c.x,c.y,c.face,c.walk,
     {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:c.hair||'#3a2a1a',shirt:c.shirt,race:c.race,
      outfit:c.outfit,pants:c.pants,tie:c.tie,gender:c.gender,hairStyle:c.hairStyle});
      if(c.talk>0)drawChatBubble(c.x,c.y,c.line); }});
@@ -3408,7 +3478,7 @@ function drawUI(){
     const sx=hx+10+i*66;
     if(i===player.tool){ctx.fillStyle='#ffd97a';rr(sx,hy+8,58,56,10);ctx.fill();
       ctx.strokeStyle='#e8a13a';ctx.lineWidth=3;rr(sx,hy+8,58,56,10);ctx.stroke();}
-    const te=i<6?TOOLS[i].e:(player.toy?ITEMS[player.toy].e:'🎁');
+    const te=i<6?TOOLS[i].e:heldEmoji(player.toy);
     const tn=i<6?TOOLS[i].n:(player.toy||'玩具');
     ctx.font='24px serif';ctx.textAlign='center';
     ctx.fillText(te,sx+29,hy+38);
@@ -3647,7 +3717,7 @@ function drawUI(){
     drawActor(x+w/2,y+h-110,0,0,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
       hair:'#4a2f1d',shirt:'#d8a04a',race:player.race}); // 囚服(橘)
     ctx.font='13px '+F;ctx.fillStyle='#9a805c';ctx.textAlign='center';
-    ctx.fillText('攻擊路人被逮捕了…要乖乖服刑，還是繳保釋金？',x+w/2,y+h-74);ctx.textAlign='left';
+    ctx.fillText(player.murderRap?'🔫 你開槍殺人被捕！服刑或保釋後都將只剩 500 元、名譽歸零…':'攻擊路人被逮捕了…要乖乖服刑，還是繳保釋金？',x+w/2,y+h-74);ctx.textAlign='left';
     const bw=(w-56)/2;
     ctx.fillStyle='#3f8f5a';rr(x+20,y+h-58,bw,42,10);ctx.fill();
     ctx.fillStyle='#fff';ctx.font='bold 15px '+F;ctx.textAlign='center';
@@ -3655,8 +3725,10 @@ function drawUI(){
     uiHits.push({x:x+20,y:y+h-58,w:bw,h:42,cb(){ player.jailed=false;
       gameDay++;gameMin=6*60;player.tired=0;player.hp=Math.min(100,player.hp+20);
       const pr=BUILDINGS.find(b=>b.t==='prison'); const q=findWalkSafe(pr.tx+2,pr.ty+pr.th+2);
-      player.x=q.x;player.y=q.y; ui=null; sfx('chime'); save();
-      toast('☀️ 服刑期滿，重獲自由！以後別再亂來了。'); }});
+      player.x=q.x;player.y=q.y; ui=null; sfx('chime');
+      if(player.murderRap){money=500;player.honor=0;player.murderRap=false;save();
+        toast('⚖️ 殺人重罪服刑期滿：出獄後身上只剩 500 元、名譽值歸零。重新做人吧。');}
+      else{save();toast('☀️ 服刑期滿，重獲自由！以後別再亂來了。');} }});
     const canBail=money>=5000;
     ctx.fillStyle=canBail?'#f0913a':'#b8b0a0';rr(x+36+bw,y+h-58,bw,42,10);ctx.fill();
     ctx.fillStyle='#fff';ctx.textAlign='center';
@@ -3664,8 +3736,10 @@ function drawUI(){
     uiHits.push({x:x+36+bw,y:y+h-58,w:bw,h:42,cb(){ if(money<5000){toast('保釋金不夠 5000 元…只能服刑了。');return;}
       money-=5000; player.jailed=false;
       const pr=BUILDINGS.find(b=>b.t==='prison'); const q=findWalkSafe(pr.tx+2,pr.ty+pr.th+2);
-      player.x=q.x;player.y=q.y; ui=null; sfx('cash'); save();
-      toast('💸 繳了保釋金，走出監獄大門。'); }});
+      player.x=q.x;player.y=q.y; ui=null; sfx('cash');
+      if(player.murderRap){money=500;player.honor=0;player.murderRap=false;save();
+        toast('⚖️ 你有殺人重罪在身，即使保釋，出獄後也只剩 500 元、名譽歸零。');}
+      else{save();toast('💸 繳了保釋金，走出監獄大門。');} }});
   }
   if(ui==='help'){
     const w=Math.min(660,VW-60),x=VW/2-w/2,y=50;
@@ -3709,7 +3783,7 @@ function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   outfit:player.outfit,deco:player.deco,tie:player.tie,ownClothes:player.ownClothes,money,inv,dex,boat:player.boat,
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
-  crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,
+  crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,ownGuns:player.ownGuns,murderRap:player.murderRap,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   if(!s)return false;
@@ -3725,6 +3799,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   gameDay=s.gameDay||1;gameMin=s.gameMin??8*60;player.tired=s.tired||0;player.jailed=!!s.jailed;
   eateryDone=s.eateryDone||{};player.toy=s.toy||null;player.love=s.love||null;
   player.crimes=s.crimes||0;player.notoriousUntil=s.notoriousUntil||0;player.patrolT=20;player.honor=s.honor||0;
+  player.ownGuns=s.ownGuns||[];player.murderRap=!!s.murderRap;
   myHomes=s.myHomes||(s.myHome?[{tx:s.myHome.tx,ty:s.myHome.ty,type:'cabin'}]:[]);
   for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0];
     addBuild('myhome',mh.tx,mh.ty,ht.tw,ht.th,(s.name||'小島民')+'的'+ht.n,{htype:ht.id});}

@@ -309,6 +309,12 @@ const LANDMARKS=[
  {t:'oldstreet',tx:148,ty:254,label:'檜意森活村',lines:['日式檜木老屋群，','空氣裡有淡淡的檜木香。']},
  {t:'saltmtn',tx:151,ty:311,label:'七股鹽山',lines:['雪白的鹽山！','其實是鹽堆成的小山，還能爬上去。']},
  {t:'temple',tx:166,ty:332,label:'台南孔廟'},
+ {t:'weaponshop',tx:198,ty:52,label:'萬華地下軍火'},  // v33 黑市武器店
+ {t:'weaponshop',tx:178,ty:363,label:'鹽埕黑市軍火'}, // v33 黑市武器店
+ {t:'temple',tx:153,ty:294,label:'鹽水武廟'},        // v33 鹽水蜂炮
+ {t:'temple',tx:187,ty:389,label:'東港東隆宮'},      // v33 東港迎王
+ {t:'temple',tx:157,ty:143,label:'白沙屯拱天宮'},    // v33 白沙屯媽祖進香
+ {t:'temple',tx:235,ty:57,label:'頭城慶元宮'},       // v33 頭城搶孤
  {t:'market',tx:163,ty:320,label:'花園夜市'},
  {t:'market',tx:193,ty:378,label:'萬巒豬腳街'},
  {t:'gate',tx:167,ty:357,label:'壽山動物園',lines:['獼猴在樹上盪來盪去！','還有可愛的黑熊區喔。']},
@@ -424,11 +430,23 @@ const CHAT_LINES=['對啊對啊～','真的假的！','哈哈哈','好餓喔…'
 /* ---------- 寺廟祭典（每天輪一場，配合台灣知名廟宇慶典，10:00–15:00 舉行；有舞龍舞獅） ---------- */
 const FESTIVALS=[
  {name:'大甲媽祖遶境',temple:'大甲鎮瀾宮',emoji:'🐉'},
+ {name:'鹽水蜂炮',temple:'鹽水武廟',emoji:'🎆'},
+ {name:'東港迎王平安祭',temple:'東港東隆宮',emoji:'🔥'},
  {name:'北港朝天宮迎媽祖',temple:'北港朝天宮',emoji:'🎊'},
+ {name:'白沙屯媽祖進香',temple:'白沙屯拱天宮',emoji:'🚶'},
  {name:'鹿港天后宮媽祖祭',temple:'鹿港天后宮',emoji:'🏮'},
+ {name:'頭城搶孤',temple:'頭城慶元宮',emoji:'🏮'},
  {name:'三峽祖師廟祖師祭',temple:'三峽祖師廟',emoji:'🐲'},
  {name:'台南孔廟祭孔大典',temple:'台南孔廟',emoji:'🎓'},
  {name:'澎湖天后宮海上遶境',temple:'澎湖天后宮',emoji:'⛩️'},
+];
+/* ---------- 黑市軍火（武器店販售，可對路人開火・重罪） ---------- */
+const GUNS=[
+ {n:'黑星手槍',e:'🔫',price:8000},
+ {n:'烏茲衝鋒槍',e:'🔫',price:25000},
+ {n:'雷明頓霰彈槍',e:'🔫',price:60000},
+ {n:'AK步槍',e:'🔫',price:120000},
+ {n:'狙擊步槍',e:'🔫',price:250000},
 ];
 /* ---------- 景點通用台詞池（每次點擊隨機組合） ---------- */
 const LM_POOL={
