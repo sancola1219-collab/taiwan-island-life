@@ -3587,23 +3587,31 @@ function drawUI(){
     let total=0; names.forEach(n=>total+=(ITEMS[n]?ITEMS[n].p:0)*inv[n]);
     ctx.font='bold 14px '+F;ctx.fillStyle='#3f8f5a';ctx.textAlign='right';
     ctx.fillText('總價值 '+fmt(total)+' 元',x+w-46,y+34);ctx.textAlign='left';
-    const cell=VH<430?52:VH<560?68:86, pitch=cell+10, ic=cell/94; // 依螢幕高度縮放格子
-    const cols=Math.max(1,Math.floor((w-40)/pitch));
-    const rows=Math.max(1,Math.floor((h-54)/pitch));
-    const hidden=names.length-cols*rows;
-    names.slice(0,cols*rows).forEach((n,i)=>{
-      const gx=x+20+(i%cols)*pitch, gy=y+48+Math.floor(i/cols)*pitch, cx=gx+cell/2;
-      ctx.fillStyle=ITEMS[n].hu?'#e8f5d6':'#fff3d6';rr(gx,gy,cell,cell,10);ctx.fill();
-      ctx.font=Math.round(28*ic)+'px serif';ctx.textAlign='center';ctx.fillText(ITEMS[n].e,cx,gy+cell*0.40);
-      ctx.font='bold '+Math.max(10,Math.round(13*ic))+'px '+F;ctx.fillStyle='#5b4023';ctx.fillText(n,cx,gy+cell*0.66);
-      ctx.font=Math.max(9,Math.round(12*ic))+'px '+F;ctx.fillStyle='#9a805c';
-      ctx.fillText('×'+inv[n]+(ITEMS[n].hu?' 🍗'+ITEMS[n].hu:' '+ITEMS[n].p+'元'),cx,gy+cell*0.86);ctx.textAlign='left';
+    // 自動縮放格子，讓「全部道具」一次顯示（道具越多格子越小）
+    const Wg=w-40, Hg=h-52, gap=8, N=Math.max(1,names.length);
+    let cell=34;
+    for(let cs=88;cs>=34;cs-=3){ const p=cs+gap;
+      const c=Math.max(1,Math.floor(Wg/p)), r=Math.max(1,Math.floor(Hg/p));
+      if(c*r>=N){cell=cs;break;} }
+    const pitch=cell+gap, ic=cell/94;
+    const cols=Math.max(1,Math.floor(Wg/pitch));
+    names.forEach((n,i)=>{
+      const gx=x+20+(i%cols)*pitch, gy=y+46+Math.floor(i/cols)*pitch, cx=gx+cell/2;
+      ctx.fillStyle=ITEMS[n].hu?'#e8f5d6':'#fff3d6';rr(gx,gy,cell,cell,Math.max(4,8*ic));ctx.fill();
+      ctx.textAlign='center';
+      if(cell>=58){ ctx.font=Math.round(26*ic)+'px serif';ctx.fillStyle='#000';ctx.fillText(ITEMS[n].e,cx,gy+cell*0.38);
+        ctx.font='bold '+Math.max(9,Math.round(13*ic))+'px '+F;ctx.fillStyle='#5b4023';ctx.fillText(n,cx,gy+cell*0.64);
+        ctx.font=Math.max(8,Math.round(12*ic))+'px '+F;ctx.fillStyle='#9a805c';
+        ctx.fillText('×'+inv[n]+(ITEMS[n].hu?' 🍗'+ITEMS[n].hu:' '+ITEMS[n].p+'元'),cx,gy+cell*0.84);
+      } else { // 小格：只放圖示＋數量
+        ctx.font=Math.round(cell*0.5)+'px serif';ctx.fillStyle='#000';ctx.fillText(ITEMS[n].e,cx,gy+cell*0.52);
+        ctx.font='bold '+Math.max(8,Math.round(cell*0.24))+'px '+F;ctx.fillStyle='#5b4023';ctx.fillText('×'+inv[n],cx,gy+cell*0.92);
+      }
+      ctx.textAlign='left';
       uiHits.push({x:gx,y:gy,w:cell,h:cell,cb:((nm)=>()=>{
         if(ITEMS[nm].toy){player.toy=nm;player.tool=6;ui=null;sfx('blip');save();
           toast(ITEMS[nm].e+' 裝備了'+nm+'！按互動鍵（或Ⓐ）就能玩');}
         else eatFood(nm);})(n)});});
-    if(hidden>0){ctx.font='12px '+F;ctx.fillStyle='#9a805c';ctx.textAlign='center';
-      ctx.fillText('…還有 '+hidden+' 種未顯示（賣掉或吃掉一些就會出現）',x+w/2,y+h-8);ctx.textAlign='left';}
     if(!names.length){ctx.font='16px '+F;ctx.fillStyle='#9a805c';
       ctx.fillText('背包空空的…去釣魚、抓蟲、搖樹吧！',x+34,y+88);}
   }
