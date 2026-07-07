@@ -287,6 +287,13 @@ const LANDMARKS=[
  {t:'giftshop',tx:184,ty:361,label:'高雄珠寶行'},
  {t:'registry',tx:210,ty:44,label:'台北戶政事務所'},
  {t:'registry',tx:146,ty:189,label:'台中戶政事務所'},
+ // 造型三店（髮型/飾品/鞋子）
+ {t:'salon',tx:191,ty:38,label:'東區髮廊'},
+ {t:'salon',tx:162,ty:181,label:'台中美髮沙龍'},
+ {t:'accshop',tx:198,ty:39,label:'西門飾品店'},
+ {t:'accshop',tx:188,ty:358,label:'高雄流行飾品'},
+ {t:'shoeshop',tx:205,ty:39,label:'東區鞋櫃'},
+ {t:'shoeshop',tx:157,ty:186,label:'台中鞋舖'},
  // v4 新增（依玩家提供的地圖照片）
  {t:'waterfall',tx:221,ty:48,label:'十分瀑布',lines:['台灣的尼加拉瀑布！','水簾垂下的彩虹好美～']},
  {t:'catvillage',tx:227,ty:34,label:'猴硐貓村',lines:['喵喵喵～整個村子都是貓！','貓橋上有好多貓咪在打盹。']},
