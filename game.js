@@ -791,9 +791,11 @@ CABLECARS.forEach(c=>{
   const SURNAMES=['陳','林','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','廖','賴','周','徐'];
   const WALLS=['#ecd6b2','#e6dcc4','#e8cfa8','#f0e2c8','#dfe4d0','#efd9c4'];
   const ROOFS=['#c9705f','#b8604f','#a86a8a','#6f8a9a','#8a6a4a','#c98a3a'];
-  const offs=[[-8,-3],[-6,3],[-3,-5],[3,-5],[7,-2],[8,3],[-8,2],[5,4],[-4,5],[2,5],[-9,-1],[9,0]];
+  const offs=[[-8,-3],[-6,3],[-3,-5],[3,-5],[7,-2],[8,3],[-8,2],[5,4],[-4,5],[2,5],[-9,-1],[9,0],
+    [-10,-4],[-2,6],[6,-5],[10,2],[-6,-6],[4,6],[-10,4],[10,-3],[0,-7],[-7,6],[8,5],[-11,1],
+    [-11,-3],[11,-1],[-3,7],[3,7],[-11,4],[11,4],[1,-8],[-8,-6],[8,-6],[-12,1],[12,1],[6,7]];
   for(const tw of TOWNS){ let placed=0;
-    for(const [ox,oy] of offs){ if(placed>=5)break;
+    for(const [ox,oy] of offs){ if(placed>=16)break;
       const hx=tw.tx+ox+Math.floor(rand()*3)-1, hy=tw.ty+oy+Math.floor(rand()*3)-1;
       let ok=true;
       for(let dy=-1;dy<=1&&ok;dy++)for(let dx=-1;dx<=2&&ok;dx++){const t=T(hx+dx,hy+dy);
@@ -907,7 +909,7 @@ const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false,love:null,wedding:null,
   crimes:0,notoriousUntil:0,patrolT:0,
   gender:'m',hairStyle:0,hair:'#4a2f1d',headAcc:null,bodyAcc:null,shoes:null,
-  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0};
+  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0,honor:0};
 // ---- 服裝（男女各20套；col=主色, style=版型, deco=花紋/配件, tie=領帶色）----
 const CLOTHES_M=[
  {n:'白T恤',col:'#eef2f6',style:'tee'},{n:'海軍條紋衫',col:'#3f6fd6',style:'shirt',deco:'stripe'},
@@ -986,6 +988,49 @@ function drawChatBubble(x,y,line){
   ctx.fillStyle='rgba(255,255,255,.95)';ctx.fill();
   ctx.fillStyle='#5b4023';ctx.textAlign='center';ctx.fillText(t,x,by+14);ctx.textAlign='left';
 }
+// ===== 寺廟祭典：舞獅／舞龍／圍觀群眾 =====
+function drawLion(x,y,t){ const bob=Math.sin(t*6)*3, sway=Math.sin(t*3)*4;
+  ctx.fillStyle='#c0392b';rr(x-2+sway*0.3,y-6,26,15,7);ctx.fill(); // 布身
+  ctx.fillStyle='#f1c40f';for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(x+6+i*7,y+2,3,0,7);ctx.fill();}
+  const hx=x+sway, hy=y-14+bob;
+  ctx.fillStyle='#f39c12';for(let i=0;i<10;i++){const a=i/10*6.283; // 鬃毛
+    ctx.beginPath();ctx.arc(hx+Math.cos(a)*13,hy+Math.sin(a)*13,3.6,0,7);ctx.fill();}
+  ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.arc(hx,hy,12,0,7);ctx.fill(); // 獅頭
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(hx-5,hy-3,4,0,7);ctx.arc(hx+5,hy-3,4,0,7);ctx.fill();
+  ctx.fillStyle='#222';ctx.beginPath();ctx.arc(hx-5,hy-3,2,0,7);ctx.arc(hx+5,hy-3,2,0,7);ctx.fill();
+  ctx.fillStyle='#27ae60';ctx.fillRect(hx-9,hy-9,6,3);ctx.fillRect(hx+3,hy-9,6,3); // 眉
+  ctx.fillStyle='#7a1f1f';ctx.beginPath();ctx.ellipse(hx,hy+7,7,3+Math.abs(Math.sin(t*6))*3,0,0,7);ctx.fill(); // 嘴
+  ctx.fillStyle='#2c3e50';const lp=Math.sin(t*6)*3; // 舞者的腳
+  rr(x+3,y+7,4,8+lp,2);ctx.fill();rr(x+10,y+7,4,8-lp,2);ctx.fill();
+  rr(x+16,y+7,4,8+lp,2);ctx.fill();rr(x+22,y+7,4,8-lp,2);ctx.fill(); }
+function drawDragon(x,y,t){ // 舞龍：龍頭＋數節身體隨波擺動、有舉桿
+  for(let i=7;i>=1;i--){ const px=x-i*13, py=y+Math.sin(t*4-i*0.7)*7;
+    if(i%2===0){ctx.strokeStyle='#8a5a2b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,py+16);ctx.stroke();}
+    ctx.fillStyle=i%2?'#f1c40f':'#e67e22';ctx.beginPath();ctx.arc(px,py,7,0,7);ctx.fill();
+    ctx.fillStyle='#c0392b';ctx.beginPath();ctx.arc(px,py-6,2.4,0,7);ctx.fill(); }
+  const hx=x, hy=y+Math.sin(t*4)*7; // 龍頭
+  ctx.fillStyle='#e67e22';ctx.beginPath();ctx.arc(hx,hy,10,0,7);ctx.fill();
+  ctx.fillStyle='#f1c40f';ctx.beginPath();ctx.moveTo(hx+1,hy-9);ctx.lineTo(hx+5,hy-18);ctx.lineTo(hx+9,hy-8);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(hx+4,hy-4,3,0,7);ctx.fill();
+  ctx.fillStyle='#222';ctx.beginPath();ctx.arc(hx+5,hy-4,1.5,0,7);ctx.fill();
+  ctx.fillStyle='#c0392b';rr(hx+2,hy+4,12,4,2);ctx.fill();
+  ctx.strokeStyle='#c0392b';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(hx+12,hy);ctx.quadraticCurveTo(hx+20,hy-4,hx+22,hy+2);ctx.stroke(); }
+function drawSpectator(x,y,i){ const cols=['#3f7fd6','#e67e22','#8e44ad','#16a085','#c0392b','#f39c12','#2c3e50','#d35400'];
+  const bob=Math.sin(tGlobal*3+i)*1;
+  ctx.fillStyle='rgba(0,0,0,.14)';ctx.beginPath();ctx.ellipse(x,y+2,9,4,0,0,7);ctx.fill();
+  ctx.fillStyle=cols[i%cols.length];rr(x-7,y-14+bob,14,16,5);ctx.fill();
+  ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x,y-18+bob,8,0,7);ctx.fill();
+  ctx.fillStyle=['#3a2a1e','#5a3a22','#2f2f38'][i%3];ctx.beginPath();ctx.arc(x,y-20+bob,8,Math.PI,0);ctx.fill(); }
+function drawFestival(f){ const b=f.b, gx=b.x+b.w/2, gy=b.y+b.h, top=gy-b.h*0.62;
+  ctx.strokeStyle='#8a5a2b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(gx-72,top);ctx.lineTo(gx+72,top);ctx.stroke();
+  for(let i=-3;i<=3;i++){ctx.fillStyle=i%2?'#e74c3c':'#f1c40f'; // 燈籠串
+    ctx.beginPath();ctx.ellipse(gx+i*22,top+8,5,7,0,0,7);ctx.fill();
+    ctx.fillStyle='#c0392b';ctx.fillRect(gx+i*22-1,top+14,2,3);}
+  ctx.fillStyle='#c0392b';rr(gx-80,top-26,160,20,5);ctx.fill(); // 紅布條
+  ctx.fillStyle='#ffe9a0';ctx.font='bold 12px "Microsoft JhengHei"';ctx.textAlign='center';
+  ctx.fillText(f.emoji+' '+f.name,gx,top-12);ctx.textAlign='left';
+  for(let i=0;i<7;i++)drawSpectator(gx-66+i*22, gy+30+(i%2)*10, i); // 圍觀群眾
+  drawDragon(gx-24, gy+16, tGlobal); drawLion(gx+42, gy+14, tGlobal); }
 // ---- 飾品（20種；slot: head 戴頭上 / body 戴身上）----
 const ACCESSORIES=[
  {id:'cap',n:'棒球帽',e:'🧢',slot:'head',price:400},
@@ -1037,6 +1082,13 @@ function eatFood(n){ const it=ITEMS[n];
   sfx('pop'); toast(it.e+' 吃了'+n+'！飢餓度 +'+it.hu); save(); return true;}
 const DIRV=[[0,1],[-1,0],[1,0],[0,-1]];
 let money=800, inv={}, dex={}, questState={};
+// 名譽值加成：名譽越高、任務酬勞越高（0→1x, 300→2x, 600→3x 封頂）
+function honorMult(){ return 1+Math.min(player.honor||0,600)/300; }
+function questPay(base){ return Math.round(base*honorMult()); }
+// 參拜/慶典累積名譽值
+function addHonor(n,reason){ player.honor=(player.honor||0)+n;
+  player.show={emoji:'⭐',text:'名譽 +'+n,t:1.4};
+  if(reason)toast('⭐ '+reason+'　名譽值 +'+n+'（目前 '+player.honor+'）'); save(); }
 function addItem(n,c){inv[n]=(inv[n]||0)+(c||1);}
 function caught(n,verb){ addItem(n); dex[n]=(dex[n]||0)+1;
   const it=ITEMS[n]; player.show={emoji:it.e,text:verb+'了 '+n+'！',t:2.2};
@@ -1204,12 +1256,12 @@ function talkTo(npc){ if(!npc)return;
   const chain=chainOf(npcIdx(npc.name));
   if(st.s<3){ const t=chain[st.s], have=inv[t[0]]||0, it=ITEMS[t[0]];
     const opts=[];
-    if(have>=t[1])opts.push({label:'交付 '+it.e+t[0]+'×'+t[1]+'（獎勵 '+fmt(t[2])+'元）',cb(){
+    if(have>=t[1])opts.push({label:'交付 '+it.e+t[0]+'×'+t[1]+'（獎勵 '+fmt(questPay(t[2]))+'元）',cb(){
       inv[t[0]]-=t[1]; if(inv[t[0]]<=0)delete inv[t[0]];
-      money+=t[2]; st.s++; sfx('jingle'); save();
-      if(st.s>=3)dlg(npc.name,['三個委託都完成了，太感謝你！','我們現在是最好的夥伴——','隨時來找我「結伴同行」，一起環島吧！🎉']);
+      const pay=questPay(t[2]); money+=pay; st.s++; sfx('jingle'); save();
+      if(st.s>=3)dlg(npc.name,['三個委託都完成了，太感謝你！（獎勵 '+fmt(pay)+' 元）','我們現在是最好的夥伴——','隨時來找我「結伴同行」，一起環島吧！🎉']);
       else{const nt2=chain[st.s];
-        dlg(npc.name,['謝謝你！獎勵請收下～','下一個委託：幫我帶 '+ITEMS[nt2[0]].e+nt2[0]+'×'+nt2[1]+'！']);}}});
+        dlg(npc.name,['謝謝你！獎勵 '+fmt(pay)+' 元請收下～'+(player.honor>0?'（名譽加成×'+honorMult().toFixed(1)+'）':''),'下一個委託：幫我帶 '+ITEMS[nt2[0]].e+nt2[0]+'×'+nt2[1]+'！']);}}});
     else opts.push({label:'我去準備！（還差 '+(t[1]-have)+' 個）',cb(){ui=null;}});
     opts.push({label:'❓ '+t[0]+' 要去哪拿？',cb(){
       dlg(npc.name,['「'+t[0]+'」的取得方式：',guideOf(t[0]),'（缺貨也可以到雜貨店🛒購買材料）']);}});
@@ -1302,9 +1354,11 @@ function buildAct(b){
        player.buffLuck=Math.max(player.buffLuck,30);
        player.hunger=Math.min(100,player.hunger+20);toast('🍧 透心涼！飢餓+20');});}},
      {label:'離開',cb(){ui=null;}}]);},
-   temple(){ openMenu(b.label+'：要參拜嗎？',[
-     {label:'參拜（香油錢 100元）🙏',cb(){ if(money>=100){money-=100;sfx('cash');save();ui=null;
+   temple(){ const fest=festival&&festival.b===b;
+     openMenu((fest?'🎉'+festival.name+'　':'')+b.label+'：要參拜嗎？'+(fest?'（慶典中，名譽加倍！）':''),[
+     {label:'參拜（香油錢 100元）🙏'+(fest?'　⭐名譽+6':'　⭐名譽+3'),cb(){ if(money>=100){money-=100;sfx('cash');ui=null;
          player.face=3; player.fishing=null;
+         addHonor(fest?6:3, fest?('參加「'+festival.name+'」大型慶典'):('到「'+b.label+'」參拜'));
          player.pray={t:3,label:b.label,line:FORTUNES[Math.floor(Math.random()*FORTUNES.length)]};}
        else dlg(b.label,['身上的錢不夠呢…','神明微笑著說:心誠則靈，保重身體喔。']);}},
      {label:'離開',cb(){ui=null;}}]);},
@@ -1388,11 +1442,11 @@ function buildAct(b){
       {label:'來一份'+b.food+'（'+b.price+'元）🍗+40',cb(){buyFood(b.price,()=>{
         player.hunger=Math.min(100,player.hunger+40);toast('🍜 '+b.food+'，讚！飢餓+40');});}}];
      if(eateryDone[b.label])opts.push({label:'（委託已完成，常來坐喔！）',cb(){ui=null;}});
-     else opts.push({label:'老闆委託：'+ITEMS[t[0]].e+t[0]+'×'+t[1]+'（酬勞'+fmt(t[2])+'元）',cb(){
+     else opts.push({label:'老闆委託：'+ITEMS[t[0]].e+t[0]+'×'+t[1]+'（酬勞'+fmt(questPay(t[2]))+'元）',cb(){
         const have=inv[t[0]]||0;
         if(have>=t[1]){inv[t[0]]-=t[1];if(inv[t[0]]<=0)delete inv[t[0]];
-          money+=t[2];eateryDone[b.label]=1;sfx('jingle');save();
-          dlg(b.label,['就是這個！太感謝了！','這是酬勞 '+fmt(t[2])+' 元，招牌菜算你半價！']);}
+          const pay=questPay(t[2]);money+=pay;eateryDone[b.label]=1;sfx('jingle');save();
+          dlg(b.label,['就是這個！太感謝了！','這是酬勞 '+fmt(pay)+' 元'+(player.honor>0?'（名譽加成×'+honorMult().toFixed(1)+'）':'')+'，招牌菜算你半價！']);}
         else dlg(b.label,['老闆說：幫我帶 '+ITEMS[t[0]].e+t[0]+'×'+t[1]+' 來，','酬勞 '+fmt(t[2])+' 元！（目前 '+have+'/'+t[1]+'）','💡 取得方式：'+guideOf(t[0])]);}});
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('🍜 '+b.label+'：歡迎光臨！',opts);},
@@ -1800,6 +1854,19 @@ addEventListener('wheel',e=>{ if(!started)return;
 
 /* ================= 更新 ================= */
 let bugSpawnT=0, digSpawnT=0, shellSpawnT=0, animalT=0, citizenT=0, seaT=0, firefly=[];
+let festival=null, festAnnouncedDay=-1; // 寺廟祭典狀態
+// 寺廟祭典排程：每天輪一場（10:00–15:00），開始前10分鐘放送
+function updateFestival(){
+  if(typeof FESTIVALS==='undefined'||!FESTIVALS.length){festival=null;return;}
+  const f=FESTIVALS[(gameDay-1)%FESTIVALS.length], START=10*60, END=15*60;
+  if(gameMin>=START-10&&gameMin<START&&festAnnouncedDay!==gameDay){ festAnnouncedDay=gameDay;
+    toast('📢 祭典放送：'+f.emoji+'『'+f.name+'』10分鐘後在「'+f.temple+'」熱鬧展開！有舞龍舞獅，快來參拜衝名譽值！'); sfx('jingle'); }
+  if(gameMin>=START&&gameMin<END){
+    if(!festival||festival.name!==f.name){ const b=BUILDINGS.find(x=>x.label===f.temple);
+      festival=b?{name:f.name,emoji:f.emoji,b,temple:f.temple}:null;
+      if(festival)toast('🎉 '+f.emoji+'「'+f.name+'」正在「'+f.temple+'」盛大舉行中——舞龍舞獅登場！'); }
+  } else festival=null;
+}
 let stamps={}, townsV={};
 const STAMP_TOTAL=LANDMARKS.filter(l=>l.label).length;
 function collectStamp(label){ if(!label||stamps[label])return;
@@ -1916,6 +1983,7 @@ function update(dt){
   const night=isNight();
   gameMin+=dt;
   if(gameMin>=1440){gameMin-=1440;gameDay++;toast('🌅 第 '+gameDay+' 天開始了！');save();}
+  updateFestival();
   zoom+=(zoomT-zoom)*Math.min(1,dt*8);
   // 乘坐中（火車/纜車）
   if(player.riding){ const r=player.riding;
@@ -3060,6 +3128,8 @@ function draw(){
   for(const l of lamps)if(inView(l.x,l.y))list.push({y:l.y,f:()=>drawLamp(l)});
   for(const b of BUILDINGS){const bx=b.x+b.w/2,by=b.y+b.h;
     if(inView(bx,by,400))list.push({y:by,f:()=>drawBuild(b)});}
+  if(festival&&inView(festival.b.x+festival.b.w/2,festival.b.y+festival.b.h,500))
+    list.push({y:festival.b.y+festival.b.h+42,f:()=>drawFestival(festival)});
   for(const n of NPCS)if(inView(n.x,n.y)){
     if(boarding()&&followers.includes(n.name))continue; // 同乘時隱藏夥伴（避免在地上飛）
     list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});}
@@ -3312,6 +3382,12 @@ function drawUI(){
   ctx.fillStyle='#6b4f2f';ctx.fillText(mtxt,VW-mw2-36,45);
   let by=70;
   ctx.font='bold 14px '+F;
+  { panel(VW-170,by,156,30,.9);ctx.fillStyle='#c9803a'; // 名譽值＋酬勞加成
+    ctx.fillText('⭐ 名譽 '+(player.honor||0)+'（酬勞×'+honorMult().toFixed(1)+'）',VW-158,by+21);by+=36; }
+  if(festival){ const bl=0.7+0.3*Math.sin(tGlobal*4); // 祭典進行中
+    ctx.fillStyle=`rgba(201,57,43,${bl})`;rr(VW-170,by,156,30,8);ctx.fill();
+    ctx.strokeStyle='#8a1f1f';ctx.lineWidth=2;rr(VW-170,by,156,30,8);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 12px '+F;ctx.fillText('🎉 '+festival.name,VW-162,by+20);ctx.font='bold 14px '+F;by+=36; }
   if(player.boat){panel(VW-158,by,144,30,.85);ctx.fillStyle='#3f6f8f';
     ctx.fillText('⛵ '+(player.sailing?'航行中':'擁有小船'),VW-146,by+21);by+=36;}
   if(player.buffSpd>0){panel(VW-158,by,144,30,.85);ctx.fillStyle='#3f7fd6';
@@ -3633,7 +3709,7 @@ function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   outfit:player.outfit,deco:player.deco,tie:player.tie,ownClothes:player.ownClothes,money,inv,dex,boat:player.boat,
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
-  crimes:player.crimes,notoriousUntil:player.notoriousUntil,
+  crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   if(!s)return false;
@@ -3648,7 +3724,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   partnerState=s.partners||{};followers=s.followers||[];
   gameDay=s.gameDay||1;gameMin=s.gameMin??8*60;player.tired=s.tired||0;player.jailed=!!s.jailed;
   eateryDone=s.eateryDone||{};player.toy=s.toy||null;player.love=s.love||null;
-  player.crimes=s.crimes||0;player.notoriousUntil=s.notoriousUntil||0;player.patrolT=20;
+  player.crimes=s.crimes||0;player.notoriousUntil=s.notoriousUntil||0;player.patrolT=20;player.honor=s.honor||0;
   myHomes=s.myHomes||(s.myHome?[{tx:s.myHome.tx,ty:s.myHome.ty,type:'cabin'}]:[]);
   for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0];
     addBuild('myhome',mh.tx,mh.ty,ht.tw,ht.th,(s.name||'小島民')+'的'+ht.n,{htype:ht.id});}
