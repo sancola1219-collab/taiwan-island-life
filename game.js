@@ -1669,7 +1669,7 @@ function buildAct(b){
          if(!owned){ if(money<gun.price){dlg(b.label,['錢不夠…「'+gun.n+'」要 '+fmt(gun.price)+' 元。','這種東西可不便宜。']);return;}
            money-=gun.price; player.ownGuns=player.ownGuns||[]; player.ownGuns.push(gun.n); sfx('cash'); }
          player.toy=gun.n; player.tool=6; save(); ui=null;
-         toast('🔫 裝備「'+gun.n+'」（切到第7格📱側邊「'+gun.n+'」對路人開火）。⚠️殺人是重罪：會被關，出獄只剩500元、名譽歸零！'); }}; });
+         toast('🔫 裝備「'+gun.n+'」（切到第7格📱側邊「'+gun.n+'」對路人開火）。⚠️殺人是重罪：會被關，出獄後身上只剩5000元、名譽歸零！'); }}; });
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('🔫 '+b.label+'（黑市軍火・後果自負）',opts); },
    cityhall(){ // v37 縣市政府：購買農地
@@ -1709,10 +1709,9 @@ function buildAct(b){
        dlg('🌾 你的農地',['稻子長到 '+pc+'% 了…（滿 100% 可收割）','生長期間每遊戲小時自動撥 '+FARM_TICK+' 元補助到你戶頭。','幫它澆澆水、說說好話吧～']); }
    },
    magicschool(){ // v37 綠島魔法屋：職業學習
-     const opts=JOBS.map(j=>({label:(player.job===j.n?'✓ ':'')+j.e+' '+j.n+'（'+j.w+j.we+'・'+j.atk+'）'+(player.job===j.n?' 修習中':' 2萬元'),cb(){
+     const opts=JOBS.map(j=>({label:(player.job===j.n?'✓ ':'')+j.e+' '+j.n+'（'+j.w+j.we+'・'+j.atk+'）'+(player.job===j.n?' 修習中':' 免費'),cb(){
        if(player.job===j.n){dlg(b.label,['你已經是'+j.n+'了！','裝備「'+j.w+'」（工具列第7格）就能施展'+j.atk+'。']);return;}
-       if(money<20000){dlg(b.label,['修習'+j.n+'的學費是 '+fmt(20000)+' 元。','魔法可不是免費的，孩子。']);return;}
-       money-=20000; player.job=j.n; player.toy=j.w; player.tool=6; sfx('jingle'); save(); ui=null;
+       player.job=j.n; player.toy=j.w; player.tool=6; sfx('jingle'); save(); ui=null;
        toast(j.e+' 你習得【'+j.n+'】了！已裝備'+j.w+j.we+'——按互動鍵對人施展'+j.atk+'。⚠️會擊斃路人，後果同槍枝！');}}));
      if(player.job)opts.push({label:'🚪 放棄職業（免費）',cb(){
        const jn=player.job; player.job=null;
@@ -4096,7 +4095,7 @@ function drawUI(){
     drawActor(x+w/2,y+h-110,0,0,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
       hair:'#4a2f1d',shirt:'#d8a04a',race:player.race}); // 囚服(橘)
     ctx.font='13px '+F;ctx.fillStyle='#9a805c';ctx.textAlign='center';
-    ctx.fillText(player.murderRap?'🔫 你開槍殺人被捕！服刑或保釋後都將只剩 500 元、名譽歸零…':'攻擊路人被逮捕了…要乖乖服刑，還是繳保釋金？',x+w/2,y+h-74);ctx.textAlign='left';
+    ctx.fillText(player.murderRap?'🔫 你開槍殺人被捕！出獄後身上會有 5000 元、名譽歸零…':'你被警察逮捕了…出獄後身上會有 5000 元。',x+w/2,y+h-74);ctx.textAlign='left';
     const bw=(w-56)/2;
     ctx.fillStyle='#3f8f5a';rr(x+20,y+h-58,bw,42,10);ctx.fill();
     ctx.fillStyle='#fff';ctx.font='bold 15px '+F;ctx.textAlign='center';
@@ -4105,20 +4104,20 @@ function drawUI(){
       gameDay++;gameMin=6*60;player.tired=0;player.hp=Math.min(100,player.hp+20);
       const pr=BUILDINGS.find(b=>b.t==='prison'); const q=findWalkSafe(pr.tx+2,pr.ty+pr.th+2);
       player.x=q.x;player.y=q.y; ui=null; sfx('chime');
-      if(player.murderRap){money=500;player.honor=0;player.murderRap=false;save();
-        toast('⚖️ 殺人重罪服刑期滿：出獄後身上只剩 500 元、名譽值歸零。重新做人吧。');}
-      else{save();toast('☀️ 服刑期滿，重獲自由！以後別再亂來了。');} }});
-    const canBail=money>=5000;
-    ctx.fillStyle=canBail?'#f0913a':'#b8b0a0';rr(x+36+bw,y+h-58,bw,42,10);ctx.fill();
+      money=5000; // 被警察抓：出獄一律持有 5000 元（設定值、不累加）
+      if(player.murderRap){player.honor=0;player.murderRap=false;save();
+        toast('⚖️ 殺人重罪服刑期滿：出獄後身上有 5000 元、名譽值歸零。重新做人吧。');}
+      else{save();toast('☀️ 服刑期滿，重獲自由！出獄後身上有 5000 元。');} }});
+    ctx.fillStyle='#f0913a';rr(x+36+bw,y+h-58,bw,42,10);ctx.fill();
     ctx.fillStyle='#fff';ctx.textAlign='center';
-    ctx.fillText('繳保釋金 5000元',x+36+bw+bw/2,y+h-32);ctx.textAlign='left';
-    uiHits.push({x:x+36+bw,y:y+h-58,w:bw,h:42,cb(){ if(money<5000){toast('保釋金不夠 5000 元…只能服刑了。');return;}
-      money-=5000; player.jailed=false;
+    ctx.fillText('立刻出獄（不用等）',x+36+bw+bw/2,y+h-32);ctx.textAlign='left';
+    uiHits.push({x:x+36+bw,y:y+h-58,w:bw,h:42,cb(){ player.jailed=false;
       const pr=BUILDINGS.find(b=>b.t==='prison'); const q=findWalkSafe(pr.tx+2,pr.ty+pr.th+2);
       player.x=q.x;player.y=q.y; ui=null; sfx('cash');
-      if(player.murderRap){money=500;player.honor=0;player.murderRap=false;save();
-        toast('⚖️ 你有殺人重罪在身，即使保釋，出獄後也只剩 500 元、名譽歸零。');}
-      else{save();toast('💸 繳了保釋金，走出監獄大門。');} }});
+      money=5000; // 被警察抓：出獄一律持有 5000 元（設定值、不累加）
+      if(player.murderRap){player.honor=0;player.murderRap=false;save();
+        toast('⚖️ 你有殺人重罪在身，出獄後身上有 5000 元、名譽歸零。');}
+      else{save();toast('🚶 走出監獄大門，身上有 5000 元。');} }});
   }
   if(ui==='help'){
     const w=Math.min(660,VW-60),x=VW/2-w/2,y=50;
