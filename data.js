@@ -312,7 +312,7 @@ const LANDMARKS=[
  {t:'oldstreet',tx:148,ty:254,label:'檜意森活村',lines:['日式檜木老屋群，','空氣裡有淡淡的檜木香。']},
  {t:'saltmtn',tx:151,ty:311,label:'七股鹽山',lines:['雪白的鹽山！','其實是鹽堆成的小山，還能爬上去。']},
  {t:'temple',tx:166,ty:332,label:'台南孔廟'},
- {t:'weaponshop',tx:198,ty:52,label:'萬華地下軍火'},  // v33 黑市武器店
+ {t:'weaponshop',tx:198,ty:54,label:'萬華地下軍火'},  // v33 黑市武器店（v37 南移2格，避開雜貨店）
  {t:'weaponshop',tx:178,ty:363,label:'鹽埕黑市軍火'}, // v33 黑市武器店
  {t:'temple',tx:153,ty:294,label:'鹽水武廟'},        // v33 鹽水蜂炮
  {t:'temple',tx:187,ty:389,label:'東港東隆宮'},      // v33 東港迎王
@@ -326,7 +326,7 @@ const LANDMARKS=[
  {t:'oldstreet',tx:245,ty:67,label:'宜蘭傳藝中心',lines:['傳統藝術大街！','捏麵人、糖蔥、布袋戲…']},
  {t:'waterfall',tx:193,ty:71,label:'滿月圓瀑布',lines:['森林步道深處的瀑布，','負離子滿滿！']},
  {t:'rockform',tx:165,ty:450,label:'花瓶岩',lines:['小琉球的地標！','像插著綠色植物的花瓶。']},
- {t:'rockform',tx:59,ty:285,label:'吉貝沙尾',lines:['金黃色的沙灘伸進海裡，','退潮時像一條沙子做的尾巴！']},
+ {t:'rockform',tx:57,ty:285,label:'吉貝沙尾',lines:['金黃色的沙灘伸進海裡，','退潮時像一條沙子做的尾巴！']}, // v37 西移上岸（原本泡在海裡）
  // 特別的人物景點
  {t:'person',tx:218,ty:33,label:'珊珊老師',lines:['基隆最溫柔的幼稚園老師！','黑色短髮、大大的眼鏡，','教過的小朋友都記得她的笑容。','「要乖乖吃飯、好好長大喔！」']},
  {t:'person',tx:177,ty:64,label:'謝麗珠阿嬤',lines:['鶯歌最可愛的阿嬤！','黑色捲髮、笑瞇瞇的眼睛，','煮的飯菜香味整條街都聞得到。','「呷飽未？來，阿嬤夾菜給你～」']},
@@ -450,6 +450,14 @@ const GUNS=[
  {n:'雷明頓霰彈槍',e:'🔫',price:60000},
  {n:'AK步槍',e:'🔫',price:120000},
  {n:'狙擊步槍',e:'🔫',price:250000},
+ {n:'次元砲',e:'🛸',price:50000}, // v37 對付海上哥吉拉專用重砲（也能傷人，後果同槍枝）
+];
+/* ---------- 職業（綠島魔法屋習得，v37） ---------- */
+const JOBS=[
+ {n:'魔法師',e:'🧙',w:'木杖',we:'🪄',atk:'火球',desc:'手持木杖，向前方射出火球'},
+ {n:'劍士',e:'⚔️',w:'大劍',we:'🗡️',atk:'地裂斬',desc:'掄起大劍朝地面砍出衝擊波'},
+ {n:'忍者',e:'🥷',w:'手裡劍',we:'✴️',atk:'手裡劍',desc:'甩出高速旋轉的手裡劍'},
+ {n:'道士',e:'☯️',w:'魔法球',we:'🔮',atk:'天雷',desc:'高舉魔法球，召喚天雷劈落目標'},
 ];
 /* ---------- 景點通用台詞池（每次點擊隨機組合） ---------- */
 const LM_POOL={
@@ -498,7 +506,7 @@ const EATERIES=[
  {tx:193,ty:49,label:'通化街麵線',food:'蚵仔麵線',price:60,icon:'🍜'},{tx:187,ty:44,label:'萬華胡椒餅',food:'胡椒餅',price:55,icon:'🥮'},
  {tx:175,ty:73,label:'中壢牛肉麵',food:'紅燒牛肉麵',price:130,icon:'🍜'},{tx:168,ty:131,label:'苗栗客家湯圓',food:'客家鹹湯圓',price:60,icon:'🍡'},
  {tx:157,ty:174,label:'逢甲大腸包小腸',food:'大腸包小腸',price:60,icon:'🌭'},{tx:160,ty:172,label:'一中街豐仁冰',food:'豐仁冰',price:50,icon:'🍧'},
- {tx:178,ty:216,label:'南投意麵',food:'南投意麵',price:55,icon:'🍜'},{tx:185,ty:226,label:'集集水里肉圓',food:'水里肉圓',price:60,icon:'🍡'},
+ {tx:178,ty:216,label:'南投意麵',food:'南投意麵',price:55,icon:'🍜'},{tx:184,ty:227,label:'集集水里肉圓',food:'水里肉圓',price:60,icon:'🍡'},
  {tx:156,ty:239,label:'虎尾肉圓',food:'虎尾肉圓',price:55,icon:'🍡'},{tx:165,ty:302,label:'新營牛肉湯',food:'溫體牛肉湯',price:120,icon:'🍲'},
  {tx:160,ty:331,label:'安平蝦捲',food:'安平蝦捲',price:80,icon:'🍤'},{tx:176,ty:353,label:'旗山香蕉蛋糕',food:'香蕉蛋糕',price:55,icon:'🍌'},
  {tx:173,ty:361,label:'六合木瓜牛奶',food:'木瓜牛奶',price:60,icon:'🥤'},{tx:190,ty:401,label:'潮州冷熱冰',food:'燒麻糬冷熱冰',price:55,icon:'🍨'},

@@ -288,6 +288,58 @@ const BUILDING_DRAWS={
   ctx.fillStyle='#111';rr(cx2+2,y+h-26,20,26,3);ctx.fill(); // 黑門
   ctx.font='15px serif';ctx.textAlign='center';ctx.fillText('🔫',x+w-16,y-2);ctx.textAlign='left';
   drawRoofSign(cx2,y-58,'🔫 '+b.label,'#8a1f1f');},
+ cityhall(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#f0ede4';rr(x,y-40,w,h+40,4);ctx.fill(); // 政府大樓
+  ctx.fillStyle='#d5d0c2';ctx.fillRect(x-6,y-44,w+12,8);
+  for(let i=0;i<5;i++){ctx.fillStyle='#e2ddd0';ctx.fillRect(x+5+i*(w-14)/4,y-36,6,h+36);} // 柱列
+  ctx.fillStyle='#c4beac';ctx.beginPath(); // 三角楣
+  ctx.moveTo(x-6,y-44);ctx.lineTo(cx2,y-62);ctx.lineTo(x+w+6,y-44);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#5a5548';ctx.fillRect(cx2-1.5,y-84,3,24); // 旗桿＋旗
+  ctx.fillStyle='#c94f43';ctx.beginPath();const fw=Math.sin(tGlobal*3)*2;
+  ctx.moveTo(cx2+1.5,y-84);ctx.lineTo(cx2+20,y-80+fw);ctx.lineTo(cx2+1.5,y-74);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#cfe3f5';for(let i=0;i<3;i++)rr(x+10+i*(w-30)/2,y-4,18,16,3),ctx.fill(); // 窗
+  ctx.fillStyle='#7a6a52';rr(cx2-13,y+h-30,26,30,3);ctx.fill(); // 大門
+  drawRoofSign(cx2,y-74,'🏛️ '+b.label,'#3f5f8f');},
+ magicschool(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#8a8296';rr(x,y-30,w,h+30,5);ctx.fill(); // 石造塔身
+  ctx.strokeStyle='#6a6478';ctx.lineWidth=1.5;
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x,y-24+i*16);ctx.lineTo(x+w,y-24+i*16);ctx.stroke();} // 石縫
+  ctx.fillStyle='#4a3a6a';ctx.beginPath(); // 高聳尖塔屋頂
+  ctx.moveTo(x-10,y-26);ctx.lineTo(cx2,y-86);ctx.lineTo(x+w+10,y-26);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#3a2d55';ctx.beginPath(); // 小尖塔
+  ctx.moveTo(x+w-18,y-24);ctx.lineTo(x+w-8,y-58);ctx.lineTo(x+w+2,y-24);ctx.closePath();ctx.fill();
+  const gl=isNight()?0.9:0.55+0.25*Math.sin(tGlobal*2);
+  ctx.fillStyle=`rgba(255,214,110,${gl})`; // 發光尖拱窗
+  ctx.beginPath();ctx.moveTo(x+12,y+4);ctx.lineTo(x+12,y-10);ctx.arc(x+19,y-10,7,Math.PI,0);ctx.lineTo(x+26,y+4);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(x+w-26,y+4);ctx.lineTo(x+w-26,y-10);ctx.arc(x+w-19,y-10,7,Math.PI,0);ctx.lineTo(x+w-12,y+4);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#4a2f1d';ctx.beginPath(); // 木拱門
+  ctx.moveTo(cx2-11,y+h);ctx.lineTo(cx2-11,y+h-20);ctx.arc(cx2,y+h-20,11,Math.PI,0);ctx.lineTo(cx2+11,y+h);ctx.closePath();ctx.fill();
+  ctx.font='13px serif';ctx.textAlign='center'; // 漂浮星光
+  for(let i=0;i<3;i++)ctx.fillText('✨',cx2-26+i*26,y-92+Math.sin(tGlobal*2+i*2.1)*4);
+  ctx.fillText('🦉',x+w-8,y-60);ctx.textAlign='left';
+  drawRoofSign(cx2,y-104,'🧙 '+b.label,'#4a3a6a');},
+ farm(b){const x=b.x,y=b.y,w=b.w,h=b.h;
+  const f=b.farm||{}; const now=gameDay*1440+gameMin;
+  ctx.fillStyle='#8a6b3a';rr(x-3,y-3,w+6,h+6,4);ctx.fill(); // 田埂
+  ctx.fillStyle='#a5824e';ctx.fillRect(x,y,w,h); // 土壤
+  ctx.strokeStyle='#8f6d3d';ctx.lineWidth=3;ctx.lineCap='round';
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x+4,y+8+i*(h-16)/3);ctx.lineTo(x+w-4,y+8+i*(h-16)/3);ctx.stroke();}ctx.lineCap='butt';
+  if(f.state==='grow'){ const gr=Math.min(1,(now-f.at)/FARM_GROW);
+    ctx.textAlign='center';
+    for(let r2=0;r2<4;r2++)for(let c2=0;c2<4;c2++){
+      const px3=x+10+c2*(w-20)/3, py3=y+9+r2*(h-16)/3;
+      if(gr>=1){ctx.font='15px serif';ctx.fillText('🌾',px3,py3+Math.sin(tGlobal*2+c2)*1.5);}
+      else if(gr>0.5){ctx.font='12px serif';ctx.fillText('🌱',px3,py3);}
+      else{ctx.strokeStyle='#4e8a3f';ctx.lineWidth=2;ctx.lineCap='round';
+        ctx.beginPath();ctx.moveTo(px3,py3);ctx.lineTo(px3-3,py3-5-gr*6);
+        ctx.moveTo(px3,py3);ctx.lineTo(px3+3,py3-5-gr*6);ctx.stroke();ctx.lineCap='butt';}}
+    ctx.textAlign='left';
+    if(gr>=1){ctx.font='bold 13px "Microsoft JhengHei"';ctx.fillStyle='#c9803a';ctx.textAlign='center';
+      ctx.fillText('🌾 可收割！',x+w/2,y-16);ctx.textAlign='left';} }
+  // 木牌
+  ctx.fillStyle='#7a5a2f';ctx.fillRect(x+w-8,y+h-2,4,10);
+  ctx.fillStyle='#b8834a';rr(x+w-20,y+h-14,28,14,3);ctx.fill();
+  ctx.font='9px serif';ctx.textAlign='center';ctx.fillText('🌾',x+w-6,y+h-3);ctx.textAlign='left';},
  registry(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
   ctx.fillStyle='#e8ecf0';rr(x,y-38,w,h+38,4);ctx.fill(); // 官方建築
   ctx.fillStyle='#c9ccd2';ctx.fillRect(x-6,y-42,w+12,8);
@@ -770,7 +822,8 @@ const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],la
   oldstreet:[6,3],highheel:[3,3],rockform:[4,2],archbridge:[6,2],canoe:[3,2],cablecar:[3,3],
   waterfall:[4,3],catvillage:[3,2],ferris:[4,3],rainbowhouse:[4,2],saltmtn:[3,3],person:[3,2],
   eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2],giftshop:[3,3],registry:[4,3],
-  salon:[3,3],accshop:[3,3],shoeshop:[3,3],clothshop:[4,3],weaponshop:[3,3]};
+  salon:[3,3],accshop:[3,3],shoeshop:[3,3],clothshop:[4,3],weaponshop:[3,3],
+  cityhall:[4,3],magicschool:[3,3],farm:[2,2]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines,steam:L.steam,isLm:true});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 // 港口自動貼齊海岸線（找最近的「臨陸海面」放置碼頭）
@@ -797,6 +850,22 @@ CABLECARS.forEach(c=>{
   addBuild('cablecar',Math.round(c.a[0])-1,Math.round(c.a[1])-1,3,3,c.a[2],{line:c,end:'a'});
   addBuild('cablecar',Math.round(c.b[0])-1,Math.round(c.b[1])-1,3,3,c.b[2],{line:c,end:'b'});
 });
+// 縣市政府（v37）：每縣市一座、設於縣治，可購買農地。座標取自「已放大」的 TOWNS，不經 data.js scale pass
+{ const GOV_SEAT={'台北':'信義','新北':'板橋','基隆':'廟口','桃園':'桃園區','新竹':'城隍廟','台中':'逢甲',
+    '彰化':'八卦山','雲林':'斗六','嘉義':'文化路','台南':'安平','高雄':'六合','花蓮':'東大門',
+    '台東':'鐵花村','澎湖':'馬公','連江':'南竿','金門':'金城'};
+  const GOV_FIX={'苗栗':[244,192],'宜蘭':[360,100],'南投':[260,315],'屏東':[288,558]}; // 縣治不在 TOWNS 裡，手放（已放大座標）
+  const CITY_SET=new Set(['台北','新北','桃園','台中','台南','高雄','基隆','新竹','嘉義']);
+  for(const c of [...new Set(TOWNS.map(t=>t.c))]){ let bx,by;
+    if(GOV_FIX[c]){[bx,by]=GOV_FIX[c];}
+    else{const tw=TOWNS.find(t=>t.n===GOV_SEAT[c])||TOWNS.find(t=>t.c===c);bx=tw.tx;by=tw.ty;}
+    const [cw,ch2]=(c==='連江')?[3,3]:[4,3]; // 南竿島太小，連江縣政府用縮小版
+    const [gx,gy]=fitSpot(Math.round(bx)+3,Math.round(by)-2,cw,ch2);
+    addBuild('cityhall',gx,gy,cw,ch2,c+(CITY_SET.has(c)?'市政府':'縣政府'),{county:c});} }
+// 綠島魔法屋（v37）：職業學習所
+{ const gi=TOWNS.find(t=>t.n==='綠島');
+  const [mx,my]=fitSpot(Math.round(gi.tx)+4,Math.round(gi.ty)-2,3,3);
+  addBuild('magicschool',mx,my,3,3,'綠島魔法屋'); }
 // 民宅（各鄉鎮周邊散佈多間小房子，約人身大小、附門牌招牌）
 { rs=SEED+7;
   const SURNAMES=['陳','林','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','廖','賴','周','徐'];
@@ -806,7 +875,7 @@ CABLECARS.forEach(c=>{
     [-10,-4],[-2,6],[6,-5],[10,2],[-6,-6],[4,6],[-10,4],[10,-3],[0,-7],[-7,6],[8,5],[-11,1],
     [-11,-3],[11,-1],[-3,7],[3,7],[-11,4],[11,4],[1,-8],[-8,-6],[8,-6],[-12,1],[12,1],[6,7]];
   for(const tw of TOWNS){ let placed=0;
-    for(const [ox,oy] of offs){ if(placed>=16)break;
+    for(const [ox,oy] of offs){ if(placed>=8)break; // v37 民宅減半（原16間/鎮）
       const hx=tw.tx+ox+Math.floor(rand()*3)-1, hy=tw.ty+oy+Math.floor(rand()*3)-1;
       let ok=true;
       for(let dy=-1;dy<=1&&ok;dy++)for(let dx=-1;dx<=2&&ok;dx++){const t=T(hx+dx,hy+dy);
@@ -1057,6 +1126,98 @@ function drawCorpse(c){ const x=c.x,y=c.y;
   for(const ox of [-3,3]){ctx.beginPath();ctx.moveTo(x-18+ox-2,y-6);ctx.lineTo(x-18+ox+2,y-2);
     ctx.moveTo(x-18+ox+2,y-6);ctx.lineTo(x-18+ox-2,y-2);ctx.stroke();}
   ctx.restore(); }
+// v37 警察（包圍圈用）：制服藍＋警帽；被打倒＝躺平冒星星
+function drawCop(cp){
+  if(cp.down){
+    ctx.save();ctx.translate(cp.x,cp.y);ctx.rotate(1.45);ctx.translate(-cp.x,-cp.y);
+    drawActor(cp.x,cp.y,2,0,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:'#1a1a1a',shirt:'#27406e',outfit:'tee'});
+    ctx.restore();
+    ctx.font='13px serif';ctx.textAlign='center';
+    ctx.fillText('💫',cp.x,cp.y-24+Math.sin(tGlobal*4)*2);ctx.textAlign='left';return;}
+  drawActor(cp.x,cp.y,cp.face||2,cp.walk||0,
+    {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:'#1a1a1a',shirt:'#27406e',outfit:'tee'});
+  ctx.fillStyle='#1f3050';ctx.beginPath();ctx.arc(cp.x,cp.y-42,7.5,Math.PI,0);ctx.fill(); // 警帽
+  ctx.fillRect(cp.x-8.5,cp.y-43,17,3);
+  ctx.fillStyle='#ffd97a';ctx.fillRect(cp.x-1.5,cp.y-46,3,2.5); // 帽徽
+}
+// v37 鋸齒閃電
+function drawBolt(x1,y1,x2,y2,alpha,w){
+  ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x1,y1);
+  const seg=6, fr=Math.floor(tGlobal*18);
+  for(let i=1;i<seg;i++){const t2=i/seg;
+    ctx.lineTo(x1+(x2-x1)*t2+(hsh(i,fr)-0.5)*34,y1+(y2-y1)*t2);}
+  ctx.lineTo(x2,y2);
+  ctx.strokeStyle=`rgba(255,235,110,${alpha})`;ctx.lineWidth=w;ctx.stroke();
+  ctx.strokeStyle=`rgba(255,255,255,${alpha*0.85})`;ctx.lineWidth=w*0.4;ctx.stroke();
+  ctx.lineCap='butt';}
+// v37 哥吉拉：體型約人物10倍、會噴射雷電的海上巨獸
+function drawGodzilla(g){
+  const x=g.x, y=g.y, bob=Math.sin(tGlobal*1.1)*5, d2=g.dir;
+  const body=g.hit>0?'#8aa07a':'#38503f', darker=g.hit>0?'#6f8560':'#2a3d30', belly='#b7c294', fin='#8fe0ea';
+  // 海面波紋
+  ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.ellipse(x,y+8,150+Math.sin(tGlobal*2)*10,30,0,0,7);ctx.stroke();
+  ctx.fillStyle='rgba(0,0,60,.22)';ctx.beginPath();ctx.ellipse(x,y+8,135,26,0,0,7);ctx.fill();
+  ctx.save();ctx.translate(x,y+bob);if(d2<0){ctx.scale(-1,1);}
+  // 尾巴（甩動）
+  const tw2=Math.sin(tGlobal*1.6)*30;
+  ctx.strokeStyle=body;ctx.lineCap='round';ctx.lineWidth=44;
+  ctx.beginPath();ctx.moveTo(-60,-80);ctx.quadraticCurveTo(-170,-60+tw2*0.4,-235,-20+tw2);ctx.stroke();
+  ctx.lineWidth=18;ctx.beginPath();ctx.moveTo(-225,-22+tw2);ctx.quadraticCurveTo(-268,-8+tw2*1.2,-292,6+tw2*1.4);ctx.stroke();ctx.lineCap='butt';
+  // 身體
+  ctx.fillStyle=body;ctx.beginPath();
+  ctx.moveTo(-95,4);ctx.quadraticCurveTo(-120,-140,-58,-236);
+  ctx.quadraticCurveTo(-30,-278,18,-286);ctx.quadraticCurveTo(80,-286,96,-244);
+  ctx.quadraticCurveTo(108,-190,84,-120);ctx.quadraticCurveTo(102,-60,88,4);ctx.closePath();ctx.fill();
+  // 肚皮鱗甲
+  ctx.fillStyle=belly;ctx.beginPath();
+  ctx.moveTo(-18,0);ctx.quadraticCurveTo(-40,-120,4,-212);ctx.quadraticCurveTo(48,-206,58,-150);
+  ctx.quadraticCurveTo(66,-70,54,0);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(90,100,60,.5)';ctx.lineWidth=2.5;
+  for(let i=0;i<7;i++){ctx.beginPath();ctx.moveTo(-24+i*1.5,-24-i*26);ctx.quadraticCurveTo(16,-34-i*26,56-i*1.5,-26-i*26);ctx.stroke();}
+  // 背鰭（三排、發光）
+  ctx.fillStyle=fin;
+  for(let i=0;i<5;i++){const fy=-60-i*44, fs=26-i*3;
+    ctx.beginPath();ctx.moveTo(-78+ i*-4,fy);ctx.lineTo(-100-i*6,fy-fs);ctx.lineTo(-64+i*-4,fy-fs*0.6);ctx.closePath();ctx.fill();}
+  ctx.fillStyle=darker;
+  for(let i=0;i<4;i++){const fy=-90-i*46;
+    ctx.beginPath();ctx.moveTo(-60,fy);ctx.lineTo(-84,fy-30);ctx.lineTo(-48,fy-20);ctx.closePath();ctx.fill();}
+  // 手臂
+  ctx.strokeStyle=body;ctx.lineWidth=24;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(52,-170);ctx.quadraticCurveTo(92,-150,100,-118+Math.sin(tGlobal*2)*8);ctx.stroke();ctx.lineCap='butt';
+  // 頭
+  ctx.fillStyle=body;ctx.beginPath();
+  ctx.moveTo(18,-286);ctx.quadraticCurveTo(50,-320,92,-312);ctx.quadraticCurveTo(140,-300,150,-278);
+  ctx.quadraticCurveTo(150,-262,118,-258);ctx.quadraticCurveTo(96,-238,60,-244);ctx.quadraticCurveTo(24,-252,18,-286);ctx.closePath();ctx.fill();
+  // 下顎（開口）
+  const jaw=g.bolt>0?14:4+Math.sin(tGlobal*3)*2;
+  ctx.fillStyle=darker;ctx.beginPath();
+  ctx.moveTo(70,-244);ctx.quadraticCurveTo(120,-240,142,-252);
+  ctx.lineTo(136,-236+jaw);ctx.quadraticCurveTo(100,-224+jaw,72,-236);ctx.closePath();ctx.fill();
+  // 牙齒
+  ctx.fillStyle='#f2f0e0';
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(88+i*14,-247);ctx.lineTo(92+i*14,-238);ctx.lineTo(96+i*14,-247);ctx.closePath();ctx.fill();}
+  // 眼睛（兇）
+  ctx.fillStyle='#ffdf60';ctx.beginPath();ctx.ellipse(84,-284,7,5,0,0,7);ctx.fill();
+  ctx.fillStyle='#c0281e';ctx.beginPath();ctx.arc(86,-284,2.6,0,7);ctx.fill();
+  ctx.strokeStyle=darker;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(72,-294);ctx.lineTo(96,-288);ctx.stroke();
+  ctx.restore();
+  // 噴射雷電（從嘴部往目標）
+  if(g.bolt>0){ const mx=x+d2*130, my=y+bob-250;
+    drawBolt(mx,my,g.btx,g.bty,Math.min(1,g.bolt*3),7);
+    drawBolt(mx,my,(mx+g.btx)/2+18,(my+g.bty)/2+30,Math.min(1,g.bolt*2.4),3); // 分岔
+    ctx.fillStyle=`rgba(180,240,255,${Math.min(1,g.bolt*2)})`;
+    ctx.beginPath();ctx.arc(mx,my,12+Math.sin(tGlobal*30)*4,0,7);ctx.fill();
+    ctx.fillStyle=`rgba(255,255,190,${Math.min(1,g.bolt*2)*0.7})`;
+    ctx.beginPath();ctx.arc(g.btx,g.bty,18*(1-g.bolt)+8,0,7);ctx.fill(); }
+  // 血條＋名牌
+  const bw=160, hpw=bw*g.hp/GODZ_HP;
+  ctx.fillStyle='rgba(20,20,30,.65)';rr(x-bw/2-4,y-386,bw+8,14,7);ctx.fill();
+  ctx.fillStyle='#d8453a';rr(x-bw/2,y-383,hpw,8,4);ctx.fill();
+  ctx.font='bold 15px "Microsoft JhengHei"';ctx.textAlign='center';
+  ctx.fillStyle='#fff';ctx.fillText('🦖 哥吉拉',x,y-394);ctx.textAlign='left';
+}
 // ---- 飾品（20種；slot: head 戴頭上 / body 戴身上）----
 const ACCESSORIES=[
  {id:'cap',n:'棒球帽',e:'🧢',slot:'head',price:400},
@@ -1511,6 +1672,55 @@ function buildAct(b){
          toast('🔫 裝備「'+gun.n+'」（切到第7格📱側邊「'+gun.n+'」對路人開火）。⚠️殺人是重罪：會被關，出獄只剩500元、名譽歸零！'); }}; });
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('🔫 '+b.label+'（黑市軍火・後果自負）',opts); },
+   cityhall(){ // v37 縣市政府：購買農地
+     openMenu('🏛️ '+b.label+'（農地承辦處）',[
+       {label:'🌾 購買農地（'+fmt(FARM_PRICE)+'元）目前 '+myFarms.length+'/'+FARM_MAX+' 塊',cb(){
+         if(myFarms.length>=FARM_MAX){dlg(b.label,['你名下已有 '+FARM_MAX+' 塊農地，不能再買了！','先把現有的田顧好吧～']);return;}
+         if(money<FARM_PRICE){dlg(b.label,['農地一塊 '+fmt(FARM_PRICE)+' 元喔。','錢不夠…先去賺點錢吧！']);return;}
+         const [fx2,fy2]=fitSpot(b.tx+6,b.ty+1,2,2);
+         let bad=false; // fitSpot 失敗會原樣返回，需再驗證一次
+         for(const bb of BUILDINGS)if(fx2<bb.tx+bb.tw+1&&fx2+3>bb.tx&&fy2<bb.ty+bb.th+2&&fy2+3>bb.ty){bad=true;break;}
+         if(bad){dlg(b.label,['這附近的地都登記完了…','換一個縣市政府買買看吧！']);return;}
+         money-=FARM_PRICE; const f={tx:fx2,ty:fy2,state:'empty',at:0,pay:0};
+         myFarms.push(f); addFarmBuild(f); sfx('cash'); save(); ui=null;
+         toast('🌾 買到農地了！就在'+b.label+'旁邊（小地圖附近找木牌）——過去播種吧！');}},
+       {label:'看看介紹',cb(){dlg(b.label,['這裡是'+(b.county||'')+'的行政中心。','想當農夫嗎？我們有平價農地放領專案！','買農地→播種→等它長大，期間每小時還有補助金領喔。']);}},
+       {label:'離開',cb(){ui=null;}}]); },
+   farm(){ const f=b.farm; // v37 農地：播種／收割
+     if(!f||!myFarms.includes(f)){dlg('農地',['這是別人家的田，不要亂踩喔！']);return;}
+     if(f.state==='empty'){
+       openMenu('🌾 你的農地（休耕中）',[
+         {label:'🌱 播種（'+FARM_SEED+'元）',cb(){
+           if(money<FARM_SEED){dlg('農地',['種子和肥料要 '+FARM_SEED+' 元喔。']);return;}
+           money-=FARM_SEED; f.state='grow'; f.at=absMin(); f.pay=f.at; sfx('chime'); save(); ui=null;
+           toast('🌱 播種完成！一個遊戲天(24分鐘)後可收割；生長期間每遊戲小時自動+'+FARM_TICK+'元補助。');}},
+         {label:'離開',cb(){ui=null;}}]);
+       return; }
+     const el=absMin()-f.at;
+     if(el>=FARM_GROW){
+       openMenu('🌾 你的農地（稻穗金黃、可以收割了！）',[
+         {label:'🌾 收割！（+'+fmt(FARM_HARVEST)+'元）',cb(){
+           money+=FARM_HARVEST; f.state='empty'; sfx('cash'); save(); ui=null;
+           for(let i=0;i<3;i++)puffs.push({x:b.x+10+i*24,y:b.y+20,t:0.5});
+           toast('🌾💰 大豐收！賣出稻穀獲得 '+fmt(FARM_HARVEST)+' 元！可以再播種囉。');}},
+         {label:'離開',cb(){ui=null;}}]);
+     } else {
+       const pc=Math.floor(el/FARM_GROW*100);
+       dlg('🌾 你的農地',['稻子長到 '+pc+'% 了…（滿 100% 可收割）','生長期間每遊戲小時自動撥 '+FARM_TICK+' 元補助到你戶頭。','幫它澆澆水、說說好話吧～']); }
+   },
+   magicschool(){ // v37 綠島魔法屋：職業學習
+     const opts=JOBS.map(j=>({label:(player.job===j.n?'✓ ':'')+j.e+' '+j.n+'（'+j.w+j.we+'・'+j.atk+'）'+(player.job===j.n?' 修習中':' 2萬元'),cb(){
+       if(player.job===j.n){dlg(b.label,['你已經是'+j.n+'了！','裝備「'+j.w+'」（工具列第7格）就能施展'+j.atk+'。']);return;}
+       if(money<20000){dlg(b.label,['修習'+j.n+'的學費是 '+fmt(20000)+' 元。','魔法可不是免費的，孩子。']);return;}
+       money-=20000; player.job=j.n; player.toy=j.w; player.tool=6; sfx('jingle'); save(); ui=null;
+       toast(j.e+' 你習得【'+j.n+'】了！已裝備'+j.w+j.we+'——按互動鍵對人施展'+j.atk+'。⚠️會擊斃路人，後果同槍枝！');}}));
+     if(player.job)opts.push({label:'🚪 放棄職業（免費）',cb(){
+       const jn=player.job; player.job=null;
+       if(JOBS.some(j=>j.w===player.toy))player.toy=null;
+       save(); ui=null; toast('你放下了'+jn+'的身分，回歸平凡島民。');}});
+     opts.push({label:'看看介紹',cb(){dlg(b.label,['歡迎來到綠島魔法屋！','（一隻貓頭鷹瞪著你看）','這裡傳授四大職業：魔法師、劍士、忍者、道士。','習得後頭上會亮出職業名號，很威風的！','⚠️ 職業攻擊威力極大，砸在路人身上是會出人命的…']);}});
+     opts.push({label:'離開',cb(){ui=null;}});
+     openMenu('🧙 '+b.label+'（職業學習所）',opts); },
    registry(){ const L=player.love;
      if(L&&L.stage==='married'){ openMenu('💒 '+b.label+'：'+L.name+' 是你的配偶',[
        {label:(inv['結婚證書']?'✓已有結婚證書':'補領結婚證書📜'),cb(){
@@ -1673,20 +1883,60 @@ function tryShake(tr){ tr.shake=0.5;
 }
 const ATTACK_LOOT=['貝殼','木材','雜草','礦石','橘子'];
 function isGun(n){ return typeof GUNS!=='undefined'&&GUNS.some(g=>g.n===n); }
-function heldEmoji(n){ if(!n)return '🎁'; if(ITEMS[n])return ITEMS[n].e; const g=isGun(n)&&GUNS.find(x=>x.n===n); return g?g.e:'🎁'; }
-function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(player.tool===6&&(['彈弓','水槍'].includes(player.toy)||isGun(player.toy)));} // 鏟/斧/矛/彈弓水槍/槍枝
-// 開槍擊殺路人：倒地→數秒後移除→補生維持人數平衡；觸發兇殺通緝＋出獄重罰
-function killCitizen(c){
+function jobOfWeapon(n){ return typeof JOBS!=='undefined'?JOBS.find(j=>j.w===n):null; } // v37 職業武器
+function heldEmoji(n){ if(!n)return '🎁'; if(ITEMS[n])return ITEMS[n].e; const g=isGun(n)&&GUNS.find(x=>x.n===n); if(g)return g.e; const j=jobOfWeapon(n); return j?j.we:'🎁'; }
+function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(player.tool===6&&(['彈弓','水槍'].includes(player.toy)||isGun(player.toy)||!!jobOfWeapon(player.toy)));} // 鏟/斧/矛/彈弓水槍/槍枝/職業武器
+// 開槍/職業技擊殺路人：倒地→數秒後移除→補生維持人數平衡；觸發兇殺通緝＋出獄重罰
+function killCitizen(c,verb){
   player.swing=0.28; sfx('swing');
   puffs.push({x:c.x,y:c.y-20,t:0.5}); puffs.push({x:c.x+6,y:c.y-14,t:0.6});
   drops.push({x:c.x+(Math.random()*16-8),y:c.y+8,coin:80+Math.floor(Math.random()*220)});
   c.dead=true; c.deadT=6; c.vx=0; c.vy=0; c.flee=0; c.talk=0;
   if(c.buddy){ c.buddy.buddy=null; c.buddy.flee=6; c.buddy.talk=0; } c.buddy=null;
-  toast('🔫💥 你開槍擊倒了'+(c.pname||'路人')+'！他倒在路上…目擊的路人驚慌報警！');
+  toast((verb||'🔫💥 你開槍')+'擊倒了'+(c.pname||'路人')+'！他倒在路上…目擊的路人驚慌報警！');
   player.crimes=(player.crimes||0)+3; player.murderRap=true;
   player.notoriousUntil=Math.max(player.notoriousUntil||0,gameDay+2); player.patrolT=12+Math.random()*18;
   if(!player.wanted)startWanted(c.x,c.y);
-  player.wanted.phase='grace'; player.wanted.t=Math.min(player.wanted.t,5); save();
+  player.wanted.phase='grace'; player.wanted.t=Math.min(player.wanted.t,5); player.wanted.cops=null; save();
+}
+// v37 職業攻擊：帶各職業特效，命中路人＝擊斃（後果同槍枝）、命中警察＝打倒
+function jobAttack(c,job){
+  const isCop=player.wanted&&player.wanted.cops&&player.wanted.cops.includes(c);
+  if(job.n==='魔法師'){ sfx('swing');
+    fx.push({kind:'proj',e:'🔥',x:player.x+DIRV[player.face][0]*14,y:player.y-26,x2:c.x,y2:c.y-16,t:0,dur:0.22}); }
+  else if(job.n==='忍者'){ sfx('swing');
+    fx.push({kind:'proj',e:'✴️',x:player.x+DIRV[player.face][0]*14,y:player.y-26,x2:c.x,y2:c.y-16,t:0,dur:0.16,spin:true}); }
+  else if(job.n==='劍士'){ sfx('thud');
+    fx.push({kind:'slash',x:player.x,y:player.y,x2:c.x,y2:c.y,t:0,dur:0.35}); }
+  else { sfx('thud'); fx.push({kind:'bolt',x:c.x,y:c.y,t:0,dur:0.45}); } // 道士天雷
+  if(isCop){ attackCop(c); return; }
+  killCitizen(c,job.we+'💥 你施展'+job.atk);
+}
+// v37 攻擊警察：打倒掉小額金幣；全打倒＝警方撤退、解除追捕
+function attackCop(cp){
+  player.swing=0.28; sfx('thud'); cp.down=true;
+  puffs.push({x:cp.x,y:cp.y-16,t:0.5});
+  const v=100+Math.floor(Math.random()*200);
+  drops.push({x:cp.x+(Math.random()*16-8),y:cp.y+8,coin:v});
+  player.crimes=(player.crimes||0)+1;
+  const alive=(player.wanted&&player.wanted.cops)?player.wanted.cops.filter(c2=>!c2.down):[];
+  if(!alive.length){ player.wanted=null; sfx('jingle');
+    toast('👊 你打倒了所有警察！警方倉皇撤退…（襲警是重罪，傷人紀錄+1，小心變通緝犯）'); }
+  else toast('👊 打倒一名警察！他掉了 '+v+' 元…剩 '+alive.length+' 名還在圍捕你！');
+  save();
+}
+// v37 次元砲 vs 哥吉拉
+function fireCannon(){
+  if((player.cannonCd||0)>0)return;
+  player.cannonCd=0.7; player.swing=0.3; sfx('swing');
+  fx.push({kind:'beam',x:player.x+DIRV[player.face][0]*16,y:player.y-22,x2:godz.x,y2:godz.y-150,t:0,dur:0.3});
+  godz.hp--; godz.hit=0.3;
+  for(let i=0;i<2;i++)puffs.push({x:godz.x+Math.random()*80-40,y:godz.y-100-Math.random()*120,t:0.6});
+  if(godz.hp<=0){
+    for(let i=0;i<10;i++)puffs.push({x:godz.x+Math.random()*160-80,y:godz.y-Math.random()*260,t:0.6});
+    money+=GODZ_PRIZE; sfx('cash'); godz=null; godzT=900+Math.random()*600; save();
+    dlg('📢 全島緊急廣播',['轟隆──哥吉拉被次元砲擊中，沉入了深海！','全島居民歡聲雷動：「英雄 '+player.name+' 萬歲！」','（獲得賞金 '+fmt(GODZ_PRIZE)+' 元！）']); }
+  else toast('🛸💥 次元砲命中！哥吉拉剩 '+godz.hp+'/'+GODZ_HP+' 格血——繼續射擊！');
 }
 function attackPerson(c){
   if(player.tool===6&&isGun(player.toy)&&citizens.includes(c)){ killCitizen(c); return; } // 持槍對路人→擊殺
@@ -1707,7 +1957,7 @@ function attackPerson(c){
     toast('🚨🚨 你已傷害路人超過10次，被列為【通緝犯】！未來2天警方將不定時派車追捕！');
   }
   if(!player.wanted)startWanted(c.x,c.y);
-  else{player.wanted.phase='grace';player.wanted.t=Math.min(player.wanted.t,4);}
+  else{player.wanted.phase='grace';player.wanted.t=Math.min(player.wanted.t,4);player.wanted.cops=null;}
 }
 function startWanted(rx,ry){
   player.wanted={phase:'grace',t:8,rx,ry,car:null};
@@ -1728,14 +1978,24 @@ function interact(){
   if(player.balloonRide||player.soak||player.pray||player.ferris)return;
   const p=frontPoint(44);
   if(!player.sailing){
-    if(isWeapon()){ // 持武器/道具時：對任何人（NPC／路人／店老闆）都是攻擊，不對話
+    if(isWeapon()){ // 持武器/道具時：對任何人（NPC／路人／店老闆／警察）都是攻擊，不對話
       const gun=(player.tool===6&&isGun(player.toy)); // 槍：射程更遠、只對路人
-      let best=null,bd=gun?190:56;
-      const scan=arr=>{for(const c of arr){if(c.dead)continue;const d=Math.min(dist(c.x,c.y,p.x,p.y),dist(c.x,c.y,player.x,player.y));
+      const job=(player.tool===6)?jobOfWeapon(player.toy):null; // v37 職業武器
+      if(player.tool===6&&player.toy==='次元砲'&&godz&&dist(godz.x,godz.y,player.x,player.y)<560){fireCannon();return;} // 次元砲優先打哥吉拉
+      const ranged=gun||(job&&job.n!=='劍士');
+      let best=null,bd=ranged?190:(job?80:56); // 劍士地裂斬範圍稍大
+      const scan=arr=>{for(const c of arr){if(c.dead||c.down)continue;const d=Math.min(dist(c.x,c.y,p.x,p.y),dist(c.x,c.y,player.x,player.y));
         if(d<bd){bd=d;best=c;}}};
-      scan(citizens); if(!gun){scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);}
-      if(best){attackPerson(best);return;}
+      scan(citizens);
+      if(player.wanted&&player.wanted.cops)scan(player.wanted.cops); // v37 警察也可攻擊
+      if(!gun&&!job){scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);}
+      if(best){
+        const isCop=player.wanted&&player.wanted.cops&&player.wanted.cops.includes(best);
+        if(job){jobAttack(best,job);return;}
+        if(isCop){attackCop(best);return;}
+        attackPerson(best);return;}
       if(gun){ player.swing=0.28; sfx('swing'); toast('🔫 砰！附近沒有路人可射擊——再靠近城鎮一點吧。'); return; }
+      if(job){ player.swing=0.28; sfx('swing'); toast(job.we+' 你施展了'+job.atk+'…但附近沒有目標。'); return; }
     }
     // 男女朋友/配偶：只有「面向對方」才互動（TA 常跟在身後，避免背對時誤觸、蓋掉點任務）
     if(player.love&&dist(player.love.x,player.love.y,p.x,p.y)<58){loveInteract();return;}
@@ -1757,6 +2017,7 @@ function interact(){
   }
   if(player.sailing){
     if(player.fishing){tryFish();return;} // 咬餌中優先收竿
+    if(player.tool===6&&player.toy==='次元砲'&&godz&&dist(godz.x,godz.y,player.x,player.y)<560){fireCannon();return;} // v37 海上迎戰哥吉拉
     const ft=frontTile(1.2);
     if(WALKABLE[ft.t]&&!hitObstacle(ft.x,ft.y)){ // 面向岸邊：任何工具都能上岸
       player.x=ft.x;player.y=ft.y;player.sailing=false;sfx('pop');toast('上岸了！');return;}
@@ -1927,6 +2188,16 @@ function collectStamp(label){ if(!label||stamps[label])return;
   toast('📍 收集景點印章：'+label+'（'+Object.keys(stamps).length+'/'+STAMP_TOTAL+'）');
   sfx('chime');save();}
 let myHomes=[], eateryDone={}, groundToys=[], projs=[], events=[], eventT=75;
+/* ---- v37 務農 ---- */
+const FARM_PRICE=8000, FARM_SEED=500, FARM_GROW=1440, FARM_TICK=40, FARM_HARVEST=2500, FARM_MAX=10;
+let myFarms=[]; // {tx,ty,state:'empty'|'grow',at(播種時遊戲絕對分),pay(上次入帳)}
+const absMin=()=>gameDay*1440+gameMin;
+function addFarmBuild(f){ addBuild('farm',f.tx,f.ty,2,2,player.name+'的農地',{farm:f}); }
+/* ---- v37 哥吉拉 ---- */
+let godz=null, godzT=240+Math.random()*300; // {x,y,hp,t,boltT,bolt,dir,hit}
+const GODZ_HP=6, GODZ_PRIZE=1000000;
+/* ---- v37 特效（雷擊/斬擊/光束） ---- */
+let fx=[]; // {kind:'bolt'|'slash'|'beam',x,y,x2,y2,t,dur}
 const HOUSE_TYPES=[
  {id:'cabin',n:'小木屋',icon:'🛖',wood:30,ore:10,cash:10000,tw:4,th:3},
  {id:'courtyard',n:'三合院',icon:'🏡',wood:45,ore:20,cash:20000,tw:5,th:4},
@@ -2269,22 +2540,86 @@ function update(dt){
   // 營火與煙霧
   for(let i=campfires.length-1;i>=0;i--){campfires[i].t-=dt;if(campfires[i].t<=0)campfires.splice(i,1);}
   for(let i=puffs.length-1;i>=0;i--){puffs[i].t-=dt;if(puffs[i].t<=0)puffs.splice(i,1);}
-  // 通緝／警車追捕
+  // 通緝／警車追捕（v37：警車超車攔截→警察下車包圍→圍住才逮捕）
   if(player.wanted){ const wt=player.wanted; wt.t-=dt;
     const hidden=(ui==='home'); // 躲進自己家＝警察看不到
     if(wt.phase==='grace'){
       if(wt.t<=0){ const sp2=findWalkSafe(Math.round(wt.rx/TILE),Math.round(wt.ry/TILE));
-        wt.car={x:sp2.x,y:sp2.y}; wt.phase='chase'; wt.t=12; sfx('sad');
-        toast('🚓 警車抵達！警察正在搜捕你——快躲遠一點！'); }
-    } else if(wt.phase==='chase'){
-      const car=wt.car, dxx=player.x-car.x, dyy=player.y-car.y, d=Math.hypot(dxx,dyy)||1;
-      if(!hidden){ const nx=car.x+dxx/d*320*dt, ny=car.y+dyy/d*320*dt;
+        wt.car={x:sp2.x,y:sp2.y}; wt.phase='chase'; wt.t=14; sfx('sad');
+        toast('🚓 警車來了！它會全速超車繞到你前面攔截——快跑！'); }
+    } else if(wt.phase==='chase'){ // 警車全速衝向玩家「前方」超車攔停
+      const car=wt.car, fv=DIRV[player.face];
+      const ax=player.x+fv[0]*150, ay=player.y+fv[1]*150; // 攔截點＝玩家前方
+      const dxx=ax-car.x, dyy=ay-car.y, d=Math.hypot(dxx,dyy)||1;
+      const pd=dist(car.x,car.y,player.x,player.y);
+      if(!hidden){
+        const nx=car.x+dxx/d*470*dt, ny=car.y+dyy/d*470*dt; // 比玩家跑步還快
         if(!hitObstacle(nx,ny)){car.x=nx;car.y=ny;}
         else if(!hitObstacle(nx,car.y))car.x=nx; else if(!hitObstacle(car.x,ny))car.y=ny;
-        if(d<64){arrest();} }
-      if(wt.t<=0){ if(hidden||d>340){player.wanted=null;toast('🏃 甩掉警察了！以後別亂來囉～');}
-        else arrest(); } }
+        else {car.x=nx;car.y=ny;} // 硬闖（避免永遠卡牆追不到）
+        if(d<28){ // 超車完成、急停攔截、警察下車
+          wt.phase='block'; wt.t=22; sfx('sad'); wt.cops=[];
+          for(let i=0;i<5;i++)wt.cops.push({x:car.x+Math.cos(i*1.257)*12,y:car.y+Math.sin(i*1.257)*12,
+            down:false,slot:i*1.257,walk:0,face:2});
+          toast('🚔 警車急煞在你前方！5名警察下車包圍你——被圍住就會被捕，快突圍！'); } }
+      if(wt.t<=0){ if(hidden||pd>340){player.wanted=null;toast('🏃 甩掉警車了！以後別亂來囉～');}
+        else wt.t=6; } // 還沒超車成功就繼續追
+    } else if(wt.phase==='block'){ // 警察包圍圈：4人以上貼身＝逮捕
+      const cops=wt.cops.filter(c2=>!c2.down);
+      let near=0,minD=1e9;
+      for(const cp of cops){
+        const a=cp.slot+tGlobal*0.35; // 包圍點緩慢繞圈，堵住缺口
+        const txp=player.x+Math.cos(a)*42, typ=player.y+Math.sin(a)*42;
+        const dxx=txp-cp.x, dyy=typ-cp.y, d=Math.hypot(dxx,dyy)||1;
+        if(!hidden){ const step=Math.min(300*dt,d);
+          const nx=cp.x+dxx/d*step, ny=cp.y+dyy/d*step;
+          if(!hitObstacle(nx,ny)){cp.x=nx;cp.y=ny;}
+          else if(!hitObstacle(nx,cp.y))cp.x=nx; else if(!hitObstacle(cp.x,ny))cp.y=ny;
+          cp.walk+=dt*8;
+          cp.face=Math.abs(player.x-cp.x)>Math.abs(player.y-cp.y)?(player.x>cp.x?1:3):(player.y>cp.y?2:0); }
+        const pdc=dist(cp.x,cp.y,player.x,player.y);
+        if(pdc<62)near++; minD=Math.min(minD,pdc); }
+      if(cops.length&&near>=Math.min(4,cops.length)&&!hidden){
+        toast('👮 警察把你團團圍住，跑不掉了——束手就擒吧！'); arrest(); }
+      else if(wt.t<=0){ if(hidden||minD>360){player.wanted=null;toast('🏃 警察追不上你，悻悻然收隊了！');}
+        else wt.t=8; } // 還沒圍住就繼續纏鬥
+    }
   }
+  // v37 哥吉拉：不定時出現在玩家附近外海（廣播），會噴射雷電
+  if(started&&!player.jailed){
+    if(!godz){ godzT-=dt;
+      if(godzT<=0){ let sp=null;
+        for(let k=0;k<40&&!sp;k++){ const a=Math.random()*6.283, r=(22+Math.random()*14)*TILE;
+          const gx2=player.x+Math.cos(a)*r, gy2=player.y+Math.sin(a)*r;
+          const tx2=Math.floor(gx2/TILE), ty2=Math.floor(gy2/TILE);
+          if(tx2<4||ty2<4||tx2>MW-5||ty2>MH-5)continue;
+          let sea=true; for(let dy=-3;dy<=3&&sea;dy++)for(let dx=-3;dx<=3&&sea;dx++)if(T(tx2+dx,ty2+dy)!==SEA)sea=false;
+          if(sea)sp={x:gx2,y:gy2}; }
+        if(sp){ godz={x:sp.x,y:sp.y,hp:GODZ_HP,t:300,boltT:2,bolt:0,btx:0,bty:0,dir:Math.random()<0.5?1:-1,hit:0};
+          sfx('sad');
+          toast('📢【全島緊急廣播】怪獸「哥吉拉」出現在你附近的外海！🚨 擊敗可獲 '+fmt(GODZ_PRIZE)+' 元賞金（武器店有售次元砲・5分鐘內有效）'); }
+        else godzT=30; } // 附近沒深海，稍後再試
+    } else { godz.t-=dt; godz.hit=Math.max(0,godz.hit-dt); godz.bolt=Math.max(0,godz.bolt-dt);
+      const nx=godz.x+godz.dir*20*dt; // 緩慢巡游（只走深海）
+      if(T(Math.floor(nx/TILE),Math.floor(godz.y/TILE))===SEA)godz.x=nx; else godz.dir*=-1;
+      godz.boltT-=dt;
+      if(godz.boltT<=0){ godz.boltT=2.4+Math.random()*2; // 噴射雷電
+        const pd=dist(godz.x,godz.y,player.x,player.y);
+        if(pd<520){ godz.btx=player.x; godz.bty=player.y; godz.bolt=0.5; sfx('thud');
+          if(pd<300){ player.hp=Math.max(5,player.hp-10); flash=0.5;
+            toast('⚡ 哥吉拉朝你噴射雷電！HP-10——拉開距離再開砲！'); } }
+        else { const a2=Math.random()*6.283; godz.btx=godz.x+Math.cos(a2)*320; godz.bty=godz.y+Math.sin(a2)*180+60; godz.bolt=0.45; } }
+      if(godz.t<=0){ godz=null; godzT=600+Math.random()*600;
+        toast('📢 哥吉拉潛回深海消失了…（賞金任務結束，等下次廣播吧）'); } }
+  }
+  // v37 農地：生長期間每遊戲小時自動入帳補助
+  if(started&&myFarms.length){ let gain=0; const nowA=absMin();
+    for(const f of myFarms){ if(f.state!=='grow')continue;
+      while(nowA-f.pay>=60&&f.pay-f.at<FARM_GROW){f.pay+=60;gain+=FARM_TICK;} }
+    if(gain){ money+=gain; sfx('cash'); toast('🌾 農地補助入帳 +'+gain+' 元'); save(); } }
+  // v37 特效與次元砲冷卻
+  for(let i=fx.length-1;i>=0;i--){fx[i].t+=dt;if(fx[i].t>fx[i].dur)fx.splice(i,1);}
+  if((player.cannonCd||0)>0)player.cannonCd-=dt;
   // 通緝犯：2天內不定時自動派警車追捕（即使沒再犯案）
   if(player.notoriousUntil>gameDay&&!player.jailed&&started){
     player.patrolT-=dt;
@@ -3276,6 +3611,11 @@ function draw(){
       drawActor(player.x,player.y,player.face,player.moving?player.walk:0,
         {species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:player.hair,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,outfit:player.outfit,deco:player.deco,tie:player.tie});
     }
+    if(player.job){ // v37 職業名牌（頭頂）
+      const j=JOBS.find(q=>q.n===player.job), txt=(j?j.e+' ':'')+player.job;
+      ctx.font='bold 11px "Microsoft JhengHei"'; const w2=ctx.measureText(txt).width;
+      ctx.fillStyle='rgba(35,25,70,.75)';rr(player.x-w2/2-7,player.y-76,w2+14,17,8);ctx.fill();
+      ctx.fillStyle='#ffd97a';ctx.textAlign='center';ctx.fillText(txt,player.x,player.y-63);ctx.textAlign='left';}
     if(player.playT){const p3=player.playT; ctx.textAlign='center';
       if(p3.act==='shoot'){ // 手持玩具做發射動作（玩具留在手上，只射出小東西）
         ctx.font='20px serif';
@@ -3337,7 +3677,10 @@ function draw(){
       ctx.font='bold 16px "Microsoft JhengHei"';ctx.textAlign='center';
       ctx.fillStyle='#e2453c';ctx.fillText('🔥 失火了！按互動鍵滅火',hb2.x+hb2.w/2,hb2.y-72);ctx.textAlign='left';}
   }});
-  if(player.wanted&&player.wanted.car&&player.wanted.phase==='chase'){const car=player.wanted.car;
+  if(player.wanted&&player.wanted.cops)for(const cp of player.wanted.cops) // v37 包圍圈警察
+    if(inView(cp.x,cp.y))list.push({y:cp.y+(cp.down?-1:0),f:()=>drawCop(cp)});
+  if(godz&&inView(godz.x,godz.y,650))list.push({y:godz.y,f:()=>drawGodzilla(godz)}); // v37 哥吉拉
+  if(player.wanted&&player.wanted.car&&(player.wanted.phase==='chase'||player.wanted.phase==='block')){const car=player.wanted.car;
     if(inView(car.x,car.y,120))list.push({y:car.y,f:()=>{
       ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(car.x,car.y+8,22,7,0,0,7);ctx.fill();
       ctx.fillStyle='#3a4a6a';rr(car.x-20,car.y-16,40,22,6);ctx.fill(); // 車身
@@ -3355,6 +3698,27 @@ function draw(){
       bees.y+Math.cos(tGlobal*9+i*1.7)*10+(i%2)*8);}});
   list.sort((a,b)=>a.y-b.y);
   for(const e of list)e.f();
+  // v37 戰鬥特效（火球/手裡劍/地裂斬/天雷/次元砲光束）——畫在人物之上
+  for(const e of fx){ const ph=e.t/e.dur;
+    if(e.kind==='proj'){ const px=e.x+(e.x2-e.x)*ph, py=e.y+(e.y2-e.y)*ph;
+      ctx.font='20px serif';ctx.textAlign='center';
+      if(e.spin){ctx.save();ctx.translate(px,py);ctx.rotate(tGlobal*22);ctx.fillText(e.e,0,0);ctx.restore();}
+      else ctx.fillText(e.e,px,py);
+      ctx.textAlign='left'; }
+    else if(e.kind==='slash'){ const ang=Math.atan2(e.y2-e.y,e.x2-e.x); // 地裂斬：往目標方向的扇形裂地衝擊
+      ctx.lineCap='round';
+      ctx.strokeStyle=`rgba(255,240,170,${1-ph})`;ctx.lineWidth=6;
+      ctx.beginPath();ctx.arc(e.x,e.y,18+ph*72,ang-0.55,ang+0.55);ctx.stroke();
+      ctx.strokeStyle=`rgba(170,130,80,${1-ph})`;ctx.lineWidth=3.5;
+      ctx.beginPath();ctx.arc(e.x,e.y,10+ph*58,ang-0.35,ang+0.35);ctx.stroke();ctx.lineCap='butt'; }
+    else if(e.kind==='bolt'){ drawBolt(e.x+10,e.y-250,e.x,e.y,1-ph,4); // 天雷從天劈落
+      ctx.fillStyle=`rgba(255,255,190,${(1-ph)*0.6})`;
+      ctx.beginPath();ctx.arc(e.x,e.y,16*(1-ph)+6,0,7);ctx.fill(); }
+    else if(e.kind==='beam'){ ctx.lineCap='round'; // 次元砲光束
+      ctx.strokeStyle=`rgba(130,215,255,${1-ph})`;ctx.lineWidth=8*(1-ph)+2;
+      ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x2,e.y2);ctx.stroke();
+      ctx.strokeStyle=`rgba(255,255,255,${1-ph})`;ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x2,e.y2);ctx.stroke();ctx.lineCap='butt'; } }
   // 天燈（世界層）
   for(const L of lanterns)if(inView(L.x,L.y,200))drawLanternBody(L);
   // 晝夜
@@ -3778,8 +4142,12 @@ function drawUI(){
       '　 →好感80帶戒指到戶政事務所💒結婚（可離婚），配偶會一直陪你環島！',
       '⚠️ 持鏟子/斧頭/木矛/彈弓時按互動鍵＝攻擊人（空手才是對話）！',
       '　 打人會掉錢可撿，但對方會報警！躲遠或躲進自己家裡，',
-      '　 否則警車追到會把你關進桃園監獄（服刑或繳保釋金才能出來）。',
+      '　 否則警車會超車攔截、警察下車包圍——被圍住就關進桃園監獄！',
+      '　 （警察也能打倒搶錢…但襲警會讓罪加一等）',
       '🚨 傷害路人超過10次會被列為【通緝犯】，連續2天警方不定時派車追捕！',
+      '🌾 各縣市政府可買農地：播種後每小時領補助、成熟收割賺大錢！',
+      '🧙 綠島魔法屋可學職業（魔法師/劍士/忍者/道士），頭上會掛職業名！',
+      '🦖 聽到廣播「哥吉拉出現」→武器店買次元砲(5萬)出海討伐，賞金100萬！',
       '',
       'B背包 M地圖 P圖鑑 J任務 C製作 N音樂 (H 或 Esc 關閉)'];
     panel(x,y,w,lines.length*27+46);
@@ -3799,6 +4167,7 @@ function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
   crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,ownGuns:player.ownGuns,murderRap:player.murderRap,
+  job:player.job,farms:myFarms,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   if(!s)return false;
@@ -3818,6 +4187,9 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   myHomes=s.myHomes||(s.myHome?[{tx:s.myHome.tx,ty:s.myHome.ty,type:'cabin'}]:[]);
   for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0];
     addBuild('myhome',mh.tx,mh.ty,ht.tw,ht.th,(s.name||'小島民')+'的'+ht.n,{htype:ht.id});}
+  player.job=s.job||null; // v37 職業＋農地
+  myFarms=(s.farms||[]).map(f=>({tx:f.tx,ty:f.ty,state:f.state||'empty',at:f.at||0,pay:f.pay||0}));
+  for(const f of myFarms)addFarmBuild(f);
   player.boat=!!s.boat;musicOn=s.music!==false;
   if(s.x!=null){ if(s.sailing&&!hitWater(s.x,s.y)){player.x=s.x;player.y=s.y;player.sailing=true;}
     else if(!hitObstacle(s.x,s.y)){player.x=s.x;player.y=s.y;} }
