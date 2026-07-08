@@ -1717,7 +1717,7 @@ function buildAct(b){
        const jn=player.job; player.job=null;
        if(JOBS.some(j=>j.w===player.toy))player.toy=null;
        save(); ui=null; toast('你放下了'+jn+'的身分，回歸平凡島民。');}});
-     opts.push({label:'看看介紹',cb(){dlg(b.label,['歡迎來到綠島魔法屋！','（一隻貓頭鷹瞪著你看）','這裡傳授四大職業：魔法師、劍士、忍者、道士。','習得後頭上會亮出職業名號，很威風的！','⚠️ 職業攻擊威力極大，砸在路人身上是會出人命的…']);}});
+     opts.push({label:'看看介紹',cb(){dlg(b.label,['歡迎來到綠島魔法屋！（免費傳授）','（一隻貓頭鷹瞪著你看）','六大職業：魔法師/劍士/忍者/道士/風女/冰女。','招式全是範圍技——直線牆或周身爆發，一次掃倒一片！','⚠️ 職業攻擊威力極大，砸在路人身上是會出人命的…']);}});
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('🧙 '+b.label+'（職業學習所）',opts); },
    registry(){ const L=player.love;
@@ -1885,44 +1885,58 @@ function isGun(n){ return typeof GUNS!=='undefined'&&GUNS.some(g=>g.n===n); }
 function jobOfWeapon(n){ return typeof JOBS!=='undefined'?JOBS.find(j=>j.w===n):null; } // v37 職業武器
 function heldEmoji(n){ if(!n)return '🎁'; if(ITEMS[n])return ITEMS[n].e; const g=isGun(n)&&GUNS.find(x=>x.n===n); if(g)return g.e; const j=jobOfWeapon(n); return j?j.we:'🎁'; }
 function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(player.tool===6&&(['彈弓','水槍'].includes(player.toy)||isGun(player.toy)||!!jobOfWeapon(player.toy)));} // 鏟/斧/矛/彈弓水槍/槍枝/職業武器
-// 開槍/職業技擊殺路人：倒地→數秒後移除→補生維持人數平衡；觸發兇殺通緝＋出獄重罰
-function killCitizen(c,verb){
-  player.swing=0.28; sfx('swing');
+// 路人倒地的視覺/狀態（不含犯罪通報）：倒地→數秒後移除→補生維持人數平衡
+function markCitizenDead(c){
   puffs.push({x:c.x,y:c.y-20,t:0.5}); puffs.push({x:c.x+6,y:c.y-14,t:0.6});
   drops.push({x:c.x+(Math.random()*16-8),y:c.y+8,coin:80+Math.floor(Math.random()*220)});
   c.dead=true; c.deadT=6; c.vx=0; c.vy=0; c.flee=0; c.talk=0;
   if(c.buddy){ c.buddy.buddy=null; c.buddy.flee=6; c.buddy.talk=0; } c.buddy=null;
-  toast((verb||'🔫💥 你開槍')+'擊倒了'+(c.pname||'路人')+'！他倒在路上…目擊的路人驚慌報警！');
-  player.crimes=(player.crimes||0)+3; player.murderRap=true;
+}
+// 犯案後果：兇殺通緝＋火速派警
+function crimeSpike(n){
+  player.crimes=(player.crimes||0)+n; player.murderRap=true;
   player.notoriousUntil=Math.max(player.notoriousUntil||0,gameDay+2); player.patrolT=12+Math.random()*18;
-  if(!player.wanted)startWanted(c.x,c.y);
+  if(!player.wanted)startWanted(player.x,player.y);
   player.wanted.phase='grace'; player.wanted.t=Math.min(player.wanted.t,5); player.wanted.cops=null; save();
 }
-// v37 職業攻擊：帶各職業特效，命中路人＝擊斃（後果同槍枝）、命中警察＝打倒
-function jobAttack(c,job){
-  const isCop=player.wanted&&player.wanted.cops&&player.wanted.cops.includes(c);
-  if(job.n==='魔法師'){ sfx('swing');
-    fx.push({kind:'proj',e:'🔥',x:player.x+DIRV[player.face][0]*14,y:player.y-26,x2:c.x,y2:c.y-16,t:0,dur:0.22}); }
-  else if(job.n==='忍者'){ sfx('swing');
-    fx.push({kind:'proj',e:'✴️',x:player.x+DIRV[player.face][0]*14,y:player.y-26,x2:c.x,y2:c.y-16,t:0,dur:0.16,spin:true}); }
-  else if(job.n==='劍士'){ sfx('thud');
-    fx.push({kind:'slash',x:player.x,y:player.y,x2:c.x,y2:c.y,t:0,dur:0.35}); }
-  else { sfx('thud'); fx.push({kind:'bolt',x:c.x,y:c.y,t:0,dur:0.45}); } // 道士天雷
-  if(isCop){ attackCop(c); return; }
-  killCitizen(c,job.we+'💥 你施展'+job.atk);
+// 開槍擊殺單一路人（槍枝用）
+function killCitizen(c,verb){
+  player.swing=0.28; sfx('swing'); markCitizenDead(c);
+  toast((verb||'🔫💥 你開槍')+'擊倒了'+(c.pname||'路人')+'！他倒在路上…目擊的路人驚慌報警！');
+  crimeSpike(3);
 }
-// v37 攻擊警察：打倒掉小額金幣；全打倒＝警方撤退、解除追捕
-function attackCop(cp){
-  player.swing=0.28; sfx('thud'); cp.down=true;
-  puffs.push({x:cp.x,y:cp.y-16,t:0.5});
-  const v=100+Math.floor(Math.random()*200);
-  drops.push({x:cp.x+(Math.random()*16-8),y:cp.y+8,coin:v});
-  player.crimes=(player.crimes||0)+1;
+// 打倒警察的視覺/狀態＋撤退判定
+function knockCop(cp){ cp.down=true; puffs.push({x:cp.x,y:cp.y-16,t:0.5});
+  const v=100+Math.floor(Math.random()*200); drops.push({x:cp.x+(Math.random()*16-8),y:cp.y+8,coin:v}); return v; }
+function copsRetreatCheck(msg){
   const alive=(player.wanted&&player.wanted.cops)?player.wanted.cops.filter(c2=>!c2.down):[];
   if(!alive.length){ player.wanted=null; sfx('jingle');
-    toast('👊 你打倒了所有警察！警方倉皇撤退…（襲警是重罪，傷人紀錄+1，小心變通緝犯）'); }
-  else toast('👊 打倒一名警察！他掉了 '+v+' 元…剩 '+alive.length+' 名還在圍捕你！');
+    toast('👊 你打倒了所有警察！警方倉皇撤退…（襲警是重罪，小心變通緝犯）'); }
+  else if(msg) toast(msg+'剩 '+alive.length+' 名還在圍捕你！');
   save();
+}
+function attackCop(cp){ // 近戰/槍：打倒單一警察
+  player.swing=0.28; sfx('thud'); const v=knockCop(cp); player.crimes=(player.crimes||0)+1;
+  copsRetreatCheck('👊 打倒一名警察！他掉了 '+v+' 元…');
+}
+// v39 職業範圍技：radius=以自身為圓心 / line=面向前方直線
+function inJobAoE(job,tx,ty){
+  const R=job.range*TILE;
+  if(job.mode==='radius') return dist(tx,ty,player.x,player.y)<=R+8;
+  const fv=DIRV[player.face], rx=tx-player.x, ry=ty-player.y;
+  const along=rx*fv[0]+ry*fv[1], perp=Math.abs(rx*(-fv[1])+ry*fv[0]);
+  return along>=-14 && along<=R && perp<=TILE*0.9;
+}
+function spawnJobFx(job){ const fv=DIRV[player.face];
+  fx.push({kind:'job',job:job.fx,x:player.x,y:player.y,dx:fv[0],dy:fv[1],range:job.range*TILE,t:0,dur:0.6}); }
+function doJobAttack(job){
+  player.swing=0.32; spawnJobFx(job); sfx(job.mode==='radius'?'thud':'swing');
+  let killed=0, copsHit=0;
+  for(const c of citizens){ if(!c.dead && inJobAoE(job,c.x,c.y)){ markCitizenDead(c); killed++; } }
+  if(player.wanted&&player.wanted.cops)for(const cp of player.wanted.cops){ if(!cp.down && inJobAoE(job,cp.x,cp.y)){ knockCop(cp); copsHit++; } }
+  if(killed>0){ toast(job.we+'💥 '+job.atk+'！一次擊倒 '+killed+' 名路人…引發警方追捕！'); crimeSpike(2+killed); }
+  if(copsHit>0){ player.crimes=(player.crimes||0)+copsHit; copsRetreatCheck('👊 '+job.atk+' 掃倒 '+copsHit+' 名警察！'); }
+  if(!killed&&!copsHit) toast(job.we+' 你施展了'+job.atk+'…範圍內沒有目標。');
 }
 // v37 次元砲 vs 哥吉拉
 function fireCannon(){
@@ -1981,20 +1995,18 @@ function interact(){
       const gun=(player.tool===6&&isGun(player.toy)); // 槍：射程更遠、只對路人
       const job=(player.tool===6)?jobOfWeapon(player.toy):null; // v37 職業武器
       if(player.tool===6&&player.toy==='次元砲'&&godz&&dist(godz.x,godz.y,player.x,player.y)<560){fireCannon();return;} // 次元砲優先打哥吉拉
-      const ranged=gun||(job&&job.n!=='劍士');
-      let best=null,bd=ranged?190:(job?80:56); // 劍士地裂斬範圍稍大
+      if(job){ doJobAttack(job); return; } // v39 職業＝範圍技能（不用瞄準單一目標）
+      let best=null,bd=gun?190:56;
       const scan=arr=>{for(const c of arr){if(c.dead||c.down)continue;const d=Math.min(dist(c.x,c.y,p.x,p.y),dist(c.x,c.y,player.x,player.y));
         if(d<bd){bd=d;best=c;}}};
       scan(citizens);
       if(player.wanted&&player.wanted.cops)scan(player.wanted.cops); // v37 警察也可攻擊
-      if(!gun&&!job){scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);}
+      if(!gun){scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);}
       if(best){
         const isCop=player.wanted&&player.wanted.cops&&player.wanted.cops.includes(best);
-        if(job){jobAttack(best,job);return;}
         if(isCop){attackCop(best);return;}
         attackPerson(best);return;}
       if(gun){ player.swing=0.28; sfx('swing'); toast('🔫 砰！附近沒有路人可射擊——再靠近城鎮一點吧。'); return; }
-      if(job){ player.swing=0.28; sfx('swing'); toast(job.we+' 你施展了'+job.atk+'…但附近沒有目標。'); return; }
     }
     // 男女朋友/配偶：只有「面向對方」才互動（TA 常跟在身後，避免背對時誤觸、蓋掉點任務）
     if(player.love&&dist(player.love.x,player.love.y,p.x,p.y)<58){loveInteract();return;}
@@ -2546,23 +2558,24 @@ function update(dt){
       if(wt.t<=0){ const sp2=findWalkSafe(Math.round(wt.rx/TILE),Math.round(wt.ry/TILE));
         wt.car={x:sp2.x,y:sp2.y}; wt.phase='chase'; wt.t=14; sfx('sad');
         toast('🚓 警車來了！它會全速超車繞到你前面攔截——快跑！'); }
-    } else if(wt.phase==='chase'){ // 警車全速衝向玩家「前方」超車攔停
-      const car=wt.car, fv=DIRV[player.face];
-      const ax=player.x+fv[0]*150, ay=player.y+fv[1]*150; // 攔截點＝玩家前方
-      const dxx=ax-car.x, dyy=ay-car.y, d=Math.hypot(dxx,dyy)||1;
-      const pd=dist(car.x,car.y,player.x,player.y);
+    } else if(wt.phase==='chase'){ // 警車追向玩家：追上就明顯減速，貼近一段時間才下車包圍（給玩家逃跑空間）
+      const car=wt.car;
+      const dxx=player.x-car.x, dyy=player.y-car.y, pd=Math.hypot(dxx,dyy)||1;
       if(!hidden){
-        const nx=car.x+dxx/d*470*dt, ny=car.y+dyy/d*470*dt; // 比玩家跑步還快
-        if(!hitObstacle(nx,ny)){car.x=nx;car.y=ny;}
-        else if(!hitObstacle(nx,car.y))car.x=nx; else if(!hitObstacle(car.x,ny))car.y=ny;
-        else {car.x=nx;car.y=ny;} // 硬闖（避免永遠卡牆追不到）
-        if(d<28){ // 超車完成、急停攔截、警察下車
-          wt.phase='block'; wt.t=22; sfx('sad'); wt.cops=[];
-          for(let i=0;i<5;i++)wt.cops.push({x:car.x+Math.cos(i*1.257)*12,y:car.y+Math.sin(i*1.257)*12,
-            down:false,slot:i*1.257,walk:0,face:2});
-          toast('🚔 警車急煞在你前方！5名警察下車包圍你——被圍住就會被捕，快突圍！'); } }
-      if(wt.t<=0){ if(hidden||pd>340){player.wanted=null;toast('🏃 甩掉警車了！以後別亂來囉～');}
-        else wt.t=6; } // 還沒超車成功就繼續追
+        const spd = pd>220?440 : pd>110?250 : 110; // 追到人就慢下來，讓玩家有時間跑
+        const nx=car.x+dxx/pd*spd*dt, ny=car.y+dyy/pd*spd*dt;
+        if(!hitObstacle(nx,ny)){car.x=nx;car.y=ny;}       // 只走陸地：不會開進海裡、不穿牆
+        else if(!hitObstacle(nx,car.y))car.x=nx;
+        else if(!hitObstacle(car.x,ny))car.y=ny;
+        if(pd<70){ wt.caughtT=(wt.caughtT||0)+dt;
+          if(wt.caughtT>1.6){ // 貼近玩家一段時間才下車包圍；中途跑開會重置
+            wt.phase='block'; wt.t=22; sfx('sad'); wt.cops=[];
+            for(let i=0;i<5;i++){ const cx=car.x+Math.cos(i*1.257)*12, cy=car.y+Math.sin(i*1.257)*12;
+              const ok=!hitObstacle(cx,cy); wt.cops.push({x:ok?cx:car.x,y:ok?cy:car.y,down:false,slot:i*1.257,walk:0,face:2}); }
+            toast('🚔 警車追上停在你旁邊，5名警察下車包圍你——被圍住就會被捕，快突圍！'); } }
+        else wt.caughtT=0; }
+      if(wt.t<=0){ if(hidden||pd>360){player.wanted=null;wt.caughtT=0;toast('🏃 甩掉警車了！以後別亂來囉～');}
+        else wt.t=6; }
     } else if(wt.phase==='block'){ // 警察包圍圈：4人以上貼身＝逮捕
       const cops=wt.cops.filter(c2=>!c2.down);
       let near=0,minD=1e9;
@@ -3717,7 +3730,43 @@ function draw(){
       ctx.strokeStyle=`rgba(130,215,255,${1-ph})`;ctx.lineWidth=8*(1-ph)+2;
       ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x2,e.y2);ctx.stroke();
       ctx.strokeStyle=`rgba(255,255,255,${1-ph})`;ctx.lineWidth=2.5;
-      ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x2,e.y2);ctx.stroke();ctx.lineCap='butt'; } }
+      ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x2,e.y2);ctx.stroke();ctx.lineCap='butt'; }
+    else if(e.kind==='job'){ const a=1-ph; // v39 職業範圍技特效
+      if(e.job==='firewall'){ const oy=e.y-16, n=8, grow=Math.min(1,ph*2);
+        for(let i=1;i<=n;i++){ const t2=i/n; if(t2>grow)continue;
+          const fx2=e.x+e.dx*e.range*t2, fy2=oy+e.dy*e.range*t2, s=14+Math.sin(tGlobal*20+i)*4;
+          ctx.fillStyle=`rgba(255,${120+i*8},40,${a})`;ctx.beginPath();ctx.ellipse(fx2,fy2,s*0.7,s,0,0,7);ctx.fill();
+          ctx.fillStyle=`rgba(255,235,130,${a*0.85})`;ctx.beginPath();ctx.ellipse(fx2,fy2-3,s*0.4,s*0.6,0,0,7);ctx.fill(); } }
+      else if(e.job==='ice'){ const oy=e.y, n=8, grow=Math.min(1,ph*2);
+        for(let i=1;i<=n;i++){ const t2=i/n; if(t2>grow)continue;
+          const px=e.x+e.dx*e.range*t2, py=oy+e.dy*e.range*t2, h=22+Math.sin(i*1.3)*6;
+          ctx.fillStyle=`rgba(150,220,255,${a})`;ctx.beginPath();ctx.moveTo(px-7,py+4);ctx.lineTo(px,py-h);ctx.lineTo(px+7,py+4);ctx.closePath();ctx.fill();
+          ctx.fillStyle=`rgba(255,255,255,${a*0.75})`;ctx.beginPath();ctx.moveTo(px-2,py-2);ctx.lineTo(px,py-h);ctx.lineTo(px+2,py-2);ctx.closePath();ctx.fill(); } }
+      else if(e.job==='shuriken'){ const oy=e.y-20, n=5;
+        for(let i=0;i<n;i++){ const t2=((i/n)+ph)%1; const sx=e.x+e.dx*e.range*t2, sy=oy+e.dy*e.range*t2;
+          ctx.save();ctx.translate(sx,sy);ctx.rotate(tGlobal*30+i);ctx.fillStyle=`rgba(90,100,115,${a})`;
+          for(let k=0;k<4;k++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(9,0);ctx.lineTo(0,2);ctx.closePath();ctx.fill();}
+          ctx.fillStyle=`rgba(230,235,245,${a})`;ctx.beginPath();ctx.arc(0,0,2.5,0,7);ctx.fill();ctx.restore(); } }
+      else if(e.job==='thunder'){ const R=e.range;
+        for(let i=0;i<5;i++){ const ang=i*1.3+Math.floor(e.x); const r=R*(0.25+((i*0.19)%0.7));
+          const gx=e.x+Math.cos(ang)*r, gy=e.y+Math.sin(ang)*r*0.6;
+          drawBolt(gx+8,gy-230,gx,gy,a,3);
+          ctx.fillStyle=`rgba(255,255,190,${a*0.5})`;ctx.beginPath();ctx.arc(gx,gy,12*a+4,0,7);ctx.fill(); }
+        ctx.strokeStyle=`rgba(180,200,255,${a*0.6})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(e.x,e.y,R,R*0.6,0,0,7);ctx.stroke(); }
+      else if(e.job==='shock'){ const R=e.range, rr2=ph*R;
+        ctx.strokeStyle=`rgba(255,240,170,${a})`;ctx.lineWidth=7*a+2;ctx.beginPath();ctx.ellipse(e.x,e.y,rr2,rr2*0.6,0,0,7);ctx.stroke();
+        ctx.strokeStyle=`rgba(170,130,80,${a})`;ctx.lineWidth=4*a+1;ctx.beginPath();ctx.ellipse(e.x,e.y,rr2*0.7,rr2*0.42,0,0,7);ctx.stroke();
+        ctx.fillStyle=`rgba(190,160,110,${a*0.5})`;
+        for(let i=0;i<8;i++){const ang=i*0.785;ctx.beginPath();ctx.arc(e.x+Math.cos(ang)*rr2,e.y+Math.sin(ang)*rr2*0.6,4*a,0,7);ctx.fill();} }
+      else if(e.job==='tornado'){ const R=e.range;
+        ctx.strokeStyle=`rgba(200,225,240,${a})`;ctx.lineWidth=4;
+        for(let s=0;s<3;s++){ ctx.beginPath();
+          for(let k=0;k<=20;k++){ const t2=k/20, ang=t2*12+tGlobal*10+s*2.1, rad=R*(0.15+t2*0.85);
+            const px=e.x+Math.cos(ang)*rad, py=e.y-t2*70+Math.sin(ang)*rad*0.5;
+            if(k===0)ctx.moveTo(px,py);else ctx.lineTo(px,py); } ctx.stroke(); }
+        ctx.font='13px serif';ctx.textAlign='center';ctx.globalAlpha=a;
+        for(let i=0;i<4;i++){const ang=tGlobal*8+i*1.57;ctx.fillText('🍃',e.x+Math.cos(ang)*R*0.7,e.y+Math.sin(ang)*R*0.4);}
+        ctx.globalAlpha=1;ctx.textAlign='left'; } } }
   // 天燈（世界層）
   for(const L of lanterns)if(inView(L.x,L.y,200))drawLanternBody(L);
   // 晝夜
@@ -4145,7 +4194,7 @@ function drawUI(){
       '　 （警察也能打倒搶錢…但襲警會讓罪加一等）',
       '🚨 傷害路人超過10次會被列為【通緝犯】，連續2天警方不定時派車追捕！',
       '🌾 各縣市政府可買農地：播種後每小時領補助、成熟收割賺大錢！',
-      '🧙 綠島魔法屋可學職業（魔法師/劍士/忍者/道士），頭上會掛職業名！',
+      '🧙 綠島魔法屋免費學職業（魔法師/劍士/忍者/道士/風女/冰女），全是範圍技！',
       '🦖 聽到廣播「哥吉拉出現」→武器店買次元砲(5萬)出海討伐，賞金100萬！',
       '',
       'B背包 M地圖 P圖鑑 J任務 C製作 N音樂 (H 或 Esc 關閉)'];
