@@ -720,3 +720,75 @@ const REF_PORTS=18; // ref/p01.png ~ p18.png
   LAKEC.x*=S;LAKEC.y*=S;LAKEC.rx*=S;LAKEC.ry*=S;
   BUGSPECS.forEach(b=>{if(b.rect)b.rect=b.rect.map(v=>R(v*S));});
 }
+
+/* ================= 大陸地區（v40，搭飛機可達；座標為完整 600×780，不經 scale pass） ================= */
+const TOWNS_CN=[
+ {n:'北京',c:'華北',tx:330,ty:140},{n:'天津',c:'華北',tx:365,ty:162},
+ {n:'上海',c:'華東',tx:455,ty:330},{n:'南京',c:'華東',tx:408,ty:300},
+ {n:'杭州',c:'華東',tx:440,ty:372},{n:'蘇州',c:'華東',tx:432,ty:342},
+ {n:'青島',c:'華東',tx:440,ty:222},{n:'廣州',c:'華南',tx:242,ty:612},
+ {n:'深圳',c:'華南',tx:286,ty:656},{n:'香港',c:'華南',tx:302,ty:696},
+ {n:'廈門',c:'華南',tx:406,ty:566},{n:'成都',c:'西南',tx:150,ty:432},
+ {n:'重慶',c:'西南',tx:200,ty:482},{n:'西安',c:'西北',tx:250,ty:282},
+ {n:'武漢',c:'華中',tx:322,ty:432},{n:'長沙',c:'湖南',tx:288,ty:512},
+ {n:'株洲',c:'湖南',tx:306,ty:546},
+];
+const EATERIES_CN=[
+ {tx:330,ty:150,label:'全聚德烤鴨',food:'北京烤鴨',price:200,icon:'🦆'},
+ {tx:456,ty:338,label:'南翔小籠包',food:'上海小籠包',price:80,icon:'🥟'},
+ {tx:242,ty:620,label:'廣州早茶樓',food:'蝦餃燒賣',price:120,icon:'🥟'},
+ {tx:150,ty:440,label:'成都老火鍋',food:'四川麻辣火鍋',price:250,icon:'🌶️'},
+ {tx:200,ty:490,label:'重慶小麵館',food:'重慶小麵',price:60,icon:'🍜'},
+ {tx:250,ty:290,label:'西安肉夾饃',food:'肉夾饃',price:55,icon:'🥙'},
+ {tx:322,ty:440,label:'武漢熱乾麵',food:'熱乾麵',price:50,icon:'🍜'},
+ {tx:406,ty:574,label:'廈門沙茶麵',food:'沙茶麵',price:65,icon:'🍜'},
+ {tx:440,ty:380,label:'杭州樓外樓',food:'西湖醋魚',price:150,icon:'🐟'},
+ {tx:288,ty:520,label:'長沙臭豆腐攤',food:'長沙臭豆腐',price:55,icon:'🥡'},
+ {tx:306,ty:554,label:'株洲炒碼粉',food:'湖南炒碼粉',price:50,icon:'🍜'},
+ {tx:302,ty:704,label:'香港燒臘飯',food:'叉燒燒鵝飯',price:90,icon:'🍛'},
+ {tx:408,ty:308,label:'南京鹽水鴨',food:'鹽水鴨',price:110,icon:'🦆'},
+ {tx:440,ty:230,label:'青島海鮮',food:'辣炒蛤蜊',price:120,icon:'🦪'},
+];
+const HOTELS_CN=[
+ {tx:334,ty:138,label:'北京四合院客棧'},{tx:458,ty:326,label:'上海外灘飯店'},
+ {tx:246,ty:608,label:'廣州珠江賓館'},{tx:154,ty:428,label:'成都熊貓旅舍'},
+ {tx:410,ty:562,label:'廈門鼓浪嶼民宿'},{tx:306,ty:690,label:'香港維港酒店'},
+ {tx:310,ty:542,label:'株洲神農大酒店'},
+];
+const LANDMARKS_CN=[
+ {t:'greatwall',tx:300,ty:105,label:'萬里長城',lines:['蜿蜒萬里的巨龍盤在山脊上！','不到長城非好漢～']},
+ {t:'tiananmen',tx:330,ty:158,label:'天安門',lines:['莊嚴的紅色城樓！','前面的廣場好大好壯觀。']},
+ {t:'orientalpearl',tx:452,ty:320,label:'東方明珠',lines:['上海的地標高塔！','球體造型好像科幻電影。']},
+ {t:'terracotta',tx:248,ty:294,label:'秦始皇兵馬俑',lines:['地下埋著千軍萬馬！','每個陶俑的表情都不一樣。']},
+ {t:'pandabase',tx:146,ty:444,label:'成都熊貓基地',lines:['圓滾滾的大熊貓在啃竹子！','翻滾的樣子超療癒～']},
+ {t:'temple',tx:334,ty:170,label:'雍和宮'},
+ {t:'shop',tx:334,ty:146,label:'北京便利店'},
+ {t:'shop',tx:244,ty:616,label:'廣州便利店'},
+ {t:'market',tx:290,ty:518,label:'長沙火宮殿夜市'},
+ {t:'giftshop',tx:460,ty:334,label:'上海禮品行'},
+ {t:'weaponshop',tx:238,ty:648,label:'深圳黑市軍火'},
+ {t:'cityhall',tx:324,ty:442,label:'武漢市政府',county:'華中'},
+];
+const AIRPORTS=[
+ {tx:263,ty:110,label:'桃園機場',w:'tw'},
+ {tx:300,ty:68,label:'松山機場',w:'tw'},
+ {tx:256,ty:548,label:'小港機場',w:'tw'},
+ {tx:462,ty:344,label:'上海浦東機場',w:'cn'},
+ {tx:345,ty:184,label:'北京首都機場',w:'cn'},
+];
+const CN_NPC_DEFS=[
+ {name:'劉思思',species:'human',gender:'f',hair:'#3a2a2a',hairStyle:1,outfit:'dress',shirt:'#f472b6',streamer:true,tx:306,ty:550,homeR:3,pal:{fur:'#f5c99b',belly:'#fff'},lines:[
+  '🎵「月亮代表我的心～你問我愛你有多深…」',
+  '哈囉家人們！歡迎來到思思的直播間～幫我點個關注嘛！',
+  '🎵「小酒窩長睫毛～是你最美的記號～」',
+  '我是湖南株洲的劉思思，今年24歲，最愛唱歌給大家聽！',
+  '🎵「你是我的小呀小蘋果～怎麼愛你都不嫌多～」',
+  '刷個火箭嘛～開玩笑的啦，你來陪我聊天思思就很開心了！',
+  '🎵「大河向東流哇～天上的星星參北斗哇～」',
+  '台灣來的朋友嗎？好想去阿里山、日月潭走走喔！',
+  '🎵「後來～我總算學會了如何去愛～」',
+  '嗓子有點啞了…再唱一首就好，你幫我點歌嘛！',
+  '🎵「隱形的翅膀～讓夢恆久比天長～」',
+  '謝謝你一直看思思直播，麼麼噠～😘',
+ ]},
+];

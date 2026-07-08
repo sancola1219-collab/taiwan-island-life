@@ -52,8 +52,9 @@ function sfx(name){ if(!AC)return; const t=AC.currentTime;
   else if(name==='train'){[392,523,659,784].forEach((f,i)=>tone(f,t+i*0.1,0.3,'triangle',0.1));}
   else if(name==='chime'){[660,880,1100].forEach((f,i)=>tone(f,t+i*0.15,0.5,'sine',0.08));}}
 
-/* ================= 地圖生成 ================= */
-const map=new Uint8Array(MW*MH);
+/* ================= 地圖生成（v40：雙世界 台灣/大陸，可切換） ================= */
+let world='tw';            // 目前所在世界
+let map=new Uint8Array(MW*MH);
 const T=(x,y)=>(x<0||y<0||x>=MW||y>=MH)?SEA:map[y*MW+x];
 function inPoly(x,y){let ins=false;for(let i=0,j=POLY.length-1;i<POLY.length;j=i++){
   const xi=POLY[i][0],yi=POLY[i][1],xj=POLY[j][0],yj=POLY[j][1];
@@ -164,11 +165,13 @@ function makeTile(type){
 }
 [SEA,SAND,GRASS,HIGH,MT,LAKE,PLAZA,PATH,FIELD].forEach(t=>tileImgs[t]=makeTile(t));
 // 小地圖
-const mini=document.createElement('canvas');mini.width=MW/2;mini.height=MH/2;
-{ const g=mini.getContext('2d');
+function makeMini(mapArr){
+  const c=document.createElement('canvas');c.width=MW/2;c.height=MH/2;const g=c.getContext('2d');
   const col={[SEA]:'#3f8fbd',[SAND]:'#efe0a8',[GRASS]:'#6fb257',[HIGH]:'#559549',
     [MT]:'#8b8f7c',[LAKE]:'#4694b4',[PLAZA]:'#d8cba8',[PATH]:'#d9b97e',[FIELD]:'#aacb6c'};
-  for(let ty=0;ty<MH;ty+=2)for(let tx=0;tx<MW;tx+=2){g.fillStyle=col[T(tx,ty)];g.fillRect(tx/2,ty/2,1,1);} }
+  for(let ty=0;ty<MH;ty+=2)for(let tx=0;tx<MW;tx+=2){g.fillStyle=col[mapArr[ty*MW+tx]]||'#3f8fbd';g.fillRect(tx/2,ty/2,1,1);}
+  return c; }
+let mini=makeMini(map);
 
 /* ================= 建築 ================= */
 function drawRoofSign(x,y,txt,bg){ if(!txt)return;
@@ -288,6 +291,64 @@ const BUILDING_DRAWS={
   ctx.fillStyle='#111';rr(cx2+2,y+h-26,20,26,3);ctx.fill(); // 黑門
   ctx.font='15px serif';ctx.textAlign='center';ctx.fillText('🔫',x+w-16,y-2);ctx.textAlign='left';
   drawRoofSign(cx2,y-58,'🔫 '+b.label,'#8a1f1f');},
+ airport(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#dfe6ee';rr(x,y-30,w,h+30,6);ctx.fill(); // 航廈
+  ctx.fillStyle='#b9c4d0';ctx.beginPath();ctx.moveTo(x-6,y-30);ctx.quadraticCurveTo(cx2,y-52,x+w+6,y-30);ctx.lineTo(x+w+6,y-24);ctx.quadraticCurveTo(cx2,y-46,x-6,y-24);ctx.closePath();ctx.fill(); // 弧形屋頂
+  ctx.fillStyle=isNight()?'#ffe6a0':'#cfe3f5';for(let i=0;i<5;i++)rr(x+7+i*(w-14)/5,y-10,(w-14)/5-4,14,2),ctx.fill(); // 玻璃帷幕
+  ctx.fillStyle='#8a95a2';rr(x+w-14,y-64,7,34,2);ctx.fill(); // 塔台桿
+  ctx.fillStyle='#4a5563';rr(x+w-20,y-74,19,14,3);ctx.fill();
+  ctx.fillStyle=isNight()?'#ffd97a':'#bfe0ff';rr(x+w-17,y-71,13,7,2);ctx.fill();
+  // 小飛機
+  ctx.save();ctx.translate(x+16,y-52+Math.sin(tGlobal*1.5)*2);ctx.fillStyle='#eef2f6';
+  ctx.beginPath();ctx.ellipse(0,0,13,4,0,0,7);ctx.fill();
+  ctx.beginPath();ctx.moveTo(-2,0);ctx.lineTo(-9,-7);ctx.lineTo(-4,0);ctx.fill();
+  ctx.fillStyle='#3f6fd6';ctx.beginPath();ctx.moveTo(2,0);ctx.lineTo(10,6);ctx.lineTo(6,0);ctx.fill();ctx.restore();
+  drawRoofSign(cx2,y-88,'✈️ '+b.label,'#3f6f8f');},
+ greatwall(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#b8ac96';ctx.beginPath();ctx.moveTo(x,y+h);ctx.lineTo(x,y-6);ctx.lineTo(cx2,y-24);ctx.lineTo(x+w,y-6);ctx.lineTo(x+w,y+h);ctx.closePath();ctx.fill(); // 城牆隨山起伏
+  ctx.fillStyle='#9c9078';for(let i=0;i<7;i++){const bx=x+2+i*(w-4)/7;rr(bx,y-8-Math.sin(i/6*Math.PI)*16,(w-4)/7-2,7,1);ctx.fill();} // 雉堞
+  ctx.fillStyle='#8a7e68';rr(cx2-13,y-46,26,40,2);ctx.fill(); // 烽火台
+  ctx.fillStyle='#6f6552';rr(cx2-13,y-52,26,7,1);ctx.fill();
+  ctx.fillStyle='#3a3126';rr(cx2-5,y-20,10,14,2);ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=1;for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(x,y+i*h/4);ctx.lineTo(x+w,y+i*h/4);ctx.stroke();}
+  drawRoofSign(cx2,y-66,b.label,'#8a6b3a');},
+ tiananmen(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#b83b2e';rr(x,y-30,w,h+30,3);ctx.fill(); // 紅色城樓
+  ctx.fillStyle='#e0b83a';ctx.beginPath();ctx.moveTo(x-8,y-30);ctx.lineTo(cx2,y-52);ctx.lineTo(x+w+8,y-30);ctx.closePath();ctx.fill(); // 金黃屋頂
+  ctx.fillStyle='#c9a02a';ctx.beginPath();ctx.moveTo(x+4,y-40);ctx.lineTo(cx2,y-58);ctx.lineTo(x+w-4,y-40);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#7a1f18';for(let i=0;i<3;i++){rr(x+8+i*(w-16)/2.4,y-14,20,h+14,2);ctx.fill();} // 拱門
+  ctx.fillStyle='#f2d98a';for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(x+8+i*(w-16)/4,y-22,2,0,7);ctx.fill();} // 燈籠/裝飾
+  drawRoofSign(cx2,y-70,b.label,'#b83b2e');},
+ orientalpearl(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.strokeStyle='#9aa6b6';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(cx2-6,y+h);ctx.lineTo(cx2-3,y-120);ctx.moveTo(cx2+6,y+h);ctx.lineTo(cx2+3,y-120);ctx.stroke(); // 三柱
+  ctx.strokeStyle='#c0c9d6';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx2,y+h);ctx.lineTo(cx2,y-132);ctx.stroke();
+  const g=ctx.createRadialGradient(cx2-5,y-58,3,cx2,y-52,20);g.addColorStop(0,'#f4a6c8');g.addColorStop(1,'#c0507f');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx2,y-52,19,0,7);ctx.fill(); // 大球
+  const g2=ctx.createRadialGradient(cx2-3,y-102,2,cx2,y-98,12);g2.addColorStop(0,'#f4a6c8');g2.addColorStop(1,'#c0507f');
+  ctx.fillStyle=g2;ctx.beginPath();ctx.arc(cx2,y-98,11,0,7);ctx.fill(); // 小球
+  ctx.fillStyle='#e2574c';ctx.beginPath();ctx.arc(cx2,y-132,3,0,7);ctx.fill();
+  drawRoofSign(cx2,y-150,b.label,'#c0507f');},
+ terracotta(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#8a6b4a';rr(x-2,y-10,w+4,h+10,3);ctx.fill(); // 坑
+  ctx.fillStyle='#c9a878';rr(x+3,y-4,w-6,h,2);ctx.fill(); // 土色地
+  ctx.strokeStyle='#8a6b4a';ctx.lineWidth=2;for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(x+3+i*(w-6)/4,y-4);ctx.lineTo(x+3+i*(w-6)/4,y+h-4);ctx.stroke();} // 隔道
+  ctx.fillStyle='#a08258';for(let c=0;c<4;c++)for(let r2=0;r2<3;r2++){ // 兵馬俑
+    const sx=x+9+c*(w-14)/4, sy=y+2+r2*(h-6)/3;
+    ctx.beginPath();ctx.arc(sx,sy-4,2.4,0,7);ctx.fill();rr(sx-2.2,sy-2,4.4,7,1.5);ctx.fill();}
+  drawRoofSign(cx2,y-24,b.label,'#8a6b4a');},
+ pandabase(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#8fbf5a';rr(x,y-6,w,h+6,8);ctx.fill(); // 草地平台
+  ctx.strokeStyle='#4e8a3f';ctx.lineWidth=3;ctx.lineCap='round'; // 竹林
+  for(let i=0;i<5;i++){const bx=x+5+i*(w-10)/5;ctx.beginPath();ctx.moveTo(bx,y+h-4);ctx.lineTo(bx-2,y-30-i%2*6);ctx.stroke();
+    ctx.fillStyle='#6ab04a';ctx.beginPath();ctx.ellipse(bx-4,y-28-i%2*6,5,2,-0.6,0,7);ctx.fill();}ctx.lineCap='butt';
+  // 熊貓
+  const px=cx2, py=y+h-12;
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(px,py,11,9,0,0,7);ctx.fill();ctx.beginPath();ctx.arc(px,py-11,8,0,7);ctx.fill();
+  ctx.fillStyle='#2a2a2a';ctx.beginPath();ctx.arc(px-6,py-15,3,0,7);ctx.arc(px+6,py-15,3,0,7);ctx.fill(); // 耳
+  ctx.beginPath();ctx.ellipse(px-4,py-11,2.4,3,0.3,0,7);ctx.ellipse(px+4,py-11,2.4,3,-0.3,0,7);ctx.fill(); // 黑眼圈
+  ctx.beginPath();ctx.ellipse(px-9,py+1,3.5,4,0.5,0,7);ctx.ellipse(px+9,py+1,3.5,4,-0.5,0,7);ctx.fill(); // 手
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px-4,py-11,1,0,7);ctx.arc(px+4,py-11,1,0,7);ctx.fill();
+  drawRoofSign(cx2,y-40,'🐼 '+b.label,'#3f8f5a');},
  cityhall(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
   ctx.fillStyle='#f0ede4';rr(x,y-40,w,h+40,4);ctx.fill(); // 政府大樓
   ctx.fillStyle='#d5d0c2';ctx.fillRect(x-6,y-44,w+12,8);
@@ -804,7 +865,7 @@ const BUILDING_DRAWS={
   ctx.fillStyle='#7a4a22';rr(cx2-16,y+h-38,32,38,5);ctx.fill();
   drawRoofSign(cx2,y-80,'🚡 '+b.label,'#c9500f');},
 };
-const BUILDINGS=[];
+let BUILDINGS=[];
 function addBuild(t,tx,ty,tw,th,label,extra){
   const b={t,tx,ty,tw,th,label,x:tx*TILE,y:ty*TILE,w:tw*TILE,h:th*TILE,...extra};
   BUILDINGS.push(b);return b;}
@@ -823,7 +884,8 @@ const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],la
   waterfall:[4,3],catvillage:[3,2],ferris:[4,3],rainbowhouse:[4,2],saltmtn:[3,3],person:[3,2],
   eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2],giftshop:[3,3],registry:[4,3],
   salon:[3,3],accshop:[3,3],shoeshop:[3,3],clothshop:[4,3],weaponshop:[3,3],
-  cityhall:[4,3],magicschool:[3,3],farm:[2,2]};
+  cityhall:[4,3],magicschool:[3,3],farm:[2,2],
+  airport:[5,3],greatwall:[6,3],tiananmen:[5,3],orientalpearl:[3,4],terracotta:[5,3],pandabase:[4,3]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines,steam:L.steam,isLm:true});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 // 港口自動貼齊海岸線（找最近的「臨陸海面」放置碼頭）
@@ -886,8 +948,75 @@ CABLECARS.forEach(c=>{
           {wall:WALLS[Math.floor(rand()*WALLS.length)],roof:ROOFS[Math.floor(rand()*ROOFS.length)]});
         placed++;}
     }}}
+// 台灣機場（v40）：搭飛機去大陸
+AIRPORTS.filter(a=>a.w==='tw').forEach(a=>{const [ax,ay]=fitSpot(a.tx,a.ty,5,3);addBuild('airport',ax,ay,5,3,a.label,{airport:a});});
 // 除了摩天輪/台北101/貓纜(與民宅/自宅)外，所有設施建設整體縮小
 for(const b of BUILDINGS)if(!SCALE_EXEMPT.has(b.t))b.scale=BSCALE;
+
+/* ===== v40 雙世界：大陸地區生成 ===== */
+function genMapCN(m){
+  for(let ty=0;ty<MH;ty++)for(let tx=0;tx<MW;tx++){
+    const edge=Math.min(tx,MW-1-tx,ty,MH-1-ty);
+    const coast=48+(vnoise(tx*0.024,ty*0.024)-0.5)*66; // 不規則海岸
+    let t=SEA;
+    if(edge>coast){ t=GRASS;
+      const md=Math.abs((tx-185)+(ty-400)*0.16);        // 西部山脈斜帶
+      if(md<48&&vnoise(tx*0.08,ty*0.08)>0.32)t=HIGH;
+      if(md<20&&vnoise(tx*0.08+40,ty*0.08)>0.5)t=MT;
+      if(((tx-300)/34)**2+((ty-472)/22)**2<1)t=LAKE;    // 洞庭湖
+      if(t===GRASS&&vnoise(tx*0.05+80,ty*0.05)>0.73)t=FIELD; }
+    m[ty*MW+tx]=t; }
+  const sand=[];                                          // 海灘
+  for(let ty=0;ty<MH;ty++)for(let tx=0;tx<MW;tx++){ const t=m[ty*MW+tx];
+    if(t===SEA||t===LAKE||!WALKABLE[t])continue; let near=false;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=tx+dx,ny=ty+dy;
+      const nt=(nx<0||ny<0||nx>=MW||ny>=MH)?SEA:m[ny*MW+nx];if(nt===SEA)near=true;}
+    if(near)sand.push(ty*MW+tx); }
+  sand.forEach(i=>m[i]=SAND);
+}
+function genWorldCN(){ // 於 map=cnMap、BUILDINGS=cnB 的狀態下呼叫
+  AIRPORTS.filter(a=>a.w==='cn').forEach(a=>{const [ax,ay]=fitSpot(a.tx,a.ty,5,3);addBuild('airport',ax,ay,5,3,a.label,{airport:a});});
+  LANDMARKS_CN.forEach(L=>{const [tw,th]=SIZE[L.t];const [lx,ly]=fitSpot(L.tx,L.ty,tw,th);
+    addBuild(L.t,lx,ly,tw,th,L.label,{lines:L.lines,county:L.county,isLm:true});});
+  EATERIES_CN.forEach(e=>{const [ex,ey]=fitSpot(e.tx,e.ty,3,2);addBuild('eatery',ex,ey,3,2,e.label,{food:e.food,price:e.price,icon:e.icon});});
+  HOTELS_CN.forEach(h=>{const [hx,hy]=fitSpot(h.tx,h.ty,4,3);addBuild('hotel',hx,hy,4,3,h.label);});
+  { rs=SEED+99; const SUR=['王','李','張','劉','陳','楊','趙','黃','周','吳','徐','孫','胡','朱','高','林','何','郭','馬','羅'];
+    const WALLS=['#ecd6b2','#e6dcc4','#e8cfa8','#dfe4d0','#efd9c4']; const ROOFS=['#b8604f','#8a6a4a','#6f8a9a','#a86a8a','#c98a3a'];
+    const offs=[[-7,-3],[6,-3],[-5,4],[6,4],[-8,1],[8,1],[-3,6],[4,-6],[-6,-6],[7,-1]];
+    for(const tw of TOWNS_CN){ let placed=0;
+      for(const [ox,oy] of offs){ if(placed>=7)break;
+        const hx=Math.round(tw.tx)+ox, hy=Math.round(tw.ty)+oy; let ok=true;
+        for(let dy=-1;dy<=1&&ok;dy++)for(let dx=-1;dx<=2&&ok;dx++){const t=T(hx+dx,hy+dy);if(!(t===GRASS||t===FIELD||t===PATH))ok=false;}
+        if(ok)for(const b of BUILDINGS)if(hx<b.tx+b.tw+1&&hx+3>b.tx&&hy<b.ty+b.th+2&&hy+3>b.ty){ok=false;break;}
+        if(ok){const nm=SUR[Math.floor(rand()*SUR.length)];
+          addBuild('house',hx,hy,2,1,'🏠 '+nm+'宅',{wall:WALLS[Math.floor(rand()*WALLS.length)],roof:ROOFS[Math.floor(rand()*ROOFS.length)]});placed++;}
+      }}}
+}
+const SCENES={ tw:{map,buildings:BUILDINGS,mini,towns:TOWNS,name:'台灣'} };
+let ACT_TOWNS=TOWNS, ACT_NPCDEFS=NPC_DEFS;
+{ // 建立大陸世界（暫時把 map/BUILDINGS 指向大陸，生成後快照、還原台灣）
+  const cnMap=new Uint8Array(MW*MH); genMapCN(cnMap);
+  const _map=map,_b=BUILDINGS; map=cnMap; BUILDINGS=[]; world='cn';
+  genWorldCN();
+  for(const b of BUILDINGS)if(!SCALE_EXEMPT.has(b.t))b.scale=BSCALE;
+  SCENES.cn={map:cnMap,buildings:BUILDINGS,mini:makeMini(cnMap),towns:TOWNS_CN,name:'大陸'};
+  map=_map; BUILDINGS=_b; world='tw';
+}
+function setScene(w){ const S=SCENES[w]; if(!S)return; world=w; map=S.map; BUILDINGS=S.buildings; mini=S.mini;
+  ACT_TOWNS=S.towns; ACT_NPCDEFS=(w==='cn')?CN_NPC_DEFS:NPC_DEFS; }
+function flyTo(destW,destLabel){
+  setScene(destW);
+  for(const a of [citizens,animals,sealife,bugs,digs,drops,puffs,groundToys,events,fx,campfires])a.length=0; // 清空舊世界動態物件
+  player.wanted=null;player.riding=null;player.balloonRide=null;player.sailing=false;player.fishing=null;
+  player.soak=null;player.pray=null;player.ferris=null;
+  godz=null; godzT=240+Math.random()*300;
+  genWorld(); genNpcs(); // 重新生成該世界的樹木/店主/特殊NPC（大陸：劉思思）
+  const ap=BUILDINGS.find(b2=>b2.t==='airport'&&b2.label===destLabel)||BUILDINGS.find(b2=>b2.t==='airport');
+  const q=findWalkSafe(ap.tx+2,ap.ty+ap.th+2); player.x=q.x; player.y=q.y; player.face=0;
+  ui=null; menu=null; zoomT=1; flash=1; sfx('jingle'); save();
+  dlg('✈️ '+destLabel,['飛機平穩降落，艙門緩緩打開——','歡迎來到'+(destW==='cn'?'大陸':'台灣')+'！',
+    destW==='cn'?'去湖南株洲找找直播主劉思思，她會唱歌給你聽喔！':'回到寶島，繼續你的環島冒險吧！','（在機場可再搭機返回）']);
+}
 
 /* ================= 世界物件 ================= */
 const trees=[],rocks=[],weeds=[],flowers=[],drops=[],bugs=[],digs=[],teaBushes=[],cacti=[],strawberries=[],lamps=[],lanterns=[];
@@ -905,6 +1034,7 @@ function fruitOf(tx,ty){
 }
 function genWorld(){
   rs=SEED;
+  for(const a of [trees,rocks,weeds,flowers,teaBushes,cacti,strawberries,lamps,lanterns,owners])a.length=0; // v40 換世界時重置靜態物件
   for(let ty=2;ty<MH-2;ty++)for(let tx=2;tx<MW-2;tx++){
     const t=T(tx,ty);
     if(t!==GRASS&&t!==HIGH&&t!==SAND)continue;
@@ -927,6 +1057,7 @@ function genWorld(){
     if(rand()<0.006&&flowers.length<650)flowers.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE,
       c:['#f26d7d','#f9c74f','#fff','#c77dff','#ff9e50'][Math.floor(rand()*5)]});
   }
+  if(world==='tw'){ // 台灣專屬：茶園/仙人掌/草莓/花海
   // 茶園
   for(const [x0,y0,x1,y1] of TEA_PATCHES)
     for(let ty=y0;ty<=y1;ty+=2)for(let tx=x0;tx<=x1;tx++){
@@ -949,8 +1080,9 @@ function genWorld(){
       const t=T(tx,ty); if(t!==GRASS&&t!==HIGH&&t!==FIELD)continue;
       for(let k=0;k<2;k++)flowers.push({x:(tx+hsh(tx+k,ty)*0.9+0.05)*TILE,
         y:(ty+hsh(tx,ty+k*3)*0.9+0.05)*TILE,c:col});}}
+  }
   // 路燈（市鎮）
-  for(const tw of TOWNS){
+  for(const tw of ACT_TOWNS){
     for(const [ox,oy] of [[-2,2],[2,-2]]){
       const t=T(tw.tx+ox,tw.ty+oy);
       if(t===PATH||t===PLAZA)lamps.push({x:(tw.tx+ox+0.5)*TILE,y:(tw.ty+oy+0.5)*TILE});}}
@@ -1067,6 +1199,21 @@ function drawChatBubble(x,y,line){
   ctx.beginPath();ctx.moveTo(x-4,by+h-1);ctx.lineTo(x+4,by+h-1);ctx.lineTo(x,by+h+6);ctx.closePath();
   ctx.fillStyle='rgba(255,255,255,.95)';ctx.fill();
   ctx.fillStyle='#5b4023';ctx.textAlign='center';ctx.fillText(t,x,by+14);ctx.textAlign='left';
+}
+// v40 直播主劉思思：自拍手機LIVE＋飄浮音符＋循環唱歌泡泡
+const STREAM_SONGS=['月亮代表我的心～','小蘋果～怎麼愛都不嫌多','隱形的翅膀～','後來～我學會了愛','大河向東流～','小酒窩長睫毛～','關注思思不迷路～'];
+function drawStreamer(n){ const x=n.x,y=n.y;
+  ctx.save();
+  ctx.fillStyle='#222';rr(x+13,y-30,9,15,2);ctx.fill(); // 自拍手機
+  ctx.fillStyle=isNight()?'#8fd0ff':'#bfe6ff';rr(x+14.5,y-28.5,6,10,1);ctx.fill();
+  ctx.fillStyle='#e2453c';ctx.beginPath();ctx.arc(x+17.5,y-33,2.6,0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 5px sans-serif';ctx.textAlign='center';ctx.fillText('LIVE',x+17.5,y-31.3);
+  ctx.font='12px serif'; // 飄浮音符
+  for(let i=0;i<3;i++){const t2=(tGlobal*0.8+i*0.9)%2.4, a=Math.max(0,1-t2/2.4);
+    ctx.globalAlpha=a;ctx.fillText(i%2?'🎵':'🎶',x-16+i*9+Math.sin(tGlobal*3+i)*4,y-46-t2*14);}
+  ctx.globalAlpha=1;ctx.restore();
+  const s=STREAM_SONGS[Math.floor(tGlobal/3.4)%STREAM_SONGS.length];
+  if((tGlobal%3.4)<2.6)drawChatBubble(x,y,'🎤 '+s);
 }
 // ===== 寺廟祭典：舞獅／舞龍／圍觀群眾 =====
 function drawLion(x,y,t){ const bob=Math.sin(t*6)*3, sway=Math.sin(t*3)*4;
@@ -1281,9 +1428,10 @@ function caught(n,verb){ addItem(n); dex[n]=(dex[n]||0)+1;
   const it=ITEMS[n]; player.show={emoji:it.e,text:verb+'了 '+n+'！',t:2.2};
   sfx('jingle'); save(); }
 let NPCS=[];
-function genNpcs(){ NPCS=NPC_DEFS.map(d=>{ const p=findWalkSafe(d.tx,d.ty);
+function genNpcs(defs){ NPCS=(defs||ACT_NPCDEFS||NPC_DEFS).map(d=>{ const p=findWalkSafe(d.tx,d.ty);
   return {name:d.name,species:d.species,x:p.x,y:p.y,hx:p.x,hy:p.y,homeR:d.homeR*TILE,
-    face:0,walk:0,vx:0,vy:0,ai:0,lines:d.lines,pal:d.pal,quest:d.quest!=null?d.quest:null};});}
+    face:0,walk:0,vx:0,vy:0,ai:0,lines:d.lines,pal:d.pal,quest:d.quest!=null?d.quest:null,sing:0,
+    gender:d.gender,hair:d.hair,hairStyle:d.hairStyle,outfit:d.outfit,shirt:d.shirt,streamer:d.streamer};});}
 
 /* ================= 碰撞 ================= */
 function solidAt(px,py){
@@ -1664,6 +1812,15 @@ function buildAct(b){
    accshop(){ shopEquipMenu(b,'acc'); },
    shoeshop(){ shopEquipMenu(b,'shoe'); },
    clothshop(){ clothMenu(b); },
+   airport(){ // v40 機場：搭飛機往返台灣/大陸
+     const dests=AIRPORTS.filter(a=>a.w!==world);
+     const opts=dests.map(a=>({label:'✈️ 飛往「'+a.label+'」（'+(a.w==='cn'?'大陸':'台灣')+'）機票 '+fmt(1500)+'元',cb(){
+       if(money<1500){dlg(b.label,['機票一張 '+fmt(1500)+' 元喔。','努力賺錢再來搭飛機吧！']);return;}
+       money-=1500; flyTo(a.w,a.label); }}));
+     opts.push({label:'看看航班資訊',cb(){dlg(b.label,['歡迎搭乘！本機場提供台灣⇌大陸航線。',
+       world==='tw'?'飛去大陸可看長城、東方明珠、熊貓，還有株洲直播主劉思思～':'飛回台灣繼續環島冒險吧！','（機票每張 '+fmt(1500)+' 元）']);}});
+     opts.push({label:'離開',cb(){ui=null;}});
+     openMenu('✈️ '+b.label,opts); },
    weaponshop(){ const opts=GUNS.map(gun=>{ const owned=(player.ownGuns||[]).includes(gun.n), eq=(player.toy===gun.n);
        return {label:gun.e+gun.n+(eq?' ✓持用中':owned?' 已擁有·點裝備':'　'+fmt(gun.price)+'元'),cb(){
          if(!owned){ if(money<gun.price){dlg(b.label,['錢不夠…「'+gun.n+'」要 '+fmt(gun.price)+' 元。','這種東西可不便宜。']);return;}
@@ -1681,7 +1838,7 @@ function buildAct(b){
          let bad=false; // fitSpot 失敗會原樣返回，需再驗證一次
          for(const bb of BUILDINGS)if(fx2<bb.tx+bb.tw+1&&fx2+3>bb.tx&&fy2<bb.ty+bb.th+2&&fy2+3>bb.ty){bad=true;break;}
          if(bad){dlg(b.label,['這附近的地都登記完了…','換一個縣市政府買買看吧！']);return;}
-         money-=FARM_PRICE; const f={tx:fx2,ty:fy2,state:'empty',at:0,pay:0};
+         money-=FARM_PRICE; const f={tx:fx2,ty:fy2,state:'empty',at:0,pay:0,w:world};
          myFarms.push(f); addFarmBuild(f); sfx('cash'); save(); ui=null;
          toast('🌾 買到農地了！就在'+b.label+'旁邊（小地圖附近找木牌）——過去播種吧！');}},
        {label:'看看介紹',cb(){dlg(b.label,['這裡是'+(b.county||'')+'的行政中心。','想當農夫嗎？我們有平價農地放領專案！','買農地→播種→等它長大，期間每小時還有補助金領喔。']);}},
@@ -1793,15 +1950,15 @@ function skyTint(){ const h=hourNow();
     return [L(K[i][1],K[i+1][1]),L(K[i][2],K[i+1][2]),L(K[i][3],K[i+1][3]),L(K[i][4],K[i+1][4])];}}
   return [0,0,0,0];}
 function nearestTown(tx,ty){ let best=null,bd=1e9;
-  for(const t of TOWNS){const d=(t.tx-tx)**2+(t.ty-ty)**2;if(d<bd){bd=d;best=t;}}
+  for(const t of ACT_TOWNS){const d=(t.tx-tx)**2+(t.ty-ty)**2;if(d<bd){bd=d;best=t;}}
   return {t:best,d:Math.sqrt(bd)};}
 function regionOf(){ const tx=player.x/TILE, ty=player.y/TILE;
   const tile=T(Math.floor(tx),Math.floor(ty));
-  const nt=nearestTown(tx,ty);
-  if(player.sailing){ if(tile===LAKE)return '日月潭';
+  const nt=nearestTown(tx,ty); if(!nt.t)return world==='cn'?'大陸':'台灣';
+  if(player.sailing){ if(world==='tw'&&tile===LAKE)return '日月潭';
     return nt.t.c+'外海';}
-  if(tile===LAKE||dist(tx,ty,LAKEC.x,LAKEC.y)<7)return '南投・日月潭';
-  if((tile===HIGH||tile===MT)&&nt.d>16)return '中央山脈';
+  if(world==='tw'){ if(tile===LAKE||dist(tx,ty,LAKEC.x,LAKEC.y)<7)return '南投・日月潭';
+    if((tile===HIGH||tile===MT)&&nt.d>16)return '中央山脈'; }
   return nt.t.c+'・'+nt.t.n;}
 
 /* ================= 互動 ================= */
@@ -2182,7 +2339,7 @@ let bugSpawnT=0, digSpawnT=0, shellSpawnT=0, animalT=0, citizenT=0, seaT=0, fire
 let festival=null, festAnnouncedDay=-1; // 寺廟祭典狀態
 // 寺廟祭典排程：每天輪一場（10:00–15:00），開始前10分鐘放送
 function updateFestival(){
-  if(typeof FESTIVALS==='undefined'||!FESTIVALS.length){festival=null;return;}
+  if(world!=='tw'||typeof FESTIVALS==='undefined'||!FESTIVALS.length){festival=null;return;}
   const f=FESTIVALS[(gameDay-1)%FESTIVALS.length], START=10*60, END=15*60;
   if(gameMin>=START-10&&gameMin<START&&festAnnouncedDay!==gameDay){ festAnnouncedDay=gameDay;
     toast('📢 祭典放送：'+f.emoji+'『'+f.name+'』10分鐘後在「'+f.temple+'」熱鬧展開！有舞龍舞獅，快來參拜衝名譽值！'); sfx('jingle'); }
@@ -2240,7 +2397,7 @@ function buildHome(ht){
   inv['木材']-=ht.wood;if(inv['木材']<=0)delete inv['木材'];
   inv['礦石']-=ht.ore;if(inv['礦石']<=0)delete inv['礦石'];
   money-=ht.cash;
-  myHomes.push({tx:ftx,ty:fty,type:ht.id});
+  myHomes.push({tx:ftx,ty:fty,type:ht.id,w:world});
   addBuild('myhome',ftx,fty,ht.tw,ht.th,player.name+'的'+ht.n,{htype:ht.id});
   sfx('jingle'); save(); ui=null;
   toast(ht.icon+' '+ht.n+'落成！走到門口就能進去睡覺（'+myHomes.length+'/2間）');
@@ -2558,23 +2715,21 @@ function update(dt){
       if(wt.t<=0){ const sp2=findWalkSafe(Math.round(wt.rx/TILE),Math.round(wt.ry/TILE));
         wt.car={x:sp2.x,y:sp2.y}; wt.phase='chase'; wt.t=14; sfx('sad');
         toast('🚓 警車來了！它會全速超車繞到你前面攔截——快跑！'); }
-    } else if(wt.phase==='chase'){ // 警車追向玩家：追上就明顯減速，貼近一段時間才下車包圍（給玩家逃跑空間）
+    } else if(wt.phase==='chase'){ // 警車追向玩家：接近就減速，到「6格距離」停車下車包圍
       const car=wt.car;
       const dxx=player.x-car.x, dyy=player.y-car.y, pd=Math.hypot(dxx,dyy)||1;
       if(!hidden){
-        const spd = pd>220?440 : pd>110?250 : 110; // 追到人就慢下來，讓玩家有時間跑
+        const spd = pd>12*TILE?460 : pd>8*TILE?300 : 160; // 接近6格逐漸減速，給玩家逃跑空間
         const nx=car.x+dxx/pd*spd*dt, ny=car.y+dyy/pd*spd*dt;
         if(!hitObstacle(nx,ny)){car.x=nx;car.y=ny;}       // 只走陸地：不會開進海裡、不穿牆
         else if(!hitObstacle(nx,car.y))car.x=nx;
         else if(!hitObstacle(car.x,ny))car.y=ny;
-        if(pd<70){ wt.caughtT=(wt.caughtT||0)+dt;
-          if(wt.caughtT>1.6){ // 貼近玩家一段時間才下車包圍；中途跑開會重置
-            wt.phase='block'; wt.t=22; sfx('sad'); wt.cops=[];
-            for(let i=0;i<5;i++){ const cx=car.x+Math.cos(i*1.257)*12, cy=car.y+Math.sin(i*1.257)*12;
-              const ok=!hitObstacle(cx,cy); wt.cops.push({x:ok?cx:car.x,y:ok?cy:car.y,down:false,slot:i*1.257,walk:0,face:2}); }
-            toast('🚔 警車追上停在你旁邊，5名警察下車包圍你——被圍住就會被捕，快突圍！'); } }
-        else wt.caughtT=0; }
-      if(wt.t<=0){ if(hidden||pd>360){player.wanted=null;wt.caughtT=0;toast('🏃 甩掉警車了！以後別亂來囉～');}
+        if(pd<6*TILE){ // 離玩家約6格就停車、警察下車朝玩家包圍過來
+          wt.phase='block'; wt.t=26; sfx('sad'); wt.cops=[];
+          for(let i=0;i<5;i++){ const cx=car.x+Math.cos(i*1.257)*16, cy=car.y+Math.sin(i*1.257)*16;
+            const ok=!hitObstacle(cx,cy); wt.cops.push({x:ok?cx:car.x,y:ok?cy:car.y,down:false,slot:i*1.257,walk:0,face:2}); }
+          toast('🚔 警車停在離你約6格處，5名警察下車朝你包圍過來——趁機突圍或躲進屋裡！'); } }
+      if(wt.t<=0){ if(hidden||pd>360){player.wanted=null;toast('🏃 甩掉警車了！以後別亂來囉～');}
         else wt.t=6; }
     } else if(wt.phase==='block'){ // 警察包圍圈：4人以上貼身＝逮捕
       const cops=wt.cops.filter(c2=>!c2.down);
@@ -3469,9 +3624,9 @@ function draw(){
         ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fillRect(tx*TILE+18,ty*TILE+22,4,4);}}
   }
   const inView=(x,y,m)=>x>cx-(m||80)&&x<cx+VWz+(m||80)&&y>cy-(m||80)&&y<cy+VHz+(m||80);
-  // 環島鐵路軌道
+  // 環島鐵路軌道（僅台灣）
   ctx.lineCap='round';
-  for(let i=0;i<RAILS.length-1;i++){
+  if(world==='tw')for(let i=0;i<RAILS.length-1;i++){
     const ax=RAILS[i][0]*TILE,ay=RAILS[i][1]*TILE,bx=RAILS[i+1][0]*TILE,by=RAILS[i+1][1]*TILE;
     if(Math.max(ax,bx)<cx-100||Math.min(ax,bx)>cx+VWz+100||Math.max(ay,by)<cy-100||Math.min(ay,by)>cy+VHz+100)continue;
     const L=Math.hypot(bx-ax,by-ay)||1,ux=(bx-ax)/L,uy=(by-ay)/L,px2=-uy,py2=ux;
@@ -3486,8 +3641,8 @@ function draw(){
     ctx.beginPath();ctx.moveTo(ax-px2*4,ay-py2*4);ctx.lineTo(bx-px2*4,by-py2*4);ctx.stroke();
   }
   ctx.lineCap='butt';
-  // 纜車纜線與往返車廂
-  for(const c of CABLECARS){
+  // 纜車纜線與往返車廂（僅台灣）
+  if(world==='tw')for(const c of CABLECARS){
     const ax=c.a[0]*TILE,ay=c.a[1]*TILE-40,bx=c.b[0]*TILE,by=c.b[1]*TILE-40;
     if(Math.max(ax,bx)<cx-200||Math.min(ax,bx)>cx+VWz+200||Math.max(ay,by)<cy-200||Math.min(ay,by)>cy+VHz+200)continue;
     ctx.strokeStyle='#5a5048';ctx.lineWidth=2;
@@ -3550,7 +3705,9 @@ function draw(){
     list.push({y:festival.b.y+festival.b.h+42,f:()=>drawFestival(festival)});
   for(const n of NPCS)if(inView(n.x,n.y)){
     if(boarding()&&followers.includes(n.name))continue; // 同乘時隱藏夥伴（避免在地上飛）
-    list.push({y:n.y,f:()=>drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,shirt:n.pal.fur})});}
+    list.push({y:n.y,f:()=>{ drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,
+        shirt:n.shirt||n.pal.fur,gender:n.gender,hair:n.hair,hairStyle:n.hairStyle,outfit:n.outfit});
+      if(n.streamer)drawStreamer(n); }});}
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
   for(const a of animals)if(inView(a.x,a.y))list.push({y:a.y,f:()=>drawAnimal(a)});
   for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>{
@@ -4043,7 +4200,9 @@ function drawUI(){
     ctx.fillText('🖼️ 縣市導覽圖',x+mw3-138,y+mh+29);
     uiHits.push({x:x+mw3-150,y:y+mh+8,w:150,h:30,cb(){ui=null;openRefView();}});
     drawClose(Math.min(x+mw3+6,VW-24),Math.max(24,y-4));
-    const MKS=[['台北',202,44],['桃園',178,70],['新竹',163,98],['台中',158,174],['彰化',150,200],
+    const MKS = world==='cn'
+      ? TOWNS_CN.map(t=>[t.n,t.tx,t.ty])
+      : [['台北',202,44],['桃園',178,70],['新竹',163,98],['台中',158,174],['彰化',150,200],
       ['嘉義',156,258],['台南',159,328],['高雄',171,360],['墾丁',210,458],['宜蘭',242,74],
       ['花蓮',257,171],['台東',245,282],['日月潭',186,220],['玉山',206,262],['阿里山',184,260],
       ['澎湖',54,309],['金門',19,255],['馬祖',24,47],['綠島',328,415],['蘭嶼',339,477],
@@ -4196,6 +4355,7 @@ function drawUI(){
       '🌾 各縣市政府可買農地：播種後每小時領補助、成熟收割賺大錢！',
       '🧙 綠島魔法屋免費學職業（魔法師/劍士/忍者/道士/風女/冰女），全是範圍技！',
       '🦖 聽到廣播「哥吉拉出現」→武器店買次元砲(5萬)出海討伐，賞金100萬！',
+      '✈️ 桃園/松山/小港機場可搭飛機去「大陸」(長城/東方明珠/熊貓)，株洲有直播主劉思思會唱歌喔！',
       '',
       'B背包 M地圖 P圖鑑 J任務 C製作 N音樂 (H 或 Esc 關閉)'];
     panel(x,y,w,lines.length*27+46);
@@ -4215,7 +4375,7 @@ function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
   crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,ownGuns:player.ownGuns,murderRap:player.murderRap,
-  job:player.job,farms:myFarms,
+  job:player.job,farms:myFarms,world,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   if(!s)return false;
@@ -4232,13 +4392,15 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   eateryDone=s.eateryDone||{};player.toy=s.toy||null;player.love=s.love||null;
   player.crimes=s.crimes||0;player.notoriousUntil=s.notoriousUntil||0;player.patrolT=20;player.honor=s.honor||0;
   player.ownGuns=s.ownGuns||[];player.murderRap=!!s.murderRap;
+  const addToScene=(wn,...a)=>{ const S=SCENES[wn]||SCENES.tw; const sv=BUILDINGS; BUILDINGS=S.buildings; addBuild(...a); BUILDINGS=sv; };
   myHomes=s.myHomes||(s.myHome?[{tx:s.myHome.tx,ty:s.myHome.ty,type:'cabin'}]:[]);
-  for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0];
-    addBuild('myhome',mh.tx,mh.ty,ht.tw,ht.th,(s.name||'小島民')+'的'+ht.n,{htype:ht.id});}
+  for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0]; mh.w=mh.w||'tw';
+    addToScene(mh.w,'myhome',mh.tx,mh.ty,ht.tw,ht.th,(s.name||'小島民')+'的'+ht.n,{htype:ht.id});}
   player.job=s.job||null; // v37 職業＋農地
-  myFarms=(s.farms||[]).map(f=>({tx:f.tx,ty:f.ty,state:f.state||'empty',at:f.at||0,pay:f.pay||0}));
-  for(const f of myFarms)addFarmBuild(f);
+  myFarms=(s.farms||[]).map(f=>({tx:f.tx,ty:f.ty,state:f.state||'empty',at:f.at||0,pay:f.pay||0,w:f.w||'tw'}));
+  for(const f of myFarms)addToScene(f.w,'farm',f.tx,f.ty,2,2,(s.name||'小島民')+'的農地',{farm:f});
   player.boat=!!s.boat;musicOn=s.music!==false;
+  setScene(s.world==='cn'?'cn':'tw'); genWorld(); genNpcs(); // v40 切到存檔所在世界，重生該世界物件/NPC
   if(s.x!=null){ if(s.sailing&&!hitWater(s.x,s.y)){player.x=s.x;player.y=s.y;player.sailing=true;}
     else if(!hitObstacle(s.x,s.y)){player.x=s.x;player.y=s.y;} }
   return true;}catch(e){return false;} }
