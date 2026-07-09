@@ -1054,14 +1054,35 @@ function flyTo(destW,destLabel){
   ui=null; menu=null; zoomT=1; flash=1; sfx('jingle'); flyAnim=2.8; flyLabel=destLabel; flyDestW=destW; typhoon=null; save();
 }
 // v43 脫困：清除卡住/占用狀態並傳送到最近城鎮的安全落點
-function rescueTeleport(){
+const RESCUE_MIN_MOVE=8; // 落點至少要離現在位置這麼多格，否則等於沒被救到
+function rescueSpots(tx,ty,max){ // 由內而外收集多個「可走、不卡建築、至少一邊走得動」的落點
+  const out=[];
+  for(let r=0;r<12&&out.length<(max||14);r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue; // 只取當前這一圈
+    if(!WALKABLE[T(tx+dx,ty+dy)])continue;
+    const x=(tx+dx+0.5)*TILE,y=(ty+dy+0.5)*TILE;
+    if(!hitObstacle(x,y)&&(!hitObstacle(x+34,y)||!hitObstacle(x-34,y)||!hitObstacle(x,y+34)||!hitObstacle(x,y-34)))
+      out.push({x,y});
+  }
+  return out;
+}
+function rescueTeleport(){ // v44 保證真的把玩家移到「另一座」最近城市，且每次落點不同
   player.riding=null;player.balloonRide=null;player.ferris=null;player.soak=null;player.pray=null;player.fishing=null;player.sailing=false;player.pet&&(player.pet.atk=null);
-  zoomT=1;
-  const nt=nearestTown(player.x/TILE,player.y/TILE);
-  const bx=nt.t?Math.round(nt.t.tx):Math.round(player.x/TILE), by=nt.t?Math.round(nt.t.ty):Math.round(player.y/TILE);
-  const q=findWalkSafe(bx,by); player.x=q.x; player.y=q.y; player.face=0;
+  zoomT=1; flyAnim=0;
+  const px=player.x/TILE, py=player.y/TILE;
+  const sorted=ACT_TOWNS.map(t=>({t,d:Math.hypot(t.tx-px,t.ty-py)})).sort((a,b)=>a.d-b.d);
+  let dest=null,spot=null;
+  for(const c of sorted){ // 由近到遠，跳過「你已經站在裡面」的那座city
+    const cands=rescueSpots(Math.round(c.t.tx),Math.round(c.t.ty));
+    if(!cands.length)continue;
+    const pick=cands[Math.floor(Math.random()*cands.length)];
+    if(Math.hypot(pick.x/TILE-px,pick.y/TILE-py)>=RESCUE_MIN_MOVE){dest=c.t;spot=pick;break;}
+  }
+  if(!spot&&sorted.length){dest=sorted[0].t;spot=findWalkSafe(Math.round(dest.tx),Math.round(dest.ty));}
+  if(!spot)spot=findWalkSafe(Math.round(px),Math.round(py));
+  player.x=spot.x; player.y=spot.y; player.face=0;
   ui=null; menu=null; sfx('pop'); flash=0.5; save();
-  toast('🆘 已脫困！把你傳送到最近的「'+(nt.t?nt.t.n:'安全地點')+'」。');
+  toast('🆘 已脫困！傳送到最近的城市「'+(dest?dest.n:'安全地點')+'」。');
 }
 let flyAnim=0, flyLabel='', flyDestW='tw';
 function drawFlyAnim(){ // v42 飛機飛出去/降落動畫（螢幕層）
@@ -1494,10 +1515,13 @@ function caught(n,verb){ addItem(n); dex[n]=(dex[n]||0)+1;
   const it=ITEMS[n]; player.show={emoji:it.e,text:verb+'了 '+n+'！',t:2.2};
   sfx('jingle'); save(); }
 let NPCS=[];
-function genNpcs(defs){ NPCS=(defs||ACT_NPCDEFS||NPC_DEFS).map(d=>{ const p=findWalkSafe(d.tx,d.ty);
+function genNpcs(defs){ NPCS=(defs||ACT_NPCDEFS||NPC_DEFS)
+  .filter(d=>!(typeof player!=='undefined'&&player.love&&player.love.name===d.name)) // v44 已成為對象的NPC不再生成分身
+  .map(d=>{ const p=findWalkSafe(d.tx,d.ty);
   return {name:d.name,species:d.species,x:p.x,y:p.y,hx:p.x,hy:p.y,homeR:d.homeR*TILE,
     face:0,walk:0,vx:0,vy:0,ai:0,lines:d.lines,pal:d.pal,quest:d.quest!=null?d.quest:null,sing:0,
-    gender:d.gender,hair:d.hair,hairStyle:d.hairStyle,outfit:d.outfit,shirt:d.shirt,streamer:d.streamer};});}
+    gender:d.gender,hair:d.hair,hairStyle:d.hairStyle,outfit:d.outfit,shirt:d.shirt,streamer:d.streamer,
+    courtable:d.courtable,aff:d.aff};});} // v44 courtable/aff 之前漏了複製，導致劉思思沒有「認識一下」
 
 /* ================= 碰撞 ================= */
 function solidAt(px,py){
@@ -1663,7 +1687,9 @@ function loveInteract(){
 }
 /* ---------- 夥伴系統：每位動物朋友 3 個委託，完成後可結伴同行 ---------- */
 let partnerState={}, followers=[], trail=[];
-function npcIdx(name){return NPC_DEFS.findIndex(d=>d.name===name);}
+function npcIdx(name){ const i=NPC_DEFS.findIndex(d=>d.name===name); if(i>=0)return i; // v44 之前大陸NPC一律回-1，全都拿到同一組委託
+  const j=(typeof CN_NPC_DEFS!=='undefined')?CN_NPC_DEFS.findIndex(d=>d.name===name):-1;
+  return j>=0?NPC_DEFS.length+j:-1; }
 function chatLine(npc){ dlg(npc.name,[npc.lines[Math.floor(Math.random()*npc.lines.length)]
   .replace(/\{name\}/g,player.name)]); }
 function talkTo(npc){ if(!npc)return;
@@ -4372,10 +4398,10 @@ function drawUI(){
       ctx.fillText('A',VW-74,VH-113);ctx.textAlign='left';ctx.globalAlpha=1;
       uiHits.push({x:VW-118,y:VH-168,w:88,h:88,cb(){interact();}});
     }
-    // 側邊功能圖示
+    // 側邊功能圖示（坐牢時整排停用：否則點🆘或切面板就能免服刑越獄，且存檔仍是jailed，重整又被關回去）
     const icons=[['🎒','bag'],['🗺️','map'],['📖','dex'],['📋','quest'],['🔨','craft'],['💾','save'],['🆘','rescue'],['❓','help']];
     const step=Math.min(50,(VH*0.66)/icons.length), iy0=Math.max(92,VH*0.15);
-    icons.forEach(([em,mode],i)=>{ const iy=iy0+i*step;
+    if(ui!=='jail')icons.forEach(([em,mode],i)=>{ const iy=iy0+i*step;
       ctx.globalAlpha=0.85;panel(VW-52,iy,42,42,.85);ctx.globalAlpha=1;
       if(mode==='rescue'){ctx.fillStyle='#e2574c';ctx.font='bold 15px '+F;ctx.textAlign='center';ctx.fillText('脫困',VW-31,iy+27);ctx.textAlign='left';}
       else{ctx.font='20px serif';ctx.fillText(em,VW-45,iy+29);}
@@ -4384,7 +4410,7 @@ function drawUI(){
         if(m==='craft'){if(!ui)openCraft();else ui=null;}
         else if(m==='save'){save();toast('💾 已存檔！');}
         else if(m==='rescue'){openMenu('🆘 卡住了嗎？',[
-          {label:'✅ 把我傳送到最近的城鎮',cb(){rescueTeleport();}},
+          {label:'✅ 換個地方！傳送到最近的城市',cb(){rescueTeleport();}},
           {label:'取消',cb(){ui=null;}}]);}
         else ui=(ui===m?null:m);
         sfx('blip');})(mode)});});
