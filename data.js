@@ -300,6 +300,7 @@ const LANDMARKS=[
  {t:'clothshop',tx:185,ty:49,label:'西門服飾店'},
  {t:'clothshop',tx:169,ty:184,label:'台中服飾館'},
  {t:'clothshop',tx:192,ty:367,label:'高雄流行服飾'},
+ {t:'petshop',tx:196,ty:46,label:'台北寵物之家'},{t:'petshop',tx:165,ty:178,label:'台中寵物店'},{t:'petshop',tx:186,ty:362,label:'高雄寵物館'},
  // v4 新增（依玩家提供的地圖照片）
  {t:'waterfall',tx:221,ty:48,label:'十分瀑布',lines:['台灣的尼加拉瀑布！','水簾垂下的彩虹好美～']},
  {t:'catvillage',tx:227,ty:34,label:'猴硐貓村',lines:['喵喵喵～整個村子都是貓！','貓橋上有好多貓咪在打盹。']},
@@ -445,12 +446,12 @@ const FESTIVALS=[
 ];
 /* ---------- 黑市軍火（武器店販售，可對路人開火・重罪） ---------- */
 const GUNS=[
- {n:'黑星手槍',e:'🔫',price:8000},
- {n:'烏茲衝鋒槍',e:'🔫',price:25000},
- {n:'雷明頓霰彈槍',e:'🔫',price:60000},
- {n:'AK步槍',e:'🔫',price:120000},
- {n:'狙擊步槍',e:'🔫',price:250000},
- {n:'次元砲',e:'🛸',price:50000}, // v37 對付海上哥吉拉專用重砲（也能傷人，後果同槍枝）
+ {n:'黑星手槍',e:'🔫',price:100,fx:'pistol'},        // v41 價格100-1000、各有特效
+ {n:'烏茲衝鋒槍',e:'🔫',price:300,fx:'smg'},
+ {n:'雷明頓霰彈槍',e:'🔫',price:500,fx:'shotgun'},
+ {n:'AK步槍',e:'🔫',price:700,fx:'rifle'},
+ {n:'狙擊步槍',e:'🔫',price:1000,fx:'sniper'},
+ {n:'次元砲',e:'🛸',price:5000,fx:'cannon'},          // v41 對付哥吉拉專用重砲，5000元（也能傷人，後果同槍枝）
 ];
 /* ---------- 職業（綠島魔法屋習得，v37；v39 全改範圍技能＋新增風女/冰女） ----------
    mode:'radius'=以自身為中心的範圍技；'line'=面向前方的直線技。range 以「格」計 */
@@ -721,74 +722,108 @@ const REF_PORTS=18; // ref/p01.png ~ p18.png
   BUGSPECS.forEach(b=>{if(b.rect)b.rect=b.rect.map(v=>R(v*S));});
 }
 
-/* ================= 大陸地區（v40，搭飛機可達；座標為完整 600×780，不經 scale pass） ================= */
+/* ================= 大陸地區（v40／v41 擴充；搭飛機可達；座標為完整 600×780，不經 scale pass） ================= */
 const TOWNS_CN=[
- {n:'北京',c:'華北',tx:330,ty:140},{n:'天津',c:'華北',tx:365,ty:162},
- {n:'上海',c:'華東',tx:455,ty:330},{n:'南京',c:'華東',tx:408,ty:300},
- {n:'杭州',c:'華東',tx:440,ty:372},{n:'蘇州',c:'華東',tx:432,ty:342},
- {n:'青島',c:'華東',tx:440,ty:222},{n:'廣州',c:'華南',tx:242,ty:612},
- {n:'深圳',c:'華南',tx:286,ty:656},{n:'香港',c:'華南',tx:302,ty:696},
- {n:'廈門',c:'華南',tx:406,ty:566},{n:'成都',c:'西南',tx:150,ty:432},
- {n:'重慶',c:'西南',tx:200,ty:482},{n:'西安',c:'西北',tx:250,ty:282},
- {n:'武漢',c:'華中',tx:322,ty:432},{n:'長沙',c:'湖南',tx:288,ty:512},
- {n:'株洲',c:'湖南',tx:306,ty:546},
+ // 東北
+ {n:'哈爾濱',c:'黑龍江',tx:392,ty:70},{n:'長春',c:'吉林',tx:372,ty:98},{n:'瀋陽',c:'遼寧',tx:352,ty:126},{n:'大連',c:'遼寧',tx:372,ty:158},
+ // 華北
+ {n:'呼和浩特',c:'內蒙古',tx:272,ty:132},{n:'北京',c:'華北',tx:330,ty:150},{n:'天津',c:'華北',tx:358,ty:168},{n:'石家莊',c:'河北',tx:318,ty:188},{n:'太原',c:'山西',tx:290,ty:210},
+ // 西北
+ {n:'烏魯木齊',c:'新疆',tx:112,ty:196},{n:'敦煌',c:'甘肅',tx:150,ty:240},{n:'蘭州',c:'甘肅',tx:206,ty:264},{n:'西安',c:'陝西',tx:258,ty:298},{n:'銀川',c:'寧夏',tx:238,ty:224},
+ // 華中
+ {n:'鄭州',c:'河南',tx:318,ty:318},{n:'洛陽',c:'河南',tx:298,ty:312},{n:'武漢',c:'湖北',tx:326,ty:420},
+ // 湖南
+ {n:'長沙',c:'湖南',tx:300,ty:500},{n:'株洲',c:'湖南',tx:314,ty:524},{n:'張家界',c:'湖南',tx:268,ty:470},
+ // 華東
+ {n:'濟南',c:'山東',tx:388,ty:238},{n:'青島',c:'山東',tx:428,ty:244},{n:'南京',c:'江蘇',tx:406,ty:322},{n:'蘇州',c:'江蘇',tx:436,ty:346},{n:'上海',c:'上海',tx:462,ty:342},
+ {n:'杭州',c:'浙江',tx:442,ty:382},{n:'合肥',c:'安徽',tx:388,ty:360},{n:'南昌',c:'江西',tx:372,ty:466},{n:'福州',c:'福建',tx:428,ty:548},{n:'廈門',c:'福建',tx:414,ty:576},
+ // 西南
+ {n:'成都',c:'四川',tx:162,ty:440},{n:'重慶',c:'重慶',tx:212,ty:472},{n:'貴陽',c:'貴州',tx:240,ty:512},{n:'昆明',c:'雲南',tx:182,ty:560},{n:'拉薩',c:'西藏',tx:122,ty:404},
+ // 華南
+ {n:'桂林',c:'廣西',tx:256,ty:566},{n:'南寧',c:'廣西',tx:232,ty:618},{n:'廣州',c:'廣東',tx:302,ty:628},{n:'深圳',c:'廣東',tx:330,ty:660},{n:'香港',c:'香港',tx:344,ty:690},{n:'澳門',c:'澳門',tx:318,ty:694},{n:'海口',c:'海南',tx:296,ty:730},
 ];
 const EATERIES_CN=[
- {tx:330,ty:150,label:'全聚德烤鴨',food:'北京烤鴨',price:200,icon:'🦆'},
- {tx:456,ty:338,label:'南翔小籠包',food:'上海小籠包',price:80,icon:'🥟'},
- {tx:242,ty:620,label:'廣州早茶樓',food:'蝦餃燒賣',price:120,icon:'🥟'},
- {tx:150,ty:440,label:'成都老火鍋',food:'四川麻辣火鍋',price:250,icon:'🌶️'},
- {tx:200,ty:490,label:'重慶小麵館',food:'重慶小麵',price:60,icon:'🍜'},
- {tx:250,ty:290,label:'西安肉夾饃',food:'肉夾饃',price:55,icon:'🥙'},
- {tx:322,ty:440,label:'武漢熱乾麵',food:'熱乾麵',price:50,icon:'🍜'},
- {tx:406,ty:574,label:'廈門沙茶麵',food:'沙茶麵',price:65,icon:'🍜'},
- {tx:440,ty:380,label:'杭州樓外樓',food:'西湖醋魚',price:150,icon:'🐟'},
- {tx:288,ty:520,label:'長沙臭豆腐攤',food:'長沙臭豆腐',price:55,icon:'🥡'},
- {tx:306,ty:554,label:'株洲炒碼粉',food:'湖南炒碼粉',price:50,icon:'🍜'},
- {tx:302,ty:704,label:'香港燒臘飯',food:'叉燒燒鵝飯',price:90,icon:'🍛'},
- {tx:408,ty:308,label:'南京鹽水鴨',food:'鹽水鴨',price:110,icon:'🦆'},
- {tx:440,ty:230,label:'青島海鮮',food:'辣炒蛤蜊',price:120,icon:'🦪'},
+ {tx:330,ty:158,label:'全聚德烤鴨',food:'北京烤鴨',price:200,icon:'🦆'},{tx:326,ty:148,label:'老北京炸醬麵',food:'炸醬麵',price:50,icon:'🍜'},
+ {tx:462,ty:350,label:'南翔小籠包',food:'上海小籠包',price:80,icon:'🥟'},{tx:456,ty:338,label:'上海生煎館',food:'生煎包',price:55,icon:'🥟'},
+ {tx:302,ty:636,label:'廣州早茶樓',food:'蝦餃燒賣',price:120,icon:'🥟'},{tx:330,ty:668,label:'深圳腸粉店',food:'腸粉',price:50,icon:'🍥'},
+ {tx:162,ty:448,label:'成都老火鍋',food:'四川麻辣火鍋',price:250,icon:'🌶️'},{tx:158,ty:432,label:'成都擔擔麵',food:'擔擔麵',price:55,icon:'🍜'},
+ {tx:212,ty:480,label:'重慶小麵館',food:'重慶小麵',price:60,icon:'🍜'},{tx:216,ty:466,label:'重慶酸辣粉',food:'酸辣粉',price:50,icon:'🍜'},
+ {tx:258,ty:306,label:'西安肉夾饃',food:'肉夾饃',price:55,icon:'🥙'},{tx:252,ty:290,label:'西安羊肉泡饃',food:'羊肉泡饃',price:80,icon:'🍲'},
+ {tx:326,ty:428,label:'武漢熱乾麵',food:'熱乾麵',price:50,icon:'🍜'},{tx:414,ty:584,label:'廈門沙茶麵',food:'沙茶麵',price:65,icon:'🍜'},
+ {tx:442,ty:390,label:'杭州樓外樓',food:'西湖醋魚',price:150,icon:'🐟'},{tx:446,ty:376,label:'杭州蔥包檜',food:'蔥包檜',price:45,icon:'🥖'},
+ {tx:300,ty:508,label:'長沙臭豆腐攤',food:'長沙臭豆腐',price:55,icon:'🥡'},{tx:314,ty:532,label:'株洲炒碼粉',food:'湖南炒碼粉',price:50,icon:'🍜'},
+ {tx:344,ty:698,label:'香港燒臘飯',food:'叉燒燒鵝飯',price:90,icon:'🍛'},{tx:318,ty:702,label:'澳門豬扒包',food:'豬扒包',price:60,icon:'🥪'},
+ {tx:406,ty:330,label:'南京鹽水鴨',food:'鹽水鴨',price:110,icon:'🦆'},{tx:428,ty:252,label:'青島海鮮攤',food:'辣炒蛤蜊',price:120,icon:'🦪'},
+ {tx:182,ty:568,label:'昆明過橋米線',food:'過橋米線',price:70,icon:'🍜'},{tx:240,ty:520,label:'貴陽腸旺麵',food:'腸旺麵',price:55,icon:'🍜'},
+ {tx:232,ty:626,label:'南寧老友粉',food:'老友粉',price:50,icon:'🍜'},{tx:256,ty:574,label:'桂林米粉店',food:'桂林米粉',price:45,icon:'🍜'},
+ {tx:296,ty:738,label:'海南文昌雞飯',food:'文昌雞飯',price:80,icon:'🍗'},{tx:392,ty:78,label:'哈爾濱鍋包肉',food:'鍋包肉',price:90,icon:'🍖'},
+ {tx:352,ty:134,label:'瀋陽雞架店',food:'老雪雞架',price:60,icon:'🍗'},{tx:388,ty:246,label:'濟南把子肉',food:'把子肉',price:70,icon:'🍖'},
+ {tx:112,ty:204,label:'新疆大盤雞',food:'新疆大盤雞',price:180,icon:'🍗'},{tx:150,ty:248,label:'蘭州牛肉麵',food:'蘭州拉麵',price:55,icon:'🍜'},
 ];
 const HOTELS_CN=[
- {tx:334,ty:138,label:'北京四合院客棧'},{tx:458,ty:326,label:'上海外灘飯店'},
- {tx:246,ty:608,label:'廣州珠江賓館'},{tx:154,ty:428,label:'成都熊貓旅舍'},
- {tx:410,ty:562,label:'廈門鼓浪嶼民宿'},{tx:306,ty:690,label:'香港維港酒店'},
- {tx:310,ty:542,label:'株洲神農大酒店'},
+ {tx:334,ty:146,label:'北京四合院客棧'},{tx:466,ty:334,label:'上海外灘飯店'},{tx:306,ty:622,label:'廣州珠江賓館'},
+ {tx:166,ty:434,label:'成都熊貓旅舍'},{tx:418,ty:570,label:'廈門鼓浪嶼民宿'},{tx:348,ty:684,label:'香港維港酒店'},
+ {tx:318,ty:518,label:'株洲神農大酒店'},{tx:396,ty:64,label:'哈爾濱冰雪飯店'},{tx:126,ty:398,label:'拉薩雪域客棧'},
+ {tx:262,ty:302,label:'西安古城旅館'},{tx:186,ty:554,label:'昆明春城旅店'},{tx:260,ty:560,label:'桂林山水民宿'},
 ];
 const LANDMARKS_CN=[
- {t:'greatwall',tx:300,ty:105,label:'萬里長城',lines:['蜿蜒萬里的巨龍盤在山脊上！','不到長城非好漢～']},
- {t:'tiananmen',tx:330,ty:158,label:'天安門',lines:['莊嚴的紅色城樓！','前面的廣場好大好壯觀。']},
- {t:'orientalpearl',tx:452,ty:320,label:'東方明珠',lines:['上海的地標高塔！','球體造型好像科幻電影。']},
- {t:'terracotta',tx:248,ty:294,label:'秦始皇兵馬俑',lines:['地下埋著千軍萬馬！','每個陶俑的表情都不一樣。']},
- {t:'pandabase',tx:146,ty:444,label:'成都熊貓基地',lines:['圓滾滾的大熊貓在啃竹子！','翻滾的樣子超療癒～']},
- {t:'temple',tx:334,ty:170,label:'雍和宮'},
- {t:'shop',tx:334,ty:146,label:'北京便利店'},
- {t:'shop',tx:244,ty:616,label:'廣州便利店'},
- {t:'market',tx:290,ty:518,label:'長沙火宮殿夜市'},
- {t:'giftshop',tx:460,ty:334,label:'上海禮品行'},
- {t:'weaponshop',tx:238,ty:648,label:'深圳黑市軍火'},
- {t:'cityhall',tx:324,ty:442,label:'武漢市政府',county:'華中'},
+ // 著名古蹟／地標（多沿用既有建物繪製）
+ {t:'greatwall',tx:300,ty:112,label:'萬里長城',lines:['蜿蜒萬里的巨龍盤在山脊上！','不到長城非好漢～']},
+ {t:'tiananmen',tx:330,ty:166,label:'天安門',lines:['莊嚴的紅色城樓！','前面的廣場好大好壯觀。']},
+ {t:'temple',tx:334,ty:176,label:'故宮紫禁城'},{t:'pagodas',tx:340,ty:158,label:'天壇'},{t:'oldstreet',tx:322,ty:172,label:'頤和園'},
+ {t:'temple',tx:334,ty:186,label:'雍和宮'},
+ {t:'orientalpearl',tx:458,ty:332,label:'東方明珠',lines:['上海的地標高塔！','球體造型好像科幻電影。']},
+ {t:'oldstreet',tx:466,ty:350,label:'上海外灘',lines:['黃浦江畔的萬國建築群！','夜景燈火好迷人。']},
+ {t:'ferris',tx:472,ty:356,label:'上海迪士尼'},
+ {t:'terracotta',tx:256,ty:308,label:'秦始皇兵馬俑',lines:['地下埋著千軍萬馬！','每個陶俑的表情都不一樣。']},
+ {t:'pagodas',tx:250,ty:306,label:'大雁塔'},
+ {t:'pandabase',tx:158,ty:452,label:'成都熊貓基地',lines:['圓滾滾的大熊貓在啃竹子！','翻滾的樣子超療癒～']},
+ {t:'weir',tx:172,ty:432,label:'都江堰'},{t:'buddha',tx:186,ty:456,label:'樂山大佛'},
+ {t:'buddha',tx:158,ty:252,label:'敦煌莫高窟'},
+ {t:'temple',tx:126,ty:412,label:'布達拉宮',lines:['雪域高原上的宮殿！','紅白相間好雄偉。']},
+ {t:'peak',tx:274,ty:478,label:'張家界天門山'},{t:'peak',tx:260,ty:574,label:'桂林山水'},{t:'peak',tx:396,ty:378,label:'黃山'},
+ {t:'pagodas',tx:330,ty:426,label:'黃鶴樓'},{t:'buddha',tx:298,ty:320,label:'龍門石窟'},{t:'temple',tx:306,ty:326,label:'少林寺'},
+ {t:'tower85',tx:306,ty:636,label:'廣州塔'},{t:'archbridge',tx:328,ty:700,label:'港珠澳大橋'},
+ {t:'redtower',tx:352,ty:132,label:'瀋陽故宮'},
+ // 商店與設施（比照台灣：便利店/夜市/髮型/飾品/鞋店/服飾/禮品/軍火/市政府）
+ {t:'shop',tx:334,ty:154,label:'北京便利店'},{t:'shop',tx:306,ty:634,label:'廣州便利店'},{t:'shop',tx:466,ty:340,label:'上海便利店'},
+ {t:'market',tx:302,ty:508,label:'長沙火宮殿夜市'},{t:'market',tx:410,ty:344,label:'上海城隍廟'},{t:'market',tx:260,ty:308,label:'西安回民街'},
+ {t:'salon',tx:462,ty:332,label:'上海髮型沙龍'},{t:'salon',tx:334,ty:142,label:'北京理髮廳'},
+ {t:'accshop',tx:308,ty:640,label:'廣州飾品城'},{t:'accshop',tx:456,ty:346,label:'上海飾品店'},
+ {t:'shoeshop',tx:334,ty:664,label:'深圳鞋城'},{t:'shoeshop',tx:322,ty:180,label:'北京鞋店'},
+ {t:'clothshop',tx:300,ty:646,label:'廣州十三行服飾'},{t:'clothshop',tx:470,ty:346,label:'上海南京路服飾'},
+ {t:'petshop',tx:336,ty:152,label:'北京寵物店'},{t:'petshop',tx:468,ty:344,label:'上海寵物之家'},{t:'petshop',tx:304,ty:642,label:'廣州寵物城'},
+ {t:'giftshop',tx:464,ty:338,label:'上海禮品行'},{t:'giftshop',tx:340,ty:696,label:'香港手信店'},
+ {t:'weaponshop',tx:334,ty:668,label:'深圳黑市軍火'},{t:'weaponshop',tx:414,ty:582,label:'廈門黑市軍火'},
+ {t:'cityhall',tx:326,ty:428,label:'武漢市政府',county:'湖北'},{t:'cityhall',tx:306,ty:622,label:'廣州市政府',county:'廣東'},
+ {t:'registry',tx:330,ty:160,label:'北京民政局'},{t:'registry',tx:306,ty:632,label:'廣州民政局'},
+ {t:'magicschool',tx:126,ty:400,label:'拉薩秘法閣'},
 ];
 const AIRPORTS=[
  {tx:263,ty:110,label:'桃園機場',w:'tw'},
  {tx:300,ty:68,label:'松山機場',w:'tw'},
  {tx:256,ty:548,label:'小港機場',w:'tw'},
- {tx:462,ty:344,label:'上海浦東機場',w:'cn'},
- {tx:345,ty:184,label:'北京首都機場',w:'cn'},
+ {tx:466,ty:352,label:'上海浦東機場',w:'cn'},
+ {tx:345,ty:196,label:'北京首都機場',w:'cn'},
+ {tx:302,ty:614,label:'廣州白雲機場',w:'cn'},
 ];
+/* 大陸路人聊天（各省口音／方言味台詞） */
+const CN_CHAT_LINES=['吃了嗎您內～','嘹咋咧！','巴適得很嘛～','老鐵沒毛病！','靈得嘞～','雷猴啊！食咗飯未？',
+ '瓷實著呢～','俺滴娘咧～','嘎哈呢？','杭兒風哦～','伐要太靈哦～','老表你好呀～','恰飯冇？','搞么子啊～',
+ '得勁！','怎個整嘛～','闊以闊以～','妥妥的～','沒得事～','安逸得板～'];
 const CN_NPC_DEFS=[
- {name:'劉思思',species:'human',gender:'f',hair:'#3a2a2a',hairStyle:1,outfit:'dress',shirt:'#f472b6',streamer:true,tx:306,ty:550,homeR:3,pal:{fur:'#f5c99b',belly:'#fff'},lines:[
-  '🎵「月亮代表我的心～你問我愛你有多深…」',
+ {name:'劉思思',species:'human',gender:'f',hair:'#3a2a2a',hairStyle:1,outfit:'dress',shirt:'#f472b6',streamer:true,courtable:true,aff:0,tx:314,ty:528,homeR:3,pal:{fur:'#f5c99b',belly:'#fff'},lines:[
+  '🎵 啦啦啦～今天天氣真好呀～心情跟著飛起來～',
   '哈囉家人們！歡迎來到思思的直播間～幫我點個關注嘛！',
-  '🎵「小酒窩長睫毛～是你最美的記號～」',
+  '🎵 嗯～哼著自己編的小曲兒～微風輕輕吹過髮梢～',
   '我是湖南株洲的劉思思，今年24歲，最愛唱歌給大家聽！',
-  '🎵「你是我的小呀小蘋果～怎麼愛你都不嫌多～」',
-  '刷個火箭嘛～開玩笑的啦，你來陪我聊天思思就很開心了！',
-  '🎵「大河向東流哇～天上的星星參北斗哇～」',
+  '🎵 啦～啦啦～星星在對我眨眼睛～笑咪咪～',
+  '刷個火箭嘛～開玩笑的啦，你來陪思思聊天就很開心了！',
+  '🎵 嘿呀嘿～唱一首送給螢幕前的你～願你天天開心～',
   '台灣來的朋友嗎？好想去阿里山、日月潭走走喔！',
-  '🎵「後來～我總算學會了如何去愛～」',
-  '嗓子有點啞了…再唱一首就好，你幫我點歌嘛！',
-  '🎵「隱形的翅膀～讓夢恆久比天長～」',
+  '🎵 噠噠噠～心裡有個小夢想～有一天閃閃發光～',
+  '嗓子有點啞了…再唱一首就好，你幫思思打打氣嘛！',
+  '如果有人真心對我好，思思也是會心動的呀～（臉紅）',
   '謝謝你一直看思思直播，麼麼噠～😘',
  ]},
 ];

@@ -349,6 +349,15 @@ const BUILDING_DRAWS={
   ctx.beginPath();ctx.ellipse(px-9,py+1,3.5,4,0.5,0,7);ctx.ellipse(px+9,py+1,3.5,4,-0.5,0,7);ctx.fill(); // 手
   ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px-4,py-11,1,0,7);ctx.arc(px+4,py-11,1,0,7);ctx.fill();
   drawRoofSign(cx2,y-40,'🐼 '+b.label,'#3f8f5a');},
+ petshop(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
+  ctx.fillStyle='#ffe1ec';rr(x,y-30,w,h+30,7);ctx.fill(); // 粉色店面
+  ctx.fillStyle='#f7a8c4';ctx.beginPath();ctx.moveTo(x-6,y-28);ctx.lineTo(cx2,y-50);ctx.lineTo(x+w+6,y-28);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fff';for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(x+10+i*(w-20)/2,y-10,7,0,7);ctx.fill();} // 櫥窗
+  ctx.fillStyle='#8a5a3a';rr(cx2-9,y+h-22,18,22,3);ctx.fill(); // 門
+  // 貓狗招牌
+  ctx.font='15px serif';ctx.textAlign='center';
+  ctx.fillText('🐕',x+13,y-6+Math.sin(tGlobal*2)*1.5);ctx.fillText('🐈',x+w-13,y-6+Math.sin(tGlobal*2+1)*1.5);ctx.textAlign='left';
+  drawRoofSign(cx2,y-56,'🐾 '+b.label,'#e0559b');},
  cityhall(b){const x=b.x,y=b.y,w=b.w,h=b.h,cx2=x+w/2;bShadow(x,y+h,w);
   ctx.fillStyle='#f0ede4';rr(x,y-40,w,h+40,4);ctx.fill(); // 政府大樓
   ctx.fillStyle='#d5d0c2';ctx.fillRect(x-6,y-44,w+12,8);
@@ -885,7 +894,7 @@ const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],la
   eatery:[3,2],hotel:[4,3],myhome:[4,3],prison:[6,4],bluetears:[2,2],giftshop:[3,3],registry:[4,3],
   salon:[3,3],accshop:[3,3],shoeshop:[3,3],clothshop:[4,3],weaponshop:[3,3],
   cityhall:[4,3],magicschool:[3,3],farm:[2,2],
-  airport:[5,3],greatwall:[6,3],tiananmen:[5,3],orientalpearl:[3,4],terracotta:[5,3],pandabase:[4,3]};
+  airport:[5,3],greatwall:[6,3],tiananmen:[5,3],orientalpearl:[3,4],terracotta:[5,3],pandabase:[4,3],petshop:[3,3]};
 LANDMARKS.forEach(L=>{const [tw,th]=SIZE[L.t];addBuild(L.t,L.tx,L.ty,tw,th,L.label,{lines:L.lines,steam:L.steam,isLm:true});});
 STATIONS.forEach(s=>addBuild('station',s.tx,s.ty,5,3,s.n));
 // 港口自動貼齊海岸線（找最近的「臨陸海面」放置碼頭）
@@ -955,16 +964,29 @@ for(const b of BUILDINGS)if(!SCALE_EXEMPT.has(b.t))b.scale=BSCALE;
 
 /* ===== v40 雙世界：大陸地區生成 ===== */
 function genMapCN(m){
+  // 依真實中國輪廓：西寬東窄、東岸有渤海灣內凹＋山東半島外突＋長三角外突、南岸漸縮＋海南島
+  const N=v=>(vnoise(v*7.3+1.5,v*3.1+4.2)-0.5); // 隨 y 的海岸抖動
+  const eastEdge=ty=>{ let e=498;
+    if(ty<118) e=436+(118-ty)*0.35;                 // 東北往內收
+    if(ty>=150&&ty<205) e=Math.min(e,392+Math.abs(ty-178)*2.1); // 渤海灣內凹
+    if(ty>=224&&ty<262) e=Math.max(e,474+(19-Math.abs(ty-243))*2.2); // 山東半島外突
+    if(ty>=330&&ty<362) e=Math.max(e,486);          // 長三角(上海)外突
+    if(ty>=400) e=500-(ty-400)*0.30;                // 東南岸漸縮
+    return e+N(ty)*20; };
+  const westEdge=ty=> 86 + (ty<210?(210-ty)*0.16:0) + N(ty+40)*18;
+  const northEdge=tx=> 48 + N(tx*0.9+7)*24;
+  const southEdge=tx=> 706 - Math.max(0,(tx-360))*0.5 + N(tx*0.9+3)*20;
   for(let ty=0;ty<MH;ty++)for(let tx=0;tx<MW;tx++){
-    const edge=Math.min(tx,MW-1-tx,ty,MH-1-ty);
-    const coast=48+(vnoise(tx*0.024,ty*0.024)-0.5)*66; // 不規則海岸
+    let land = tx>westEdge(ty)&&tx<eastEdge(ty)&&ty>northEdge(tx)&&ty<southEdge(tx);
+    if(((tx-296)/23)**2+((ty-732)/17)**2<1) land=true;  // 海南島
     let t=SEA;
-    if(edge>coast){ t=GRASS;
-      const md=Math.abs((tx-185)+(ty-400)*0.16);        // 西部山脈斜帶
-      if(md<48&&vnoise(tx*0.08,ty*0.08)>0.32)t=HIGH;
-      if(md<20&&vnoise(tx*0.08+40,ty*0.08)>0.5)t=MT;
-      if(((tx-300)/34)**2+((ty-472)/22)**2<1)t=LAKE;    // 洞庭湖
-      if(t===GRASS&&vnoise(tx*0.05+80,ty*0.05)>0.73)t=FIELD; }
+    if(land){ t=GRASS;
+      if(tx<170&&vnoise(tx*0.06,ty*0.06)>0.40)t=HIGH;   // 青藏/橫斷山（西部）
+      if(tx<148&&vnoise(tx*0.06+30,ty*0.06)>0.55)t=MT;
+      if(tx>332&&ty<150&&vnoise(tx*0.08,ty*0.08)>0.55)t=HIGH; // 東北大興安嶺
+      if(((tx-300)/20)**2+((ty-480)/13)**2<1)t=LAKE;    // 洞庭湖
+      if(((tx-372)/15)**2+((ty-460)/11)**2<1)t=LAKE;    // 鄱陽湖
+      if(t===GRASS&&vnoise(tx*0.05+80,ty*0.05)>0.74)t=FIELD; }
     m[ty*MW+tx]=t; }
   const sand=[];                                          // 海灘
   for(let ty=0;ty<MH;ty++)for(let tx=0;tx<MW;tx++){ const t=m[ty*MW+tx];
@@ -1006,7 +1028,7 @@ function setScene(w){ const S=SCENES[w]; if(!S)return; world=w; map=S.map; BUILD
   ACT_TOWNS=S.towns; ACT_NPCDEFS=(w==='cn')?CN_NPC_DEFS:NPC_DEFS; }
 function flyTo(destW,destLabel){
   setScene(destW);
-  for(const a of [citizens,animals,sealife,bugs,digs,drops,puffs,groundToys,events,fx,campfires])a.length=0; // 清空舊世界動態物件
+  for(const a of [citizens,animals,sealife,bugs,digs,drops,puffs,groundToys,events,fx,campfires,strays])a.length=0; // 清空舊世界動態物件
   player.wanted=null;player.riding=null;player.balloonRide=null;player.sailing=false;player.fishing=null;
   player.soak=null;player.pray=null;player.ferris=null;
   godz=null; godzT=240+Math.random()*300;
@@ -1020,7 +1042,7 @@ function flyTo(destW,destLabel){
 
 /* ================= 世界物件 ================= */
 const trees=[],rocks=[],weeds=[],flowers=[],drops=[],bugs=[],digs=[],teaBushes=[],cacti=[],strawberries=[],lamps=[],lanterns=[];
-const campfires=[],animals=[],citizens=[],sealife=[],puffs=[],owners=[];
+const campfires=[],animals=[],citizens=[],sealife=[],puffs=[],owners=[],strays=[];
 let bees=null;
 function nearBuilding(tx,ty){ return BUILDINGS.some(b=>tx>=b.tx-1&&tx<=b.tx+b.tw&&ty>=b.ty-2&&ty<=b.ty+b.th); }
 function inRectA(tx,ty,r){return tx>=r.x0&&tx<=r.x1&&ty>=r.y0&&ty<=r.y1;}
@@ -1121,7 +1143,8 @@ const player={x:spawn.x,y:spawn.y,face:0,walk:0,moving:false,tool:0,
   boat:false,sailing:false,hp:100,hunger:100,race:0,soak:null,tired:0,toy:null,wanted:null,jailed:false,love:null,wedding:null,
   crimes:0,notoriousUntil:0,patrolT:0,
   gender:'m',hairStyle:0,hair:'#4a2f1d',headAcc:null,bodyAcc:null,shoes:null,
-  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0,honor:0,ownGuns:[],murderRap:false};
+  ownAcc:[],ownShoes:[],outfit:'tee',deco:null,tie:null,ownClothes:[],sparkle:0,honor:0,ownGuns:[],murderRap:false,
+  pet:null,petFood:0};
 // ---- 服裝（男女各20套；col=主色, style=版型, deco=花紋/配件, tie=領帶色）----
 const CLOTHES_M=[
  {n:'白T恤',col:'#eef2f6',style:'tee'},{n:'海軍條紋衫',col:'#3f6fd6',style:'shirt',deco:'stripe'},
@@ -1201,7 +1224,7 @@ function drawChatBubble(x,y,line){
   ctx.fillStyle='#5b4023';ctx.textAlign='center';ctx.fillText(t,x,by+14);ctx.textAlign='left';
 }
 // v40 直播主劉思思：自拍手機LIVE＋飄浮音符＋循環唱歌泡泡
-const STREAM_SONGS=['月亮代表我的心～','小蘋果～怎麼愛都不嫌多','隱形的翅膀～','後來～我學會了愛','大河向東流～','小酒窩長睫毛～','關注思思不迷路～'];
+const STREAM_SONGS=['啦啦啦～天氣真好呀～','嗯～哼著小曲兒～','星星對我眨眼睛～','心裡有個小夢想～','願你天天都開心～','微風吹過髮梢～','關注思思不迷路～'];
 function drawStreamer(n){ const x=n.x,y=n.y;
   ctx.save();
   ctx.fillStyle='#222';rr(x+13,y-30,9,15,2);ctx.fill(); // 自拍手機
@@ -1538,6 +1561,21 @@ function citizenInteract(c){
   openMenu(c.pname+' '+genderTxt+'（'+(c.race!=null?RACES[c.race].n.split('・')[0]:'路人')+'）',[...opts,
     {label:'離開',cb(){ui=null;}}]);
 }
+function courtNpc(npc){ // v41 追求固定NPC（劉思思）：認識→成為對象後沿用戀愛系統(送禮/告白/求婚/分手/帶著走)
+  faceToward(npc);
+  if(player.love){ dlg(npc.name,['「你已經有心上人啦～思思祝福你們♥」']); return; }
+  openMenu(npc.name+'（湖南株洲・24歲・直播主）',[
+   {label:'認識一下 💗（成為約會對象，會一直跟著你）',cb(){
+     player.love={name:npc.name,gender:'f',aff:Math.max(15,npc.aff||0),stage:'courting',streamer:true,
+       ap:{shirt:npc.shirt||'#f472b6',outfit:npc.outfit||'dress',pants:null,tie:null,hair:npc.hair||'#3a2a2a',race:null,hairStyle:npc.hairStyle||1},
+       x:npc.x,y:npc.y,face:npc.face,walk:0};
+     const idx=NPCS.indexOf(npc); if(idx>=0)NPCS.splice(idx,1);
+     sfx('chime'); save();
+     dlg(npc.name,['「呀…你這樣看著人家，思思會害羞的啦～♥」','（劉思思成為你的約會對象💗，會一直跟著你，連搭飛機也會一起走！）',
+       '多送禮物、多陪陪她，好感夠高就能告白、求婚結婚！']);}},
+   {label:'聽她唱歌／聊聊',cb(){dlg(npc.name,[npc.lines[Math.floor(Math.random()*npc.lines.length)]]);}},
+   {label:'離開',cb(){ui=null;}}]);
+}
 function giftMenuForLove(){
   const owned=GIFTS.filter(g=>inv[g.n]>0);
   if(!owned.length){dlg(player.love.name,['你手上沒有禮物耶…','去「禮品店/珠寶店」買束花或戒指再來吧！']);return;}
@@ -1568,11 +1606,14 @@ function loveInteract(){
   }
   opts.push({label:'聊聊',cb(){
     dlg(L.name,[(L.stage==='married'?SPOUSE_LINES:DATE_LINES)[Math.floor(Math.random()*(L.stage==='married'?SPOUSE_LINES:DATE_LINES).length)]]);}});
-  if(L.stage!=='married')opts.push({label:'💔 分手',cb(){
-    openMenu('確定要和 '+L.name+' 分手嗎？',[
-      {label:'狠心分手…',cb(){dlg(L.name,['「為什麼…嗚嗚…」'+L.name+'哭著跑走了。','（你們分手了）']);
-        player.love=null;sfx('sad');save();}},
-      {label:'不，我還愛'+heShe(L.gender),cb(){ui=null;}}]);}});
+  { const married=L.stage==='married', word=married?'離婚':'分手'; // v41 隨時可分手/離婚
+    opts.push({label:'💔 '+word+'（隨時解除關係）',cb(){
+      openMenu('確定要和 '+L.name+' '+word+'嗎？',[
+        {label:'狠心'+word+'…',cb(){
+          dlg(L.name,['「為什麼…嗚嗚…」'+L.name+(married?'難過地在協議書上簽了字。':'哭著跑走了。'),'（你們'+word+'了）']);
+          if(married&&inv['結婚證書'])delete inv['結婚證書'];
+          player.love=null;sfx('sad');save();}},
+        {label:'不，我還愛'+heShe(L.gender),cb(){ui=null;}}]);}}); }
   opts.push({label:'離開',cb(){ui=null;}});
   const badge=L.stage==='married'?'💍配偶':(L.stage==='dating'?'💗男女朋友':'💗約會中');
   openMenu(L.name+'（'+badge+'・好感'+L.aff+'/100）',opts);
@@ -1587,6 +1628,7 @@ function talkTo(npc){ if(!npc)return;
   const ddx=player.x-npc.x,ddy=player.y-npc.y;
   npc.face=Math.abs(ddx)>Math.abs(ddy)?(ddx<0?1:2):(ddy<0?3:0);
   if(npc.name==='里長伯'){chatLine(npc);return;}
+  if(npc.courtable){ courtNpc(npc); return; } // v41 可追求的NPC（劉思思）
   const st=partnerState[npc.name]||(partnerState[npc.name]={s:0,f:false});
   const chain=chainOf(npcIdx(npc.name));
   if(st.s<3){ const t=chain[st.s], have=inv[t[0]]||0, it=ITEMS[t[0]];
@@ -1821,6 +1863,17 @@ function buildAct(b){
        world==='tw'?'飛去大陸可看長城、東方明珠、熊貓，還有株洲直播主劉思思～':'飛回台灣繼續環島冒險吧！','（機票每張 '+fmt(1500)+' 元）']);}});
      opts.push({label:'離開',cb(){ui=null;}});
      openMenu('✈️ '+b.label,opts); },
+   petshop(){ // v41 寵物店：領養貓狗、買飼料
+     openMenu('🐾 '+b.label,[
+       {label:'🐕 領養狗狗（'+fmt(2000)+'元）忠心護主',cb(){ if(player.pet){dlg(b.label,['你已經養了一隻'+(player.pet.kind==='dog'?'狗':'貓')+'囉！']);return;}
+         if(money<2000){dlg(b.label,['領養一隻要 '+fmt(2000)+' 元喔。']);return;} money-=2000; adoptPet('dog'); ui=null;}},
+       {label:'🐈 領養貓咪（'+fmt(2000)+'元）優雅高冷',cb(){ if(player.pet){dlg(b.label,['你已經養了一隻'+(player.pet.kind==='dog'?'狗':'貓')+'囉！']);return;}
+         if(money<2000){dlg(b.label,['領養一隻要 '+fmt(2000)+' 元喔。']);return;} money-=2000; adoptPet('cat'); ui=null;}},
+       {label:'🍖 買寵物飼料 ×5（'+fmt(300)+'元）目前'+player.petFood+'包',cb(){
+         if(money<300){dlg(b.label,['飼料 5 包 '+fmt(300)+' 元喔。']);return;} money-=300; player.petFood+=5; sfx('cash'); save();
+         toast('🍖 買了 5 包寵物飼料！（共 '+player.petFood+' 包）面對寵物按互動鍵餵食。');}},
+       {label:'看看介紹',cb(){dlg(b.label,['歡迎光臨寵物店！','領養的貓狗會跟著你、有好感度，好感高會冒愛心和音符🎵。','也可以在路上撿流浪貓狗免費領養喔！','寵物會慢慢長大變老…好好照顧牠、按時餵飼料吧！','⚠️ 面對寵物可指使牠去攻擊最近的路人（後果自負）。']);}},
+       {label:'離開',cb(){ui=null;}}]); },
    weaponshop(){ const opts=GUNS.map(gun=>{ const owned=(player.ownGuns||[]).includes(gun.n), eq=(player.toy===gun.n);
        return {label:gun.e+gun.n+(eq?' ✓持用中':owned?' 已擁有·點裝備':'　'+fmt(gun.price)+'元'),cb(){
          if(!owned){ if(money<gun.price){dlg(b.label,['錢不夠…「'+gun.n+'」要 '+fmt(gun.price)+' 元。','這種東西可不便宜。']);return;}
@@ -2042,6 +2095,12 @@ function isGun(n){ return typeof GUNS!=='undefined'&&GUNS.some(g=>g.n===n); }
 function jobOfWeapon(n){ return typeof JOBS!=='undefined'?JOBS.find(j=>j.w===n):null; } // v37 職業武器
 function heldEmoji(n){ if(!n)return '🎁'; if(ITEMS[n])return ITEMS[n].e; const g=isGun(n)&&GUNS.find(x=>x.n===n); if(g)return g.e; const j=jobOfWeapon(n); return j?j.we:'🎁'; }
 function isWeapon(){return player.tool===3||player.tool===4||player.tool===5||(player.tool===6&&(['彈弓','水槍'].includes(player.toy)||isGun(player.toy)||!!jobOfWeapon(player.toy)));} // 鏟/斧/矛/彈弓水槍/槍枝/職業武器
+// v41 槍枝開火特效：各槍不同（手槍單發/衝鋒槍連發/霰彈散射/步槍曳光/狙擊長曳光/次元砲光束）
+function gunFxOf(n){ const g=isGun(n)&&GUNS.find(x=>x.n===n); return g?g.fx:'pistol'; }
+function spawnGunFx(sub,tx,ty){
+  const ox=player.x+DIRV[player.face][0]*16, oy=player.y-22, ang=Math.atan2(ty-oy,tx-ox);
+  fx.push({kind:'gun',sub,x:ox,y:oy,x2:tx,y2:ty,ang,t:0,dur:sub==='sniper'?0.28:0.2});
+}
 // 路人倒地的視覺/狀態（不含犯罪通報）：倒地→數秒後移除→補生維持人數平衡
 function markCitizenDead(c){
   puffs.push({x:c.x,y:c.y-20,t:0.5}); puffs.push({x:c.x+6,y:c.y-14,t:0.6});
@@ -2161,11 +2220,20 @@ function interact(){
       if(!gun){scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);}
       if(best){
         const isCop=player.wanted&&player.wanted.cops&&player.wanted.cops.includes(best);
+        if(gun)spawnGunFx(gunFxOf(player.toy),best.x,best.y-16); // v41 開火特效
         if(isCop){attackCop(best);return;}
         attackPerson(best);return;}
-      if(gun){ player.swing=0.28; sfx('swing'); toast('🔫 砰！附近沒有路人可射擊——再靠近城鎮一點吧。'); return; }
+      if(gun){ spawnGunFx(gunFxOf(player.toy),player.x+DIRV[player.face][0]*190,player.y-16);
+        player.swing=0.28; sfx('swing'); toast('🔫 砰！附近沒有路人可射擊——再靠近城鎮一點吧。'); return; }
     }
     // 男女朋友/配偶：只有「面向對方」才互動（TA 常跟在身後，避免背對時誤觸、蓋掉點任務）
+    if(player.pet&&dist(player.pet.x,player.pet.y,p.x,p.y)<52){petInteract();return;} // v41 面對寵物→指使/照顧
+    for(let i=strays.length-1;i>=0;i--){const s=strays[i]; // v41 面對流浪貓狗→免費領養
+      if(dist(s.x,s.y,p.x,p.y)<52||dist(s.x,s.y,player.x,player.y)<48){
+        if(player.pet){dlg('流浪'+(s.kind==='dog'?'狗':'貓'),['一隻流浪'+(s.kind==='dog'?'狗':'貓')+'…','你已經有寵物了，先照顧好牠吧！']);return;}
+        openMenu('🐾 一隻流浪'+(s.kind==='dog'?'狗狗':'貓咪')+'眼巴巴看著你…',[
+          {label:'❤️ 領養牠（免費）',cb(){strays.splice(i,1);adoptPet(s.kind);ui=null;}},
+          {label:'先不要',cb(){ui=null;}}]);return;}}
     if(player.love&&dist(player.love.x,player.love.y,p.x,p.y)<58){loveInteract();return;}
     for(const n of NPCS) if(dist(n.x,n.y,p.x,p.y)<52||dist(n.x,n.y,player.x,player.y)<50){talkTo(n);return;}
     for(const c of citizens) if(dist(c.x,c.y,p.x,p.y)<48||dist(c.x,c.y,player.x,player.y)<46){citizenInteract(c);return;}
@@ -2366,6 +2434,76 @@ let godz=null, godzT=240+Math.random()*300; // {x,y,hp,t,boltT,bolt,dir,hit}
 const GODZ_HP=6, GODZ_PRIZE=1000000;
 /* ---- v37 特效（雷擊/斬擊/光束） ---- */
 let fx=[]; // {kind:'bolt'|'slash'|'beam',x,y,x2,y2,t,dur}
+/* ---- v41 寵物系統 ---- */
+let strayT=8+Math.random()*10; // 流浪貓狗生成計時
+const PET_PALS={dog:{fur:'#d8a35a',belly:'#fff'},cat:{fur:'#8a8a8a',belly:'#fff'}};
+const PET_NAMES=['小白','旺財','來福','咪咪','花花','阿黑','球球','奶茶','布丁','麻糬','妞妞','豆豆'];
+function petAgeDays(){ return player.pet?((absMin()-player.pet.born)/1440):0; }
+function petStage(){ const d=petAgeDays(); return d<3?'幼':d<16?'成':'老'; }
+function makePetObj(kind,name){ return {kind,name:name||PET_NAMES[Math.floor(Math.random()*PET_NAMES.length)],
+  born:absMin()-1440, aff:20,hunger:90, x:player.x,y:player.y+30, face:0,walk:0,vx:0,vy:0, sick:0, atk:null, note:0}; }
+function adoptPet(kind,name){ if(player.pet){toast('你已經有一隻'+(player.pet.kind==='dog'?'狗狗':'貓咪')+'了！先放生或送養才能再養一隻。');return false;}
+  const p=makePetObj(kind,name); p.x=player.x; p.y=player.y+30; player.pet=p; sfx('jingle'); save();
+  toast('🐾 你領養了'+(kind==='dog'?'狗狗':'貓咪')+'「'+p.name+'」！面對牠按互動鍵可以摸摸/餵食/指使攻擊。'); return true; }
+function petInteract(){ const p=player.pet;
+  const heart=p.aff>=60?'💗':p.aff>=30?'🙂':'';
+  const opts=[
+   {label:'🤚 摸摸頭（好感+3）',cb(){p.aff=Math.min(100,p.aff+3);p.note=1.2;sfx('chime');save();
+     dlg(p.name,[(p.kind==='dog'?'汪汪！':'喵～')+p.name+'開心地蹭了蹭你♥']);}},
+   {label:'🍖 餵飼料（剩'+player.petFood+'包・飽食+40好感+4）',cb(){
+     if(player.petFood<=0){dlg(p.name,['沒有寵物飼料了…','去寵物店買一些吧！']);return;}
+     player.petFood--; p.hunger=Math.min(100,p.hunger+40); p.aff=Math.min(100,p.aff+4); p.sick=Math.max(0,p.sick-1); p.note=1.2; sfx('cash');save();
+     toast('🍖 '+p.name+'吃得津津有味！飽食+40、好感+4');}},
+   {label:'⚔️ 指使攻擊最近的路人',cb(){ ui=null;
+     let best=null,bd=1e9; for(const c of citizens){if(c.dead)continue;const d=dist(c.x,c.y,p.x,p.y);if(d<bd){bd=d;best=c;}}
+     if(!best||bd>360){toast(p.name+'四處張望…附近沒有可攻擊的路人。');return;}
+     p.atk={c:best,t:0}; sfx('swing'); toast('🐾💢 '+p.name+'齜牙咧嘴地朝路人衝過去！');}},
+   {label:'🏞️ 放生（送養）',cb(){openMenu('確定要放生「'+p.name+'」嗎？',[
+     {label:'放生…',cb(){toast('你和'+p.name+'道別，牠回到了街上。');player.pet=null;sfx('sad');save();}},
+     {label:'再想想',cb(){ui=null;}}]);}},
+   {label:'離開',cb(){ui=null;}}];
+  openMenu('🐾 '+p.name+' '+heart+'（'+petStage()+'齡・好感'+Math.floor(p.aff)+'/100・飽食'+Math.floor(p.hunger)+'）',opts);
+}
+function updatePet(dt){ const p=player.pet; if(!p)return;
+  p.note=Math.max(0,p.note-dt);
+  p.hunger=Math.max(0,p.hunger-dt*0.35);                         // 飽食下降
+  if(p.hunger>40)p.aff=Math.min(100,p.aff+dt*0.12);             // 吃飽→好感緩增
+  else{ p.aff=Math.max(0,p.aff-dt*0.18); p.sick=Math.min(100,p.sick+dt*0.05); } // 餓→好感降、易病
+  const age=petAgeDays();
+  if(age>16)p.sick=Math.min(100,p.sick+dt*(0.02+(age-16)*0.004)); // 老年漸病
+  if(p.sick>=100){ toast('🌈 '+p.name+'年紀大了…在你懷裡安詳地離開了。謝謝牠這段日子的陪伴。'); player.pet=null; save(); return; }
+  if(p.atk){ const c=p.atk.c;                                    // 指使攻擊
+    if(!c||c.dead||!citizens.includes(c)){p.atk=null;}
+    else{ const a=Math.atan2(c.y-p.y,c.x-p.x); p.x+=Math.cos(a)*270*dt; p.y+=Math.sin(a)*270*dt; p.walk+=dt*16;
+      p.face=Math.abs(c.x-p.x)>Math.abs(c.y-p.y)?(c.x>p.x?2:1):(c.y>p.y?0:3);
+      if(dist(p.x,p.y,c.x,c.y)<26){ markCitizenDead(c); puffs.push({x:c.x,y:c.y-14,t:0.5});
+        toast('🐾💥 '+p.name+'把路人撲倒了！目擊者驚慌報警！'); crimeSpike(3); p.atk=null; } }
+    return; }
+  const tx2=player.x-DIRV[player.face][0]*22-10, ty2=player.y+22, d=dist(p.x,p.y,tx2,ty2); // 跟隨主人身後
+  if(d>38){ const a=Math.atan2(ty2-p.y,tx2-p.x), sp=Math.min(d,(d>220?320:170)*dt);
+    const nx=p.x+Math.cos(a)*sp, ny=p.y+Math.sin(a)*sp;
+    if(!hitObstacle(nx,ny)){p.x=nx;p.y=ny;}else if(!hitObstacle(nx,p.y))p.x=nx;else if(!hitObstacle(p.x,ny))p.y=ny;
+    p.walk+=dt*10; p.face=Math.abs(tx2-p.x)>Math.abs(ty2-p.y)?(tx2>p.x?2:1):(ty2>p.y?0:3); } }
+function drawPetActor(kind,x,y,face,walk,s){ ctx.save();ctx.translate(x,y);ctx.scale(s||0.72,s||0.72);ctx.translate(-x,-y);
+  drawActor(x,y,face,walk,{species:kind,pal:PET_PALS[kind],shirt:PET_PALS[kind].fur}); ctx.restore(); }
+function drawPet(p){ drawPetActor(p.kind,p.x,p.y,p.face,p.walk);
+  if(p.aff>=60||p.note>0){ ctx.font='12px serif';ctx.textAlign='center';ctx.globalAlpha=p.note>0?1:0.75;
+    ctx.fillText('💗',p.x-8+Math.sin(tGlobal*3)*3,p.y-24-((tGlobal*22)%14));
+    ctx.fillText('🎵',p.x+9+Math.sin(tGlobal*3+1)*3,p.y-28-((tGlobal*22+7)%14));ctx.globalAlpha=1;ctx.textAlign='left'; }
+  if(p.sick>55){ctx.font='11px serif';ctx.textAlign='center';ctx.fillText('🤒',p.x,p.y-22);ctx.textAlign='left';} }
+function drawStray(s){ drawPetActor(s.kind,s.x,s.y,s.face,s.walk,0.66);
+  ctx.font='10px serif';ctx.textAlign='center';ctx.fillStyle='#fff';
+  const w2=ctx.measureText('領養?').width+8;ctx.fillStyle='rgba(90,64,35,.8)';rr(s.x-w2/2,s.y-40,w2,15,7);ctx.fill();
+  ctx.fillStyle='#ffe9a0';ctx.fillText('🐾領養?',s.x,s.y-29);ctx.textAlign='left'; }
+function updateStrays(dt){ strayT-=dt;
+  if(strayT<=0){ strayT=12+Math.random()*14;
+    for(let i=strays.length-1;i>=0;i--)if(dist(strays[i].x,strays[i].y,player.x,player.y)>1400)strays.splice(i,1);
+    if(strays.length<2&&!player.sailing){ const ntC=nearestTown(player.x/TILE,player.y/TILE);
+      if(ntC.t&&ntC.d<11){ const sp=findWalkSafe(Math.round(ntC.t.tx)+Math.floor(Math.random()*10-5),Math.round(ntC.t.ty)+Math.floor(Math.random()*10-5));
+        if(dist(sp.x,sp.y,player.x,player.y)>150)strays.push({x:sp.x,y:sp.y,kind:Math.random()<0.5?'dog':'cat',vx:0,vy:0,ai:0,walk:0,face:0}); } } }
+  for(const s of strays){ s.ai-=dt;
+    if(s.ai<=0){s.ai=1.5+Math.random()*2.5; if(Math.random()<0.5){s.vx=0;s.vy=0;}else{const a=Math.random()*6.283;s.vx=Math.cos(a);s.vy=Math.sin(a);}}
+    if(s.vx||s.vy){if(moveActor(s,s.vx,s.vy,40,dt)){s.walk+=dt*8;s.face=s.vx<-0.1?1:s.vx>0.1?2:s.face;}else{s.vx=0;s.vy=0;}} } }
 const HOUSE_TYPES=[
  {id:'cabin',n:'小木屋',icon:'🛖',wood:30,ore:10,cash:10000,tw:4,th:3},
  {id:'courtyard',n:'三合院',icon:'🏡',wood:45,ore:20,cash:20000,tw:5,th:4},
@@ -2685,7 +2823,8 @@ function update(dt){
       const bd=c.buddy, dd=dist(c.x,c.y,bd.x,bd.y);
       if(c.talk>0){ c.vx=0;c.vy=0; c.face=bd.x<c.x?1:2; continue; } // 聊天中站定面對夥伴
       if(dd<64&&c.chatCd<=0&&Math.random()<0.03){ c.talk=bd.talk=2.4; c.chatCd=bd.chatCd=8;
-        c.line=bd.line=CHAT_LINES[Math.floor(Math.random()*CHAT_LINES.length)]; continue; }
+        const pool=(world==='cn'&&typeof CN_CHAT_LINES!=='undefined')?CN_CHAT_LINES:CHAT_LINES; // v41 大陸路人方言口音
+        c.line=bd.line=pool[Math.floor(Math.random()*pool.length)]; continue; }
       if(dd>80){ c.vx=bd.x-c.x; c.vy=bd.y-c.y; // 落後太多就靠向夥伴
         if(moveActor(c,c.vx,c.vy,50,dt))c.walk+=dt*5; continue; }
     }
@@ -2786,6 +2925,7 @@ function update(dt){
     if(gain){ money+=gain; sfx('cash'); toast('🌾 農地補助入帳 +'+gain+' 元'); save(); } }
   // v37 特效與次元砲冷卻
   for(let i=fx.length-1;i>=0;i--){fx[i].t+=dt;if(fx[i].t>fx[i].dur)fx.splice(i,1);}
+  updatePet(dt); updateStrays(dt); // v41 寵物與流浪貓狗
   if((player.cannonCd||0)>0)player.cannonCd-=dt;
   // 通緝犯：2天內不定時自動派警車追捕（即使沒再犯案）
   if(player.notoriousUntil>gameDay&&!player.jailed&&started){
@@ -3710,6 +3850,8 @@ function draw(){
       if(n.streamer)drawStreamer(n); }});}
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
   for(const a of animals)if(inView(a.x,a.y))list.push({y:a.y,f:()=>drawAnimal(a)});
+  for(const s of strays)if(inView(s.x,s.y))list.push({y:s.y,f:()=>drawStray(s)}); // v41 流浪貓狗
+  if(player.pet&&inView(player.pet.x,player.pet.y))list.push({y:player.pet.y,f:()=>drawPet(player.pet)}); // v41 寵物
   for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>{
      if(c.dead){ drawCorpse(c); return; }
      drawActor(c.x,c.y,c.face,c.walk,
@@ -3721,6 +3863,7 @@ function draw(){
       drawActor(L.x,L.y,L.face,L.walk,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
         hair:ap.hair,shirt:ap.shirt,race:ap.race,outfit:ap.outfit,pants:ap.pants,tie:ap.tie,
         gender:L.gender,hairStyle:ap.hairStyle});
+      if(L.streamer)drawStreamer({x:L.x,y:L.y}); // v41 劉思思當對象時仍會唱歌
       // 頭上愛心／婚戒標記
       ctx.font='14px serif';ctx.textAlign='center';
       ctx.fillText(L.stage==='married'?'💍':'💗',L.x,L.y-52+Math.sin(tGlobal*3)*2);ctx.textAlign='left';}});}
@@ -3888,6 +4031,19 @@ function draw(){
       ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x2,e.y2);ctx.stroke();
       ctx.strokeStyle=`rgba(255,255,255,${1-ph})`;ctx.lineWidth=2.5;
       ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x2,e.y2);ctx.stroke();ctx.lineCap='butt'; }
+    else if(e.kind==='gun'){ const a=1-ph, ca=Math.cos(e.ang), sa=Math.sin(e.ang); // v41 開火特效
+      if(ph<0.5){ // 槍口火光
+        ctx.fillStyle=`rgba(255,220,90,${a})`;ctx.beginPath();ctx.arc(e.x+ca*6,e.y+sa*6,5+(0.5-ph)*10,0,7);ctx.fill();
+        ctx.fillStyle=`rgba(255,255,220,${a})`;ctx.beginPath();ctx.arc(e.x+ca*6,e.y+sa*6,3,0,7);ctx.fill(); }
+      if(e.sub==='shotgun'){ for(let k=-2;k<=2;k++){const aa=e.ang+k*0.12,px=e.x+Math.cos(aa)*(20+ph*90),py=e.y+Math.sin(aa)*(20+ph*90);
+        ctx.fillStyle=`rgba(90,80,70,${a})`;ctx.beginPath();ctx.arc(px,py,2,0,7);ctx.fill();} }
+      else if(e.sub==='smg'){ for(let k=0;k<3;k++){const t2=Math.min(1,ph+k*0.18),px=e.x+(e.x2-e.x)*t2,py=e.y+(e.y2-e.y)*t2;
+        ctx.fillStyle=`rgba(70,70,70,${a})`;ctx.beginPath();ctx.arc(px,py,1.8,0,7);ctx.fill();} }
+      else{ const tw=(e.sub==='sniper'||e.sub==='rifle')?1:0.7, hx=e.x+(e.x2-e.x)*Math.min(1,ph*1.6), hy=e.y+(e.y2-e.y)*Math.min(1,ph*1.6);
+        const wcol=e.sub==='sniper'?`rgba(180,230,255,${a})`:e.sub==='cannon'?`rgba(130,215,255,${a})`:`rgba(255,220,120,${a})`;
+        ctx.strokeStyle=wcol;ctx.lineCap='round';ctx.lineWidth=(e.sub==='cannon'?6:e.sub==='sniper'?3.5:2.2);
+        ctx.beginPath();ctx.moveTo(e.x+ca*10,e.y+sa*10);ctx.lineTo(hx,hy);ctx.stroke();
+        ctx.fillStyle=wcol;ctx.beginPath();ctx.arc(hx,hy,e.sub==='sniper'?3:2,0,7);ctx.fill();ctx.lineCap='butt'; } }
     else if(e.kind==='job'){ const a=1-ph; // v39 職業範圍技特效
       if(e.job==='firewall'){ const oy=e.y-16, n=8, grow=Math.min(1,ph*2);
         for(let i=1;i<=n;i++){ const t2=i/n; if(t2>grow)continue;
@@ -3957,11 +4113,17 @@ function draw(){
       ctx.fillStyle=g;ctx.fillRect(f.x-12,f.y-12,24,24);}
     ctx.globalCompositeOperation='source-over';}
   // 雨絲
-  if(isRainy()){
+  if(isRainy()&&!(world==='cn'&&player.y/TILE<250)){
     ctx.strokeStyle='rgba(190,210,255,.4)';ctx.lineWidth=1.5;
     for(let i=0;i<90;i++){
       const rx2=cx+((hsh(i,9)*VWz+tGlobal*60)%VWz), ry2=cy+((hsh(i,5)*VHz+tGlobal*860)%VHz);
       ctx.beginPath();ctx.moveTo(rx2,ry2);ctx.lineTo(rx2-4,ry2+14);ctx.stroke();}}
+  // v41 大陸北方寒冷飄雪（越往北越冷、雪越大）
+  if(world==='cn'){ const cold=Math.max(0,Math.min(1,(250-player.y/TILE)/180));
+    if(cold>0.05){ ctx.fillStyle=`rgba(205,225,255,${0.14*cold})`;ctx.fillRect(cx,cy,VWz,VHz);
+      ctx.fillStyle='rgba(255,255,255,.92)'; const n=Math.floor(110*cold);
+      for(let i=0;i<n;i++){ const sx=cx+((hsh(i,3)*VWz+tGlobal*26+Math.sin(tGlobal+i)*22)%VWz), sy=cy+((hsh(i,11)*VHz+tGlobal*105)%VHz);
+        ctx.beginPath();ctx.arc(sx,sy,1.4+hsh(i,2)*1.6,0,7);ctx.fill(); } } }
   ctx.restore();
   if(flash>0){ctx.fillStyle=`rgba(255,255,255,${Math.min(1,flash)})`;ctx.fillRect(0,0,VW,VH);}
   if(player.wedding){ ctx.font='26px serif';ctx.textAlign='center'; // 婚禮飄愛心
@@ -3993,8 +4155,10 @@ function drawUI(){
   ctx.fillStyle='#6b4f2f';ctx.font='bold 18px '+F;
   ctx.fillText('第 '+gameDay+' 天（'+wd+'）'+pIcon+pName+(isRainy()?'🌧️':''),28,40);
   ctx.font='bold 22px '+F;
-  const gh=Math.floor(gameMin/60)%24, gm=Math.floor(gameMin%60);
-  ctx.fillText(`${String(gh).padStart(2,'0')}:${String(gm).padStart(2,'0')}`,30,68);
+  let dispMin=gameMin, tzoff=0;
+  if(world==='cn'){ tzoff=Math.round((300-player.x/TILE)/70); dispMin=gameMin-tzoff*60; } // v41 大陸時差：越西邊時間越早
+  const gh=Math.floor((dispMin+2880)/60)%24, gm=Math.floor(((gameMin%60)+60)%60);
+  ctx.fillText(`${String(gh).padStart(2,'0')}:${String(gm).padStart(2,'0')}`+(world==='cn'?(tzoff>0?' 西'+tzoff+'區':tzoff<0?' 東'+(-tzoff)+'區':' 京'):''),30,68);
   ctx.font='bold 15px '+F;ctx.fillStyle='#3f8f5a';
   ctx.fillText('📍 '+lastRegion,110,66);
   // 血量、飢餓、疲勞
@@ -4375,7 +4539,7 @@ function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
   crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,ownGuns:player.ownGuns,murderRap:player.murderRap,
-  job:player.job,farms:myFarms,world,
+  job:player.job,farms:myFarms,world,pet:player.pet,petFood:player.petFood,
   x:player.x,y:player.y,sailing:player.sailing,music:musicOn}));}catch(e){} }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   if(!s)return false;
@@ -4392,6 +4556,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   eateryDone=s.eateryDone||{};player.toy=s.toy||null;player.love=s.love||null;
   player.crimes=s.crimes||0;player.notoriousUntil=s.notoriousUntil||0;player.patrolT=20;player.honor=s.honor||0;
   player.ownGuns=s.ownGuns||[];player.murderRap=!!s.murderRap;
+  player.pet=s.pet||null; player.petFood=s.petFood||0; // v41 寵物
   const addToScene=(wn,...a)=>{ const S=SCENES[wn]||SCENES.tw; const sv=BUILDINGS; BUILDINGS=S.buildings; addBuild(...a); BUILDINGS=sv; };
   myHomes=s.myHomes||(s.myHome?[{tx:s.myHome.tx,ty:s.myHome.ty,type:'cabin'}]:[]);
   for(const mh of myHomes){const ht=HOUSE_TYPES.find(h=>h.id===mh.type)||HOUSE_TYPES[0]; mh.w=mh.w||'tw';
