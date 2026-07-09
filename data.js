@@ -800,12 +800,35 @@ const LANDMARKS_CN=[
  {t:'magicschool',tx:126,ty:400,label:'拉薩秘法閣'},
 ];
 const AIRPORTS=[
- {tx:263,ty:110,label:'桃園機場',w:'tw'},
- {tx:300,ty:68,label:'松山機場',w:'tw'},
- {tx:256,ty:548,label:'小港機場',w:'tw'},
+ {tx:246,ty:104,label:'桃園機場',w:'tw'},    // v42 靠西部海岸
+ {tx:288,ty:50,label:'松山機場',w:'tw'},     // v42 靠北部海岸
+ {tx:252,ty:556,label:'小港機場',w:'tw'},    // v42 靠西南海岸
  {tx:466,ty:352,label:'上海浦東機場',w:'cn'},
  {tx:345,ty:196,label:'北京首都機場',w:'cn'},
  {tx:302,ty:614,label:'廣州白雲機場',w:'cn'},
+];
+/* v42 大陸高鐵環線（動車）：節點為城市，首尾相連成環；座標為完整 600×780 */
+const CN_RAILS=[
+ [330,150],[358,168],[388,238],[406,322],[462,342],[442,382],[372,466],[300,500],[326,420],[318,318],[258,298],[330,150]
+];
+const CN_STATIONS=[
+ {n:'北京高鐵站',tx:330,ty:150,railIdx:0},{n:'天津高鐵站',tx:358,ty:168,railIdx:1},{n:'濟南高鐵站',tx:388,ty:238,railIdx:2},
+ {n:'南京高鐵站',tx:406,ty:322,railIdx:3},{n:'上海高鐵站',tx:462,ty:342,railIdx:4},{n:'杭州高鐵站',tx:442,ty:382,railIdx:5},
+ {n:'南昌高鐵站',tx:372,ty:466,railIdx:6},{n:'長沙高鐵站',tx:300,ty:500,railIdx:7},{n:'武漢高鐵站',tx:326,ty:420,railIdx:8},
+ {n:'鄭州高鐵站',tx:318,ty:318,railIdx:9},{n:'西安高鐵站',tx:258,ty:298,railIdx:10},
+];
+/* v42 明星（路上隨機出現，可索取簽名+名譽；台詞皆原創泛用，不引用實際歌詞） */
+const STARS_TW=[
+ {name:'周杰倫',gender:'m',shirt:'#2f3540',hair:'#1a1a1a',hairStyle:6,headAcc:'sunglasses',lines:['謝謝歌迷一路支持～','音樂就是我的生命！','要簽名？來，排一下隊～'],catch:'謝謝支持！'},
+ {name:'蔡依林',gender:'f',shirt:'#f472b6',hair:'#5a3a22',hairStyle:0,headAcc:'sunglasses',lines:['一起舞動起來吧～','謝謝你們的愛！','要相信自己喔！'],catch:'閃耀吧～'},
+ {name:'五月天阿信',gender:'m',shirt:'#3f7fd6',hair:'#2a2a2a',hairStyle:1,lines:['演唱會見！','勇敢去追夢～','人生就是要唱歌！'],catch:'一起唱！'},
+ {name:'鄧紫棋',gender:'f',shirt:'#7c3aed',hair:'#2a2a2a',hairStyle:0,lines:['謝謝大家的鼓勵～','唱歌要用盡全力！','有夢想就去衝！'],catch:'加油！'},
+];
+const STARS_CN=[
+ {name:'王家爾',gender:'m',shirt:'#111111',hair:'#1a1a1a',hairStyle:7,headAcc:'sunglasses',lines:['謝謝家人們的支持～','一起搖擺起來！','簽名要排隊喔～'],catch:'搖擺起來！'},
+ {name:'那英',gender:'f',shirt:'#c0392b',hair:'#3a2a1a',hairStyle:2,lines:['好聲音就要唱出來～','加油，別放棄！','唱歌要用心～'],catch:'唱得好！'},
+ {name:'李榮浩',gender:'m',shirt:'#4a5563',hair:'#1a1a1a',hairStyle:3,headAcc:'sunglasses',lines:['謝謝支持～','慢慢來，會更好～','音樂路上有你真好～'],catch:'加油喔～'},
+ {name:'鹿晗',gender:'m',shirt:'#16a085',hair:'#2a2a2a',hairStyle:0,lines:['謝謝粉絲們～','保持熱愛，奔赴山海～','一起努力吧！'],catch:'衝呀～'},
 ];
 /* 大陸路人聊天（各省口音／方言味台詞） */
 const CN_CHAT_LINES=['吃了嗎您內～','嘹咋咧！','巴適得很嘛～','老鐵沒毛病！','靈得嘞～','雷猴啊！食咗飯未？',
