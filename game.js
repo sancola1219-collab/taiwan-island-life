@@ -1051,7 +1051,17 @@ function flyTo(destW,destLabel){
   genWorld(); genNpcs(); // 重新生成該世界的樹木/店主/特殊NPC（大陸：劉思思）
   const ap=BUILDINGS.find(b2=>b2.t==='airport'&&b2.label===destLabel)||BUILDINGS.find(b2=>b2.t==='airport');
   const q=findWalkSafe(ap.tx+2,ap.ty+ap.th+2); player.x=q.x; player.y=q.y; player.face=0;
-  ui=null; menu=null; zoomT=1; flash=1; sfx('jingle'); flyAnim=2.8; flyLabel=destLabel; flyDestW=destW; save();
+  ui=null; menu=null; zoomT=1; flash=1; sfx('jingle'); flyAnim=2.8; flyLabel=destLabel; flyDestW=destW; typhoon=null; save();
+}
+// v43 脫困：清除卡住/占用狀態並傳送到最近城鎮的安全落點
+function rescueTeleport(){
+  player.riding=null;player.balloonRide=null;player.ferris=null;player.soak=null;player.pray=null;player.fishing=null;player.sailing=false;player.pet&&(player.pet.atk=null);
+  zoomT=1;
+  const nt=nearestTown(player.x/TILE,player.y/TILE);
+  const bx=nt.t?Math.round(nt.t.tx):Math.round(player.x/TILE), by=nt.t?Math.round(nt.t.ty):Math.round(player.y/TILE);
+  const q=findWalkSafe(bx,by); player.x=q.x; player.y=q.y; player.face=0;
+  ui=null; menu=null; sfx('pop'); flash=0.5; save();
+  toast('🆘 已脫困！把你傳送到最近的「'+(nt.t?nt.t.n:'安全地點')+'」。');
 }
 let flyAnim=0, flyLabel='', flyDestW='tw';
 function drawFlyAnim(){ // v42 飛機飛出去/降落動畫（螢幕層）
@@ -2466,6 +2476,31 @@ const absMin=()=>gameDay*1440+gameMin;
 function addFarmBuild(f){ addBuild('farm',f.tx,f.ty,2,2,player.name+'的農地',{farm:f}); }
 /* ---- v37 哥吉拉 ---- */
 let godz=null, godzT=240+Math.random()*300; // {x,y,hp,t,boltT,bolt,dir,hit}
+/* ---- v43 颱風（僅台灣；大雷雨/雷擊/淹水） ---- */
+let typhoon=null, typhoonT=220+Math.random()*320; // {name,desc,phase,t,dur,flood,lightT,strike}
+function updateTyphoon(dt){
+  if(world!=='tw'||!started){ if(world!=='tw')typhoon=null; return; }
+  if(!typhoon){ typhoonT-=dt;
+    if(typhoonT<=0&&!player.jailed){ const T2=TYPHOONS[Math.floor(Math.random()*TYPHOONS.length)];
+      typhoon={name:T2.n,desc:T2.d,phase:'in',t:0,dur:300,flood:0,lightT:2,strike:null};
+      sfx('sad'); flash=0.4;
+      dlg('🌀 中央氣象署 颱風警報',['強烈颱風『'+T2.name+'』來襲！','（'+T2.d+'）',
+        '將帶來狂風、大雷雨、雷擊與淹水，','外出小心，也可躲進屋裡避風雨！']); }
+    return; }
+  const ty=typhoon; ty.t+=dt; const p=ty.t/ty.dur;
+  ty.phase = p<0.25?'in':p<0.78?'peak':'out';
+  const target = ty.phase==='out'?Math.max(0,(1-p)/0.22):Math.min(1,p/0.25);
+  ty.flood += (target-ty.flood)*Math.min(1,dt*0.5);
+  ty.lightT-=dt;
+  if(ty.lightT<=0){ ty.lightT = ty.phase==='peak'?(0.7+Math.random()*1.6):(2.6+Math.random()*3.2);
+    flash=Math.max(flash,0.55); sfx('thud');
+    const a=Math.random()*6.283, r=(2.5+Math.random()*8)*TILE;
+    ty.strike={x:player.x+Math.cos(a)*r,y:player.y+Math.sin(a)*r,t:0};
+    if(r<3.4*TILE&&ty.phase!=='out'&&!(ui==='home')){ player.hp=Math.max(5,player.hp-8);
+      toast('⚡ 落雷就打在你附近！HP-8——快躲進屋裡或搭交通工具避雷！'); } }
+  if(ty.strike){ ty.strike.t+=dt; if(ty.strike.t>0.45)ty.strike=null; }
+  if(ty.t>=ty.dur){ toast('🌤️ 颱風『'+ty.name+'』遠離了，天氣逐漸放晴～'); typhoon=null; typhoonT=420+Math.random()*520; }
+}
 const GODZ_HP=6, GODZ_PRIZE=1000000;
 /* ---- v37 特效（雷擊/斬擊/光束） ---- */
 let fx=[]; // {kind:'bolt'|'slash'|'beam',x,y,x2,y2,t,dur}
@@ -2734,6 +2769,7 @@ function update(dt){
       toast('🎡 轉了一圈回到地面！風景真好～');}}
   const run=keys.ShiftLeft||keys.ShiftRight;
   let spd=player.sailing?420:(run?385:255)*(player.buffSpd>0?1.25:1);
+  if(typhoon&&typhoon.flood>0.4&&!player.sailing&&!player.riding)spd*=(1-typhoon.flood*0.32); // v43 淹水涉水變慢
   if(player.hunger<20)spd*=0.7;
   if(player.tired>80)spd*=0.75; // 太累走不快，睡一覺吧
   player.moving=false;
@@ -2992,7 +3028,7 @@ function update(dt){
     if(gain){ money+=gain; sfx('cash'); toast('🌾 農地補助入帳 +'+gain+' 元'); save(); } }
   // v37 特效與次元砲冷卻
   for(let i=fx.length-1;i>=0;i--){fx[i].t+=dt;if(fx[i].t>fx[i].dur)fx.splice(i,1);}
-  updatePet(dt); updateStrays(dt); updateStars(dt); // v41 寵物/流浪貓狗、v42 明星
+  updatePet(dt); updateStrays(dt); updateStars(dt); updateTyphoon(dt); // v41 寵物/流浪貓狗、v42 明星、v43 颱風
   if(flyAnim>0){ flyAnim-=dt; if(flyAnim<=0){flyAnim=0;
     toast('✈️ 抵達「'+flyLabel+'」！歡迎來到'+(flyDestW==='cn'?'大陸'+(regionOf?'':''):'台灣')+'～'+(flyDestW==='cn'?'（湖南株洲有直播主劉思思）':'')); } }
   if((player.cannonCd||0)>0)player.cannonCd-=dt;
@@ -4156,7 +4192,7 @@ function draw(){
   // 晝夜
   const [tr_,tg,tb2,ta]=skyTint();
   if(ta>0.005){ctx.fillStyle=`rgba(${tr_|0},${tg|0},${tb2|0},${ta})`;ctx.fillRect(cx,cy,VWz,VHz);}
-  if(isRainy()){ctx.fillStyle='rgba(60,80,120,.14)';ctx.fillRect(cx,cy,VWz,VHz);}
+  if(isRainy()&&!typhoon){ctx.fillStyle='rgba(60,80,120,.14)';ctx.fillRect(cx,cy,VWz,VHz);}
   if(isNight()){ // 夜晚海面的星光點點（藍眼淚）
     for(let k=0;k<90;k++){const sx3=hsh(k,321)*MW*TILE, sy3=hsh(k,654)*MH*TILE;
       if(sx3<cx||sx3>cx+VWz||sy3<cy||sy3>cy+VHz)continue;
@@ -4184,11 +4220,24 @@ function draw(){
       ctx.fillStyle=g;ctx.fillRect(f.x-12,f.y-12,24,24);}
     ctx.globalCompositeOperation='source-over';}
   // 雨絲
-  if(isRainy()&&!(world==='cn'&&player.y/TILE<250)){
+  if(isRainy()&&!typhoon&&!(world==='cn'&&player.y/TILE<250)){
     ctx.strokeStyle='rgba(190,210,255,.4)';ctx.lineWidth=1.5;
     for(let i=0;i<90;i++){
       const rx2=cx+((hsh(i,9)*VWz+tGlobal*60)%VWz), ry2=cy+((hsh(i,5)*VHz+tGlobal*860)%VHz);
       ctx.beginPath();ctx.moveTo(rx2,ry2);ctx.lineTo(rx2-4,ry2+14);ctx.stroke();}}
+  // v43 颱風：昏暗暴風雨＋淹水波紋＋強風斜雨＋落雷（世界層）
+  if(typhoon){ const fl=typhoon.flood;
+    ctx.fillStyle=`rgba(26,34,58,${0.24+fl*0.14})`;ctx.fillRect(cx,cy,VWz,VHz);
+    if(fl>0.05){ ctx.fillStyle=`rgba(70,120,170,${fl*0.4})`;ctx.fillRect(cx,cy,VWz,VHz); // 積水
+      ctx.strokeStyle=`rgba(230,245,255,${fl*0.35})`;ctx.lineWidth=1.5;
+      for(let i=0;i<10;i++){ const yy=cy+i*VHz/10+Math.sin(tGlobal*1.5+i)*8;
+        ctx.beginPath();for(let x2=0;x2<=VWz;x2+=24)ctx.lineTo(cx+x2,yy+Math.sin(x2*0.05+tGlobal*3+i)*3);ctx.stroke(); } }
+    ctx.strokeStyle='rgba(200,220,255,.55)';ctx.lineWidth=1.6; // 強風斜雨
+    for(let i=0;i<180;i++){ const rx=cx+((hsh(i,9)*VWz+tGlobal*120)%VWz), ry=cy+((hsh(i,5)*VHz+tGlobal*1200)%VHz);
+      ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(rx-14,ry+22);ctx.stroke(); }
+    if(typhoon.strike){ const s=typhoon.strike, a=1-s.t/0.45; // 落雷
+      drawBolt(s.x+14,cy-20,s.x,s.y,a,5);
+      ctx.fillStyle=`rgba(255,255,200,${a*0.6})`;ctx.beginPath();ctx.arc(s.x,s.y,20*a+8,0,7);ctx.fill(); } }
   // v41 大陸北方寒冷飄雪（越往北越冷、雪越大）
   if(world==='cn'){ const cold=Math.max(0,Math.min(1,(250-player.y/TILE)/180));
     if(cold>0.05){ ctx.fillStyle=`rgba(205,225,255,${0.14*cold})`;ctx.fillRect(cx,cy,VWz,VHz);
@@ -4266,6 +4315,10 @@ function drawUI(){
     ctx.fillStyle=`rgba(201,57,43,${bl})`;rr(VW-170,by,156,30,8);ctx.fill();
     ctx.strokeStyle='#8a1f1f';ctx.lineWidth=2;rr(VW-170,by,156,30,8);ctx.stroke();
     ctx.fillStyle='#fff';ctx.font='bold 12px '+F;ctx.fillText('🎉 '+festival.name,VW-162,by+20);ctx.font='bold 14px '+F;by+=36; }
+  if(typhoon){ const bl=0.65+0.35*Math.sin(tGlobal*5); // v43 颱風警報
+    ctx.fillStyle=`rgba(50,70,110,${bl})`;rr(VW-170,by,156,30,8);ctx.fill();
+    ctx.strokeStyle='#26365a';ctx.lineWidth=2;rr(VW-170,by,156,30,8);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 12px '+F;ctx.fillText('🌀 颱風「'+typhoon.name+'」'+(typhoon.flood>0.4?'・淹水':''),VW-162,by+20);ctx.font='bold 14px '+F;by+=36; }
   if(player.boat){panel(VW-158,by,144,30,.85);ctx.fillStyle='#3f6f8f';
     ctx.fillText('⛵ '+(player.sailing?'航行中':'擁有小船'),VW-146,by+21);by+=36;}
   if(player.buffSpd>0){panel(VW-158,by,144,30,.85);ctx.fillStyle='#3f7fd6';
@@ -4320,15 +4373,19 @@ function drawUI(){
       uiHits.push({x:VW-118,y:VH-168,w:88,h:88,cb(){interact();}});
     }
     // 側邊功能圖示
-    const icons=[['🎒','bag'],['🗺️','map'],['📖','dex'],['📋','quest'],['🔨','craft'],['💾','save'],['❓','help']];
-    const step=Math.min(50,(VH*0.62)/icons.length), iy0=Math.max(96,VH*0.17);
+    const icons=[['🎒','bag'],['🗺️','map'],['📖','dex'],['📋','quest'],['🔨','craft'],['💾','save'],['🆘','rescue'],['❓','help']];
+    const step=Math.min(50,(VH*0.66)/icons.length), iy0=Math.max(92,VH*0.15);
     icons.forEach(([em,mode],i)=>{ const iy=iy0+i*step;
       ctx.globalAlpha=0.85;panel(VW-52,iy,42,42,.85);ctx.globalAlpha=1;
-      ctx.font='20px serif';ctx.fillText(em,VW-45,iy+29);
+      if(mode==='rescue'){ctx.fillStyle='#e2574c';ctx.font='bold 15px '+F;ctx.textAlign='center';ctx.fillText('脫困',VW-31,iy+27);ctx.textAlign='left';}
+      else{ctx.font='20px serif';ctx.fillText(em,VW-45,iy+29);}
       // 點擊區加大：填滿整格高度、延伸到螢幕右緣，減少手機誤觸
       uiHits.push({x:VW-60,y:iy-(step-42)/2,w:60,h:step,cb:((m)=>()=>{
         if(m==='craft'){if(!ui)openCraft();else ui=null;}
         else if(m==='save'){save();toast('💾 已存檔！');}
+        else if(m==='rescue'){openMenu('🆘 卡住了嗎？',[
+          {label:'✅ 把我傳送到最近的城鎮',cb(){rescueTeleport();}},
+          {label:'取消',cb(){ui=null;}}]);}
         else ui=(ui===m?null:m);
         sfx('blip');})(mode)});});
   }
