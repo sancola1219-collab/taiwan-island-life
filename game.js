@@ -980,15 +980,23 @@ function genMapCN(m){
   // 依真實中國輪廓：西寬東窄、東岸有渤海灣內凹＋山東半島外突＋長三角外突、南岸漸縮＋海南島
   const N=v=>(vnoise(v*7.3+1.5,v*3.1+4.2)-0.5); // 隨 y 的海岸抖動
   const eastEdge=ty=>{ let e=498;
-    if(ty<118) e=436+(118-ty)*0.35;                 // 東北往內收
-    if(ty>=150&&ty<205) e=Math.min(e,392+Math.abs(ty-178)*2.1); // 渤海灣內凹
+    if(ty<118) e=396+80*Math.exp(-(((ty-72)/45)**2)); // v47 東北圓弧鼓起（頂點在烏蘇里江口一帶）
+    if(ty>=118&&ty<168) e=Math.min(e,470-Math.abs(ty-145)*0.8); // v47 遼東半島一帶海岸
+    if(ty>=168&&ty<218) e=Math.min(e,384+Math.abs(ty-195)*1.8); // v47 渤海灣內凹（更深、更像）
+    if(ty>=218&&ty<227) e=Math.min(e,425+(ty-218)*8);           // v47 灣口過渡（延到227消除33格斷差）
     if(ty>=224&&ty<262) e=Math.max(e,474+(19-Math.abs(ty-243))*2.2); // 山東半島外突
     if(ty>=330&&ty<362) e=Math.max(e,486);          // 長三角(上海)外突
     if(ty>=400) e=500-(ty-400)*0.30;                // 東南岸漸縮
-    return e+N(ty)*20; };
-  const westEdge=ty=> 86 + (ty<210?(210-ty)*0.16:0) + N(ty+40)*18;
+    return e+N(ty)*(ty>=150&&ty<230?8:20); };       // 渤海一帶降噪，保住海灣形狀
+  const westEdge=ty=> 86 + (ty<210?(210-ty)*0.16:0)
+    - (ty>=240&&ty<430?14*Math.sin((ty-240)/190*Math.PI):0) // v47 西藏一帶邊界西擴
+    + N(ty+40)*18;
   const northEdge=tx=> 48 + N(tx*0.9+7)*24;
-  const southEdge=tx=> 706 - Math.max(0,(tx-360))*0.5 + N(tx*0.9+3)*20;
+  const southEdge=tx=>{ let s=706;                  // v47 南岸：北部灣內凹＋雷州半島＋瓊州海峽
+    if(tx>=236&&tx<270) s=676+Math.abs(tx-253)*0.9; // 北部灣
+    if(tx>=274&&tx<302) s=712-Math.abs(tx-288)*0.4; // 雷州半島（頂點712，與海南島間留出海峽）
+    if(tx>=360) s=706-(tx-360)*0.5;
+    return s+N(tx*0.9+3)*(tx>=236&&tx<302?5:20); }; // 半島/海灣一帶降噪，保住海峽
   for(let ty=0;ty<MH;ty++)for(let tx=0;tx<MW;tx++){
     let land = tx>westEdge(ty)&&tx<eastEdge(ty)&&ty>northEdge(tx)&&ty<southEdge(tx);
     if(((tx-296)/23)**2+((ty-732)/17)**2<1) land=true;  // 海南島
@@ -1020,7 +1028,7 @@ function genWorldCN(){ // 於 map=cnMap、BUILDINGS=cnB 的狀態下呼叫
     const WALLS=['#ecd6b2','#e6dcc4','#e8cfa8','#dfe4d0','#efd9c4']; const ROOFS=['#b8604f','#8a6a4a','#6f8a9a','#a86a8a','#c98a3a'];
     const offs=[[-7,-3],[6,-3],[-5,4],[6,4],[-8,1],[8,1],[-3,6],[4,-6],[-6,-6],[7,-1]];
     for(const tw of TOWNS_CN){ let placed=0;
-      for(const [ox,oy] of offs){ if(placed>=7)break;
+      for(const [ox,oy] of offs){ if(placed>=3)break; // v47 民宅減量(7→3)，把空間留給景點與小吃
         const hx=Math.round(tw.tx)+ox, hy=Math.round(tw.ty)+oy; let ok=true;
         for(let dy=-1;dy<=1&&ok;dy++)for(let dx=-1;dx<=2&&ok;dx++){const t=T(hx+dx,hy+dy);if(!(t===GRASS||t===FIELD||t===PATH))ok=false;}
         if(ok)for(const b of BUILDINGS)if(hx<b.tx+b.tw+1&&hx+3>b.tx&&hy<b.ty+b.th+2&&hy+3>b.ty){ok=false;break;}
@@ -2335,12 +2343,21 @@ function startWanted(rx,ry){
   player.wanted={phase:'grace',t:8,rx,ry,car:null};
   sfx('sad'); toast('🚨 路人報警了！警車約8秒後抵達——快逃或躲進屋裡！');
 }
+function nearestPrison(){ // v47 依當前世界找最近監獄（台灣：桃園；大陸：秦城/提籃橋/廣州）
+  let best=null,bd=1e18;
+  for(const b of BUILDINGS)if(b.t==='prison'){
+    const d=(b.x+b.w/2-player.x)**2+(b.y+b.h/2-player.y)**2;
+    if(d<bd){bd=d;best=b;}}
+  return best; }
+function prisonExit(){ // v47 出獄落點：找不到監獄也絕不讓玩家卡死
+  const pr=nearestPrison();
+  return pr?findWalkSafe(pr.tx+2,pr.ty+pr.th+2):findWalkSafe(Math.round(player.x/TILE),Math.round(player.y/TILE)); }
 function arrest(){
   player.wanted=null; player.jailed=true; player.fishing=null;
   // 清除所有乘坐/占用狀態，避免被捕後卡死
   player.riding=null; player.balloonRide=null; player.ferris=null;
   player.soak=null; player.pray=null; player.sailing=false; zoomT=1;
-  const pr=BUILDINGS.find(b=>b.t==='prison');
+  const pr=nearestPrison();
   if(pr){player.x=(pr.tx+pr.tw/2)*TILE;player.y=(pr.ty+pr.th/2)*TILE;}
   flash=1; sfx('sad'); ui='jail'; save();
 }
@@ -4736,10 +4753,11 @@ function drawUI(){
     ctx.font='13px '+F;ctx.fillStyle='#9a805c';
     ctx.fillText('睡一覺 → 隔天早上 06:00，疲勞歸零、體力大補（✕ 出門）',x+24,y+h-14);
   }
-  if(ui==='jail'){ // 桃園監獄牢房（不可用✕關閉，只能服刑或保釋）
+  if(ui==='jail'){ // 監獄牢房（不可用✕關閉，只能服刑或保釋）；v47 依所在世界顯示監獄名
     const w=Math.min(520,VW-40),h=330,x=VW/2-w/2,y=Math.max(20,VH/2-h/2);
     panel(x,y,w,h);
-    ctx.fillStyle='#5b4023';ctx.font='bold 22px '+F;ctx.fillText('🚔 桃園監獄',x+24,y+40);
+    const prNow=nearestPrison();
+    ctx.fillStyle='#5b4023';ctx.font='bold 22px '+F;ctx.fillText('🚔 '+(prNow?prNow.label:'監獄'),x+24,y+40);
     ctx.fillStyle='#6a6a6a';rr(x+20,y+56,w-40,h-150,8);ctx.fill(); // 牢房地
     ctx.strokeStyle='#3a3a3a';ctx.lineWidth=5; // 鐵欄杆
     for(let i=0;i<=8;i++){ctx.beginPath();ctx.moveTo(x+40+i*(w-80)/8,y+60);ctx.lineTo(x+40+i*(w-80)/8,y+h-100);ctx.stroke();}
@@ -4754,7 +4772,7 @@ function drawUI(){
     ctx.fillText('服刑到隔天06:00',x+20+bw/2,y+h-32);ctx.textAlign='left';
     uiHits.push({x:x+20,y:y+h-58,w:bw,h:42,cb(){ player.jailed=false;
       gameDay++;gameMin=6*60;player.tired=0;player.hp=Math.min(100,player.hp+20);
-      const pr=BUILDINGS.find(b=>b.t==='prison'); const q=findWalkSafe(pr.tx+2,pr.ty+pr.th+2);
+      const q=prisonExit(); // v47 防呆：大陸被捕也能正常出獄，不再卡畫面
       player.x=q.x;player.y=q.y; ui=null; sfx('chime');
       money=5000; // 被警察抓：出獄一律持有 5000 元（設定值、不累加）
       if(player.murderRap){player.honor=0;player.murderRap=false;save();
@@ -4764,7 +4782,7 @@ function drawUI(){
     ctx.fillStyle='#fff';ctx.textAlign='center';
     ctx.fillText('立刻出獄（不用等）',x+36+bw+bw/2,y+h-32);ctx.textAlign='left';
     uiHits.push({x:x+36+bw,y:y+h-58,w:bw,h:42,cb(){ player.jailed=false;
-      const pr=BUILDINGS.find(b=>b.t==='prison'); const q=findWalkSafe(pr.tx+2,pr.ty+pr.th+2);
+      const q=prisonExit(); // v47 防呆：大陸被捕也能正常出獄，不再卡畫面
       player.x=q.x;player.y=q.y; ui=null; sfx('cash');
       money=5000; // 被警察抓：出獄一律持有 5000 元（設定值、不累加）
       if(player.murderRap){player.honor=0;player.murderRap=false;save();
@@ -4793,7 +4811,7 @@ function drawUI(){
       '　 →好感80帶戒指到戶政事務所💒結婚（可離婚），配偶會一直陪你環島！',
       '⚠️ 持鏟子/斧頭/木矛/彈弓時按互動鍵＝攻擊人（空手才是對話）！',
       '　 打人會掉錢可撿，但對方會報警！躲遠或躲進自己家裡，',
-      '　 否則警車會超車攔截、警察下車包圍——被圍住就關進桃園監獄！',
+      '　 否則警車會超車攔截、警察下車包圍——被圍住就關進最近的監獄！',
       '　 （警察也能打倒搶錢…但襲警會讓罪加一等）',
       '🚨 傷害路人超過10次會被列為【通緝犯】，連續2天警方不定時派車追捕！',
       '🌾 各縣市政府可買農地：播種後每小時領補助、成熟收割賺大錢！',
@@ -4850,7 +4868,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   player.boat=!!s.boat;musicOn=s.music!==false;
   setScene(s.world==='cn'?'cn':'tw'); genWorld(); genNpcs(); // v40 切到存檔所在世界，重生該世界物件/NPC
   if(s.x!=null){ if(s.sailing&&!hitWater(s.x,s.y)){player.x=s.x;player.y=s.y;player.sailing=true;}
-    else if(!hitObstacle(s.x,s.y)){player.x=s.x;player.y=s.y;} }
+    else if(s.jailed||!hitObstacle(s.x,s.y)){player.x=s.x;player.y=s.y;} } // v47 坐牢中存檔在監獄碰撞箱內，仍要還原位置（否則重整會被換到別座監獄）
   return true;}catch(e){return false;} }
 setInterval(()=>{if(started)save();},10000);
 addEventListener('beforeunload',()=>{if(started)save();});
@@ -4891,7 +4909,7 @@ document.getElementById('startBtn').onclick=()=>{
   player.race=+document.getElementById('raceSel').value||0;
   document.getElementById('intro').style.display='none';
   initAudio(); started=true; save();
-  if(player.jailed){const pr=BUILDINGS.find(b=>b.t==='prison');
+  if(player.jailed){const pr=nearestPrison(); // v47 依所在世界找最近監獄
     if(pr){player.x=(pr.tx+pr.tw/2)*TILE;player.y=(pr.ty+pr.th/2)*TILE;} ui='jail';}
   if(!hasSave) setTimeout(()=>{ dlg('里長伯',[
     player.name+'，歡迎來到台灣島！這裡是台北車站前的廣場。',
