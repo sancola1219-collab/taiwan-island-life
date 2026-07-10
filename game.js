@@ -1347,6 +1347,15 @@ function drawStreamer(n){ const x=n.x,y=n.y;
   const s=STREAM_SONGS[Math.floor(tGlobal/3.4)%STREAM_SONGS.length];
   if((tGlobal%3.4)<2.6)drawChatBubble(x,y,'🎤 '+s);
 }
+function drawNamePlate(x,y,name,married){ // v46 劉思思專屬名牌（腳下，避開唱歌泡泡）
+  ctx.save();ctx.font='bold 11px "Microsoft JhengHei",sans-serif';
+  const t=(married?'💍 ':'🎤 ')+name, w=ctx.measureText(t).width+16, py=y+14;
+  ctx.globalAlpha=.95;
+  ctx.fillStyle='#fff';rr(x-w/2,py,w,17,8);ctx.fill();
+  ctx.strokeStyle='#f06fa8';ctx.lineWidth=2;rr(x-w/2,py,w,17,8);ctx.stroke();
+  ctx.fillStyle='#d13c86';ctx.textAlign='center';ctx.fillText(t,x,py+12.5);
+  ctx.textAlign='left';ctx.globalAlpha=1;ctx.restore();
+}
 // ===== 寺廟祭典：舞獅／舞龍／圍觀群眾 =====
 function drawLion(x,y,t){ const bob=Math.sin(t*6)*3, sway=Math.sin(t*3)*4;
   ctx.fillStyle='#c0392b';rr(x-2+sway*0.3,y-6,26,15,7);ctx.fill(); // 布身
@@ -2085,7 +2094,7 @@ function buildAct(b){
            if(money<1200){dlg(b.label,['登記規費 1200 元不夠喔。']);return;}
            money-=1200; delete inv[ring]; if((inv[ring]||0)<=0)delete inv[ring];
            addItem('結婚證書'); L.stage='married'; L.aff=100;
-           if(L.streamer){ L.ap.shirt='#ffffff'; L.ap.outfit='dress'; L.sparkle=10; } // v42 劉思思換上白色新娘禮服＋閃亮10秒
+           if(L.streamer){ L.ap.shirt='#ffffff'; L.ap.outfit='gown'; L.sparkle=10; } // v46 劉思思換上白紗澎裙禮服＋頭紗＋閃亮10秒
            player.wedding={t:4}; sfx('jingle'); save();
            dlg(b.label,['🎉 恭喜！你和 '+L.name+' 正式結為連理！','（獲得結婚證書📜，'+L.name+' 成為你的配偶💍）',
              '婚後'+heShe(L.gender)+'會一直陪在你身邊，一起環島吧！']);}},
@@ -3384,6 +3393,20 @@ function drawActor(x,y,face,walk,o){
     ctx.fillStyle=tint(bodyC,24);
     ctx.beginPath();ctx.moveTo(x-9,y-27+bob);ctx.lineTo(x+3,y-24+bob);ctx.lineTo(x-1,y-8+bob);
     ctx.lineTo(x-11,y-10+bob);ctx.closePath();ctx.fill();
+  }else if(o.outfit==='gown'){ // v46 婚紗禮服：合身馬甲＋拖地澎裙（劉思思婚後）
+    ctx.beginPath();ctx.moveTo(x-8,y-16+bob); // 澎裙（蓋過腿、微拖地）
+    ctx.quadraticCurveTo(x-21,y-6+bob,x-19,y+4+bob);
+    ctx.quadraticCurveTo(x,y+9+bob,x+19,y+4+bob);
+    ctx.quadraticCurveTo(x+21,y-6+bob,x+8,y-16+bob);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.1)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.strokeStyle='rgba(190,190,210,.75)';ctx.lineWidth=1.2; // 裙襬層次紗
+    ctx.beginPath();ctx.moveTo(x-15,y-2+bob);ctx.quadraticCurveTo(x,y+4+bob,x+15,y-2+bob);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-11,y-9+bob);ctx.quadraticCurveTo(x,y-4+bob,x+11,y-9+bob);ctx.stroke();
+    ctx.fillStyle=g;ctx.beginPath(); // 上身合身馬甲
+    ctx.moveTo(x-9,y-27+bob);ctx.lineTo(x+9,y-27+bob);
+    ctx.lineTo(x+8,y-14+bob);ctx.lineTo(x-8,y-14+bob);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.1)';ctx.stroke();
+    ctx.fillStyle='#e9e2f2';ctx.fillRect(x-8,y-16+bob,16,2.5); // 腰際緞帶
   }else if(isDress){
     ctx.beginPath();ctx.moveTo(x-9,y-27+bob);ctx.lineTo(x+9,y-27+bob);
     ctx.lineTo(x+15,y-5+bob);ctx.lineTo(x-15,y-5+bob);ctx.closePath();ctx.fill();
@@ -3600,6 +3623,21 @@ function drawActor(x,y,face,walk,o){
     ctx.beginPath();ctx.ellipse(x-6,hy-9,4.6,2.3,-0.6,0,7);ctx.fill();
     ctx.globalAlpha=.3;
     ctx.beginPath();ctx.ellipse(x+4,hy-7,2.8,1.5,-0.5,0,7);ctx.fill();ctx.restore();
+    if(o.veil){ // v46 白色頭紗（婚後劉思思）：珍珠冠＋垂肩薄紗
+      ctx.save();
+      ctx.fillStyle='rgba(255,255,255,.4)'; // 垂到肩後的薄紗
+      ctx.beginPath();ctx.moveTo(x-15,hy-8);ctx.quadraticCurveTo(x-23,hy+12,x-14,y-10+bob);
+      ctx.quadraticCurveTo(x,y-4+bob,x+14,y-10+bob);ctx.quadraticCurveTo(x+23,hy+12,x+15,hy-8);
+      ctx.quadraticCurveTo(x,hy-3,x-15,hy-8);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.2;ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.9)'; // 頭頂紗帽
+      ctx.beginPath();ctx.arc(x,hy-12,8,Math.PI*1.05,Math.PI*1.95);ctx.fill();
+      ctx.fillStyle='#fff'; // 珍珠冠冕
+      ctx.beginPath();ctx.arc(x-6,hy-15,1.7,0,7);ctx.arc(x,hy-17.5,2,0,7);ctx.arc(x+6,hy-15,1.7,0,7);ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,hy-6,15.5,Math.PI*1.15,Math.PI*1.85);ctx.stroke(); // 髮箍線
+      ctx.restore();
+    }
     // 族群服飾（衣飾帶＋頭帶/花環）
     if(o.race!=null&&RACES[o.race]){ const R=RACES[o.race];
       ctx.fillStyle=R.acc;ctx.fillRect(x-13,y-19+bob,26,4);
@@ -4064,7 +4102,7 @@ function draw(){
     if(boarding()&&followers.includes(n.name))continue; // 同乘時隱藏夥伴（避免在地上飛）
     list.push({y:n.y,f:()=>{ drawActor(n.x,n.y,n.face,n.walk,{species:n.species,pal:n.pal,
         shirt:n.shirt||n.pal.fur,gender:n.gender,hair:n.hair,hairStyle:n.hairStyle,outfit:n.outfit});
-      if(n.streamer)drawStreamer(n); }});}
+      if(n.streamer){drawStreamer(n);drawNamePlate(n.x,n.y,n.name);} }});}
   for(const cf of campfires)if(inView(cf.x,cf.y))list.push({y:cf.y,f:()=>drawCampfire(cf)});
   for(const a of animals)if(inView(a.x,a.y))list.push({y:a.y,f:()=>drawAnimal(a)});
   for(const s of strays)if(inView(s.x,s.y))list.push({y:s.y,f:()=>drawStray(s)}); // v41 流浪貓狗
@@ -4078,10 +4116,11 @@ function draw(){
      if(c.talk>0)drawChatBubble(c.x,c.y,c.line); }});
   if(player.love&&!boarding()&&inView(player.love.x,player.love.y)){const L=player.love;
     list.push({y:L.y,f:()=>{ const ap=L.ap;
+      const wed=L.streamer&&L.stage==='married'; // v46 婚後：白紗禮服(澎裙)＋頭紗（舊存檔也適用）
       drawActor(L.x,L.y,L.face,L.walk,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},
-        hair:ap.hair,shirt:ap.shirt,race:ap.race,outfit:ap.outfit,pants:ap.pants,tie:ap.tie,
-        gender:L.gender,hairStyle:ap.hairStyle});
-      if(L.streamer)drawStreamer({x:L.x,y:L.y}); // v41 劉思思當對象時仍會唱歌
+        hair:ap.hair,shirt:wed?'#ffffff':ap.shirt,race:ap.race,outfit:wed?'gown':ap.outfit,
+        pants:ap.pants,tie:ap.tie,gender:L.gender,hairStyle:ap.hairStyle,veil:wed});
+      if(L.streamer){drawStreamer({x:L.x,y:L.y});drawNamePlate(L.x,L.y,L.name,L.stage==='married');} // v41 劉思思當對象時仍會唱歌
       if(L.sparkle>0)drawSparkle(L.x,L.y,L.sparkle); // v42 新娘禮服閃亮
       // 頭上愛心／婚戒標記
       ctx.font='14px serif';ctx.textAlign='center';
@@ -4790,6 +4829,8 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   player.ownAcc=s.ownAcc||[];player.ownShoes=s.ownShoes||[];
   player.outfit=s.outfit||'tee';player.deco=s.deco||null;player.tie=s.tie||null;player.ownClothes=s.ownClothes||[];
   money=s.money??800;inv=s.inv||{};dex=s.dex||{};
+  if(!Number.isFinite(money)||money<0||money>10000000){ // v46 防外部改檔：遊戲內收入不可能到千萬
+    money=88888; toast('💰 偵測到異常金額，已修正為 88,888 元'); }
   player.hp=s.hp??100;player.hunger=s.hunger??100;
   stamps=s.stamps||{};townsV=s.townsV||{};
   partnerState=s.partners||{};followers=s.followers||[];
