@@ -68,6 +68,7 @@
 - **生存**：`player.hp/hunger/tired`；進食 `eatFood(n)`；餓昏復活在 update() 生存區塊
 - **乘坐系統**（共用）：`startRide(pts,kind,speed,onEnd)`＋`pathPos`；鐵路 v45 起為路網圖：`buildRailNet()`（genWorld 內 per 世界重建 `RAILNET{nodes,edges,adj}`）＋`railRoute(from,to)`（Dijkstra 最短路徑自動轉乘，回 `{pts,len,lines,reg,ferry}`；台灣以站名、大陸以城市名為 key）；火車=多節車廂 `drawTrainCars`（`r.tt==='reg'` 畫綠皮車）；氣球/101觀景=`player.balloonRide{r,kind}`；摩天輪=`player.ferris`；泡湯=`player.soak`；拜拜=`player.pray`。**新增「占用玩家」的狀態時，記得同步加進 update() 的移動 gate 與 interact() 開頭的 early-return**
 - **船**：`player.boat(擁有)/sailing(航行中)`；水面碰撞 `hitWater`；上下船在 `interact()` 的 sailing 分支
+- **碰撞空間網格（v48）**：`solidAt/hitObstacle` 不再線性掃全部建築/樹/石，改查 `BGRID/TGRID/RGRID`（4-tile 格；`addBuild` 即時插入、`genWorld()` 收尾 `rebuildGrids()` 重建）。**若新增會「移除」樹/石/建築的玩法，移除後務必呼叫 `rebuildGrids()`**，否則會留下幽靈碰撞
 - **夥伴/跟隨**：`partnerState{name:{s,f}}`、`followers[]`、`trail[]`（蛇形跟隨）；對話流程在 `talkTo()`
 - **偶發事件**：`events[]/eventT`；生成在 update()、處理在 interact() 徒手區、繪製在 y-sort
 - **蓋房**：`HOUSE_TYPES`(4型)/`myHomes[]`(上限2)/`homeMenu()/buildHome(ht)`；室內=`ui='home'` 畫在 drawUI

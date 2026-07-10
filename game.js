@@ -875,9 +875,28 @@ const BUILDING_DRAWS={
   drawRoofSign(cx2,y-80,'🚡 '+b.label,'#c9500f');},
 };
 let BUILDINGS=[];
+/* v48 空間網格：碰撞查詢從「掃全部建築/樹/石」降為「只看腳邊一格」；
+   格子大小 4 tiles，物件以其碰撞範圍插入所有覆蓋到的格子，查詢只需查自己那格 */
+const GCELL=4*48;
+let BGRID=new Map(), TGRID=new Map(), RGRID=new Map();
+function gKey(px,py){return Math.floor(px/GCELL)*1000+Math.floor(py/GCELL);}
+function gInsert(map,x0,y0,x1,y1,item){
+  const gx0=Math.floor(x0/GCELL),gy0=Math.floor(y0/GCELL),gx1=Math.floor(x1/GCELL),gy1=Math.floor(y1/GCELL);
+  for(let gy=gy0;gy<=gy1;gy++)for(let gx=gx0;gx<=gx1;gx++){
+    const k=gx*1000+gy; let a=map.get(k); if(!a){a=[];map.set(k,a);} a.push(item);}}
+function bgridAdd(b){ // 依 solidAt 的實際碰撞箱（含±4px邊距）插入
+  const s=b.scale||1;
+  if(s===1)gInsert(BGRID,b.x-4,b.y-4,b.x+b.w+4,b.y+b.h,b);
+  else{const cx=b.x+b.w/2,by=b.y+b.h,hw=b.w*s/2,hh=b.h*s;
+    gInsert(BGRID,cx-hw-4,by-hh-4,cx+hw+4,by,b);}}
+function rebuildGrids(){ // genWorld() 收尾時呼叫：樹/石不會中途增減，換世界前都有效
+  BGRID=new Map();TGRID=new Map();RGRID=new Map();
+  for(const b of BUILDINGS)bgridAdd(b);
+  for(const tr of trees)gInsert(TGRID,tr.x-20,tr.y-24,tr.x+20,tr.y+16,tr);
+  for(const r of rocks)gInsert(RGRID,r.x-24,r.y-24,r.x+24,r.y+24,r);}
 function addBuild(t,tx,ty,tw,th,label,extra){
   const b={t,tx,ty,tw,th,label,x:tx*TILE,y:ty*TILE,w:tw*TILE,h:th*TILE,...extra};
-  BUILDINGS.push(b);return b;}
+  BUILDINGS.push(b); bgridAdd(b); return b;}
 // 建築整體縮放（維持美術比例；只縮小非豁免類型）；以底部中心為錨點
 const BSCALE=0.62, SCALE_EXEMPT=new Set(['ferris','t101','cablecar','house','myhome']);
 function drawBuild(b){ const d=BUILDING_DRAWS[b.t]; if(!d)return;
@@ -1188,6 +1207,7 @@ function genWorld(){
       const k=Math.floor(hsh(b.tx,b.ty)*6);
       owners.push({x:b.x+b.w/2+(hsh(b.ty,b.tx)>0.5?38:-38),y:b.y+b.h+20,
         species:sps[k],pal:pals[(k+Math.floor(hsh(b.tx*3,b.ty)*3))%6]});}}
+  rebuildGrids(); // v48 世界物件就緒後重建碰撞空間網格
 }
 
 /* ================= 乘坐系統（火車 / 纜車） ================= */
@@ -1589,7 +1609,8 @@ function genNpcs(defs){ NPCS=(defs||ACT_NPCDEFS||NPC_DEFS)
 function solidAt(px,py){
   const t=T(Math.floor(px/TILE),Math.floor(py/TILE));
   if(!WALKABLE[t])return true;
-  for(const b of BUILDINGS){ const s=b.scale||1;
+  const arr=BGRID.get(gKey(px,py)); // v48 空間網格：只查腳邊那格的建築
+  if(arr)for(const b of arr){ const s=b.scale||1;
     if(s===1){ if(px>b.x-4&&px<b.x+b.w+4&&py>b.y-4&&py<b.y+b.h)return true; }
     else{ const cx=b.x+b.w/2, by=b.y+b.h, hw=b.w*s/2, hh=b.h*s;
       if(px>cx-hw-4&&px<cx+hw+4&&py>by-hh-4&&py<by)return true; } }
@@ -1597,8 +1618,10 @@ function solidAt(px,py){
 }
 function hitObstacle(px,py){
   if(solidAt(px-12,py)||solidAt(px+12,py)||solidAt(px,py-8)||solidAt(px,py+10))return true;
-  for(const tr of trees)if(dist(px,py,tr.x,tr.y-4)<20)return true;
-  for(const r of rocks)if(dist(px,py,r.x,r.y)<24)return true;
+  const ta=TGRID.get(gKey(px,py)); // v48 樹/石同樣走網格
+  if(ta)for(const tr of ta)if(dist(px,py,tr.x,tr.y-4)<20)return true;
+  const ra=RGRID.get(gKey(px,py));
+  if(ra)for(const r of ra)if(dist(px,py,r.x,r.y)<24)return true;
   return false;
 }
 function waterAt(px,py){const t=T(Math.floor(px/TILE),Math.floor(py/TILE));return t===SEA||t===LAKE;}
