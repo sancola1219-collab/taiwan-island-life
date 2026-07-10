@@ -1029,7 +1029,7 @@ function genWorldCN(){ // 於 map=cnMap、BUILDINGS=cnB 的狀態下呼叫
       }}}
 }
 const SCENES={ tw:{map,buildings:BUILDINGS,mini,towns:TOWNS,name:'台灣'} };
-let ACT_TOWNS=TOWNS, ACT_NPCDEFS=NPC_DEFS, ACT_RAILS=RAILS, ACT_STATIONS=STATIONS;
+let ACT_TOWNS=TOWNS, ACT_NPCDEFS=NPC_DEFS, ACT_STATIONS=STATIONS; // v45 鐵路改用 RAILNET 路網圖，ACT_RAILS 已移除
 { // 建立大陸世界（暫時把 map/BUILDINGS 指向大陸，生成後快照、還原台灣）
   const cnMap=new Uint8Array(MW*MH); genMapCN(cnMap);
   const _map=map,_b=BUILDINGS; map=cnMap; BUILDINGS=[]; world='cn';
@@ -1040,7 +1040,6 @@ let ACT_TOWNS=TOWNS, ACT_NPCDEFS=NPC_DEFS, ACT_RAILS=RAILS, ACT_STATIONS=STATION
 }
 function setScene(w){ const S=SCENES[w]; if(!S)return; world=w; map=S.map; BUILDINGS=S.buildings; mini=S.mini;
   ACT_TOWNS=S.towns; ACT_NPCDEFS=(w==='cn')?CN_NPC_DEFS:NPC_DEFS;
-  ACT_RAILS=(w==='cn'&&typeof CN_RAILS!=='undefined')?CN_RAILS:RAILS;
   ACT_STATIONS=(w==='cn'&&typeof CN_STATIONS!=='undefined')?CN_STATIONS:STATIONS; }
 function flyTo(destW,destLabel){
   setScene(destW);
@@ -1120,6 +1119,7 @@ function fruitOf(tx,ty){
 }
 function genWorld(){
   rs=SEED;
+  buildRailNet(); // v45 依當前世界重建鐵路路網圖
   for(const a of [trees,rocks,weeds,flowers,teaBushes,cacti,strawberries,lamps,lanterns,owners])a.length=0; // v40 換世界時重置靜態物件
   for(let ty=2;ty<MH-2;ty++)for(let tx=2;tx<MW-2;tx++){
     const t=T(tx,ty);
@@ -1183,15 +1183,60 @@ function genWorld(){
 }
 
 /* ================= 乘坐系統（火車 / 纜車） ================= */
-function railPath(i0,i1){ // 環島/環線鐵路：取較短方向的節點序列（依當前世界）
-  const RL=ACT_RAILS, N=RL.length-1; // 首尾同點（閉環）
-  const segLen=[]; let tot=0;
-  for(let i=0;i<N;i++){segLen.push(Math.hypot(RL[(i+1)%N][0]-RL[i][0],RL[(i+1)%N][1]-RL[i][1]));tot+=segLen[i];}
-  let fwd=0; for(let i=i0;i!==i1;i=(i+1)%N)fwd+=segLen[i];
-  const pts=[];
-  if(fwd<=tot-fwd){ for(let i=i0;;i=(i+1)%N){pts.push(RL[i]);if(i===i1)break;} }
-  else { for(let i=i0;;i=(i-1+N)%N){pts.push(RL[i]);if(i===i1)break;} }
-  return pts.map(([x,y])=>({x:x*TILE,y:y*TILE}));
+/* v45 鐵路路網圖：節點=車站城市、邊=路線區間；搭車用 Dijkstra 找最短路徑自動轉乘 */
+let RAILNET=null;
+function buildRailNet(){
+  const nodes={}, edges=[];
+  if(world==='cn'&&typeof CN_RAIL_LINES!=='undefined'){
+    CN_STATIONS.forEach(s=>{nodes[s.city]={x:s.tx,y:s.ty,st:s.n};});
+    CN_RAIL_LINES.forEach(L=>{
+      let prev=null, bends=[];
+      L.s.forEach(el=>{
+        if(Array.isArray(el)){bends.push(el);return;} // 轉彎點：只influences路徑不設站
+        if(!nodes[el]){bends=[];prev=el;return;}
+        if(prev&&nodes[prev]){
+          const a=nodes[prev], b=nodes[el];
+          const pts=[[a.x,a.y],...bends,[b.x,b.y]];
+          let len=0; for(let i=0;i<pts.length-1;i++)len+=Math.hypot(pts[i+1][0]-pts[i][0],pts[i+1][1]-pts[i][1]);
+          edges.push({a:prev,b:el,line:L.n,t:L.t,ferry:!!L.ferry,note:L.note,pts,len});
+        }
+        prev=el; bends=[];
+      });
+    });
+  } else {
+    // 台灣環島線：把 STATIONS 依 railIdx 串成閉環，區間沿原折線
+    const st=[...STATIONS].sort((p,q)=>p.railIdx-q.railIdx), N=RAILS.length-1;
+    st.forEach(s=>{nodes[s.n]={x:s.tx,y:s.ty,st:s.n};});
+    for(let k=0;k<st.length;k++){ const A=st[k], B=st[(k+1)%st.length];
+      const pts=[]; for(let i=A.railIdx;;i=(i+1)%N){pts.push(RAILS[i]);if(i===B.railIdx)break;}
+      let len=0; for(let i=0;i<pts.length-1;i++)len+=Math.hypot(pts[i+1][0]-pts[i][0],pts[i+1][1]-pts[i][1]);
+      edges.push({a:A.n,b:B.n,line:'環島鐵路',t:'hsr',pts,len});}
+  }
+  const adj={}; Object.keys(nodes).forEach(n=>adj[n]=[]);
+  edges.forEach((e,i)=>{adj[e.a].push({to:e.b,e:i});adj[e.b].push({to:e.a,e:i});});
+  RAILNET={nodes,edges,adj};
+}
+function railRoute(from,to){ // 最短路徑；回傳{pts(px),len(格),lines(依序經過線名),reg,ferry}
+  if(!RAILNET||!RAILNET.nodes[from]||!RAILNET.nodes[to])return null;
+  const {nodes,edges,adj}=RAILNET;
+  const D={},prev={},Q=Object.keys(nodes);
+  Q.forEach(n=>D[n]=1e18); D[from]=0;
+  while(Q.length){
+    Q.sort((a,b)=>D[a]-D[b]); const u=Q.shift();
+    if(u===to||D[u]>=1e18)break;
+    adj[u].forEach(({to:v,e})=>{const nd=D[u]+edges[e].len;
+      if(nd<D[v]){D[v]=nd;prev[v]={u,e};}});
+  }
+  if(from!==to&&!prev[to])return null;
+  const segs=[]; let cur=to;
+  while(cur!==from){const p=prev[cur];segs.unshift({e:edges[p.e],from:p.u});cur=p.u;}
+  const pts=[],lines=[]; let reg=false,ferry=false;
+  segs.forEach(s=>{
+    let ep=s.e.pts; if(s.e.a!==s.from)ep=[...ep].reverse();
+    ep.forEach((p,i)=>{if(!(pts.length&&i===0))pts.push(p);});
+    if(!lines.length||lines[lines.length-1]!==s.e.line)lines.push(s.e.line);
+    if(s.e.t==='reg')reg=true; if(s.e.ferry)ferry=true;});
+  return {pts:pts.map(([x,y])=>({x:x*TILE,y:y*TILE})),len:D[to],lines,reg,ferry};
 }
 function startRide(pts,kind,speed,onEnd){
   let len=0; const segs=[];
@@ -1815,23 +1860,42 @@ function buildAct(b){
        player.fishing=null;
        toast('🎡 摩天輪緩緩轉動…');}},
      {label:'不用了',cb(){ui=null;}}]);},
-   station(){ const here=ACT_STATIONS.find(s=>s.n===b.label);
-     const opts=ACT_STATIONS.filter(s=>s.n!==b.label).map(s=>{
-       const fee=Math.round((50+dist(here.tx,here.ty,s.tx,s.ty)*1.3)/10)*10;
-       return {label:s.n.replace('車站','').replace('高鐵站','')+'（'+fmt(fee)+'元）',cb(){
-         if(money<fee){dlg(b.label,['車票錢不夠喔！','去賣點東西再來吧。']);return;}
-         money-=fee; sfx('train');
-         startRide(railPath(here.railIdx,s.railIdx),'train',920,()=>{
-           const p=findWalkSafe(s.tx+2,s.ty+4);
-           player.x=p.x;player.y=p.y;
-           toast('🚉 抵達 '+s.n+'！'); save();});
-         toast((world==='cn'?'🚄 動車出發！':'🚂 火車出發！')+'沿著鐵軌前進…（點擊/空白鍵加速）');}};});
-     opts.unshift({label:'🍱 鐵路便當（80元）飢餓+40',cb(){
+   station(){ const here=ACT_STATIONS.find(s=>s.n===b.label); if(!here)return;
+     const myKey=here.city||here.n;
+     const rideTo=(s)=>{ const key=s.city||s.n, route=railRoute(myKey,key);
+       if(!route){dlg(b.label,['這裡沒有鐵路可以到那邊耶…']);return;}
+       const fee=Math.round((50+route.len*1.1)/10)*10;
+       if(money<fee){dlg(b.label,['車票錢不夠喔！要 '+fmt(fee)+' 元。','去賣點東西再來吧。']);return;}
+       money-=fee; sfx('train');
+       startRide(route.pts,'train',route.reg?660:920,()=>{
+         const p=findWalkSafe(s.tx+2,s.ty+4);
+         player.x=p.x;player.y=p.y;
+         toast('🚉 抵達 '+s.n+'！'+(s.sight?'附近名勝：'+s.sight:'')); save();});
+       player.riding.tt=route.reg?'reg':'hsr';
+       const via=route.lines.join('→');
+       toast((route.ferry?'⛴️ 火車開上渡輪過海！':route.reg?'🚂 綠皮火車哐當哐當出發！':world==='cn'?'🚄 動車出發！':'🚂 火車出發！')+'經由：'+via);};
+     const bento={label:'🍱 鐵路便當（80元）飢餓+40',cb(){
        if(money<80){dlg(b.label,['便當一個 80 元喔。']);return;}
        money-=80;player.hunger=Math.min(100,player.hunger+40);
-       sfx('pop');save();ui=null;toast('🍱 火車便當就是香！飢餓+40');}});
-     opts.push({label:'離開',cb(){ui=null;}});
-     openMenu('🚉 '+b.label+'：要搭車去哪裡呢？',opts);},
+       sfx('pop');save();ui=null;toast('🍱 火車便當就是香！飢餓+40');}};
+     if(world==='cn'){ // v45 42站太多：先選地區再選城市；票價依實際路徑長度
+       const regions={};
+       ACT_STATIONS.filter(s=>s.n!==b.label).forEach(s=>{(regions[s.r]=regions[s.r]||[]).push(s);});
+       const opts=Object.keys(regions).map(r=>({label:'🗺️ '+r+'（'+regions[r].length+' 站）',cb(){
+         const o2=regions[r].map(s=>{ const route=railRoute(myKey,s.city);
+           const fee=route?Math.round((50+route.len*1.1)/10)*10:0;
+           return {label:s.city+(route&&route.reg?' 🚂':'')+'（'+(route?fmt(fee)+'元':'未通車')+'）',cb(){rideTo(s);}};});
+         o2.push({label:'回上頁',cb(){buildAct(b);}});
+         openMenu('🚄 前往 '+r+' 地區：',o2);}}));
+       opts.unshift(bento); opts.push({label:'離開',cb(){ui=null;}});
+       openMenu('🚄 '+b.label+'：要搭車去哪個地區？',opts);
+     } else {
+       const opts=ACT_STATIONS.filter(s=>s.n!==b.label).map(s=>{
+         const route=railRoute(here.n,s.n), fee=route?Math.round((50+route.len*1.1)/10)*10:0;
+         return {label:s.n.replace('車站','')+'（'+fmt(fee)+'元）',cb(){rideTo(s);}};});
+       opts.unshift(bento); opts.push({label:'離開',cb(){ui=null;}});
+       openMenu('🚉 '+b.label+'：要搭車去哪裡呢？',opts);
+     }},
    cablecar(){ const c=b.line, from=b.end==='a'?c.a:c.b, to=b.end==='a'?c.b:c.a;
      openMenu('🚡 '+c.n+'・'+from[2]+'：要搭纜車嗎？',[
        {label:'搭到 '+to[2]+'（'+c.fee+'元）',cb(){
@@ -3489,6 +3553,10 @@ function drawActor(x,y,face,walk,o){
         ctx.fillStyle=tint(o.hair,20);for(let k=0;k<3;k++){ctx.beginPath();ctx.ellipse(x-9,hy+6+k*7,4,3,0,0,7);ctx.fill();}}
       else {ctx.beginPath();ctx.moveTo(x-6,hy-8);ctx.quadraticCurveTo(x+2,y+6+bob,x+10,y+8+bob); // 高馬尾
         ctx.quadraticCurveTo(x+14,y+2+bob,x+6,hy-6);ctx.closePath();ctx.fill();}
+      if(hs===2||hs===5||hs===6||hs===7){ // v45 這幾款後髮原本整片蓋在臉上：重繪臉部，把頭髮墊回臉後面
+        const gf=ctx.createRadialGradient(x-5,hy-7,3,x,hy,17);
+        gf.addColorStop(0,tint(fur,36));gf.addColorStop(0.65,fur);gf.addColorStop(1,tint(fur,-24));
+        ctx.fillStyle=gf;ctx.beginPath();ctx.arc(x,hy+0.5,13.5,0,7);ctx.fill();}
       // 頭頂瀏海
       ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,hy-3,17,Math.PI*0.98,Math.PI*2.02);ctx.fill();
       ctx.fillStyle=o.hair; // 瀏海分線
@@ -3703,19 +3771,21 @@ function pathPos(r,dd){ dd=clamp(dd,0,r.len); let d=dd,i=0;
   while(i<r.segs.length-1&&d>r.segs[i]){d-=r.segs[i];i++;}
   const a=r.pts[i],b=r.pts[i+1],t=r.segs[i]?d/r.segs[i]:0;
   return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,ang:Math.atan2(b.y-a.y,b.x-a.x)};}
-function drawTrainCars(r){ // 長列高鐵：白身飾帶、流線車頭、沿軌道轉向（大陸動車=藍帶）
-  const CARS=4, GAP=58, BAND=world==='cn'?'#2f6fd6':'#f28a2a';
+function drawTrainCars(r){ // 長列列車：高鐵=白身飾帶(大陸藍/台灣橘)、普速=綠皮車黃帶；沿軌道轉向
+  const reg=r.tt==='reg', CARS=4, GAP=58;
+  const BAND=reg?'#f2d24a':(world==='cn'?'#2f6fd6':'#f28a2a');
+  const H1=reg?'#5d8a60':'#fafaf8', H2=reg?'#365a3a':'#d6d6d2', EDGE=reg?'#2a4a2e':'#b4b4b0';
   for(let i=CARS-1;i>=0;i--){
     const p=pathPos(r,Math.max(0,r.d-i*GAP));
     ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.ang);
     ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(0,10,30,7,0,0,7);ctx.fill();
-    if(i===0){ // 車頭
+    if(i===0&&!reg){ // 高鐵流線車頭
       let g=ctx.createLinearGradient(0,-14,0,10);
-      g.addColorStop(0,'#fafaf8');g.addColorStop(1,'#d6d6d2');
+      g.addColorStop(0,H1);g.addColorStop(1,H2);
       ctx.fillStyle=g;
       ctx.beginPath();ctx.moveTo(-28,-11);ctx.lineTo(10,-11);
       ctx.quadraticCurveTo(28,-10,34,1);ctx.quadraticCurveTo(29,8,10,9);ctx.lineTo(-28,9);ctx.closePath();ctx.fill();
-      ctx.strokeStyle='#b4b4b0';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.strokeStyle=EDGE;ctx.lineWidth=1.5;ctx.stroke();
       ctx.fillStyle=BAND; // 飾帶
       ctx.beginPath();ctx.moveTo(-28,-2);ctx.lineTo(14,-2);ctx.quadraticCurveTo(27,-1,31,2);
       ctx.lineTo(-28,3);ctx.closePath();ctx.fill();
@@ -3724,13 +3794,23 @@ function drawTrainCars(r){ // 長列高鐵：白身飾帶、流線車頭、沿�
       ctx.lineTo(20,-4);ctx.lineTo(10,-6);ctx.closePath();ctx.fill();
       ctx.fillStyle='#7ec8e8';
       for(let w2=0;w2<3;w2++){rr(-24+w2*11,-8,8,5,2);ctx.fill();}
+    } else if(i===0){ // 綠皮車火車頭：方正車頭＋車燈
+      let g=ctx.createLinearGradient(0,-14,0,10);
+      g.addColorStop(0,H1);g.addColorStop(1,H2);
+      ctx.fillStyle=g;rr(-28,-11,58,20,4);ctx.fill();
+      ctx.strokeStyle=EDGE;ctx.lineWidth=1.5;rr(-28,-11,58,20,4);ctx.stroke();
+      ctx.fillStyle=BAND;ctx.fillRect(-28,-2,58,4);
+      ctx.fillStyle='#3a4a58';rr(16,-9,11,7,2);ctx.fill(); // 駕駛窗
+      ctx.fillStyle='#ffe9a8';ctx.beginPath();ctx.arc(28,3,2.5,0,7);ctx.fill(); // 車頭燈
+      ctx.fillStyle='#cfe3d0';
+      for(let w2=0;w2<3;w2++){rr(-24+w2*12,-8,8,5,2);ctx.fill();}
     } else {
       let g=ctx.createLinearGradient(0,-12,0,10);
-      g.addColorStop(0,'#f5f5f2');g.addColorStop(1,'#d0d0cc');
+      g.addColorStop(0,reg?'#548257':'#f5f5f2');g.addColorStop(1,reg?'#335537':'#d0d0cc');
       ctx.fillStyle=g;rr(-26,-11,52,20,5);ctx.fill();
-      ctx.strokeStyle='#b4b4b0';ctx.lineWidth=1.5;rr(-26,-11,52,20,5);ctx.stroke();
-      ctx.fillStyle=BAND;ctx.fillRect(-26,-2,52,5);
-      ctx.fillStyle='#7ec8e8';
+      ctx.strokeStyle=EDGE;ctx.lineWidth=1.5;rr(-26,-11,52,20,5);ctx.stroke();
+      ctx.fillStyle=BAND;ctx.fillRect(-26,-2,52,reg?4:5);
+      ctx.fillStyle=reg?'#cfe3d0':'#7ec8e8';
       for(let w2=0;w2<4;w2++){rr(-22+w2*12,-8,8,5,2);ctx.fill();}
       ctx.strokeStyle='#5a5048';ctx.lineWidth=3;
       ctx.beginPath();ctx.moveTo(26,0);ctx.lineTo(32,0);ctx.stroke();
@@ -3895,21 +3975,27 @@ function draw(){
         ctx.fillStyle='rgba(255,255,255,'+a+')';ctx.fillRect(tx*TILE+18,ty*TILE+22,4,4);}}
   }
   const inView=(x,y,m)=>x>cx-(m||80)&&x<cx+VWz+(m||80)&&y>cy-(m||80)&&y<cy+VHz+(m||80);
-  // 環島鐵路軌道（僅台灣）
+  // 鐵路軌道（v45 路網圖：台灣環島線＋大陸八縱八橫；粵海鐵路輪渡段畫虛線）
   ctx.lineCap='round';
-  for(let i=0;i<ACT_RAILS.length-1;i++){
-    const ax=ACT_RAILS[i][0]*TILE,ay=ACT_RAILS[i][1]*TILE,bx=ACT_RAILS[i+1][0]*TILE,by=ACT_RAILS[i+1][1]*TILE;
-    if(Math.max(ax,bx)<cx-100||Math.min(ax,bx)>cx+VWz+100||Math.max(ay,by)<cy-100||Math.min(ay,by)>cy+VHz+100)continue;
-    const L=Math.hypot(bx-ax,by-ay)||1,ux=(bx-ax)/L,uy=(by-ay)/L,px2=-uy,py2=ux;
-    ctx.strokeStyle='rgba(150,125,95,.5)';ctx.lineWidth=13;
-    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
-    ctx.strokeStyle='#8a6b4a';ctx.lineWidth=2.5;
-    for(let d=0;d<L;d+=16){const tx2=ax+ux*d,ty3=ay+uy*d;
-      if(tx2<cx-20||tx2>cx+VWz+20||ty3<cy-20||ty3>cy+VHz+20)continue;
-      ctx.beginPath();ctx.moveTo(tx2+px2*7,ty3+py2*7);ctx.lineTo(tx2-px2*7,ty3-py2*7);ctx.stroke();}
-    ctx.strokeStyle='#5a5048';ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(ax+px2*4,ay+py2*4);ctx.lineTo(bx+px2*4,by+py2*4);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(ax-px2*4,ay-py2*4);ctx.lineTo(bx-px2*4,by-py2*4);ctx.stroke();
+  if(RAILNET)for(const e of RAILNET.edges){ const P=e.pts;
+    for(let i=0;i<P.length-1;i++){
+      const ax=P[i][0]*TILE,ay=P[i][1]*TILE,bx=P[i+1][0]*TILE,by=P[i+1][1]*TILE;
+      if(Math.max(ax,bx)<cx-100||Math.min(ax,bx)>cx+VWz+100||Math.max(ay,by)<cy-100||Math.min(ay,by)>cy+VHz+100)continue;
+      if(e.ferry){ // 火車輪渡航線：海上虛線
+        ctx.setLineDash([16,12]);ctx.strokeStyle='rgba(60,105,150,.6)';ctx.lineWidth=4;
+        ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+        ctx.setLineDash([]); continue; }
+      const L=Math.hypot(bx-ax,by-ay)||1,ux=(bx-ax)/L,uy=(by-ay)/L,px2=-uy,py2=ux;
+      ctx.strokeStyle='rgba(150,125,95,.5)';ctx.lineWidth=13;
+      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+      ctx.strokeStyle='#8a6b4a';ctx.lineWidth=2.5;
+      for(let d=0;d<L;d+=16){const tx2=ax+ux*d,ty3=ay+uy*d;
+        if(tx2<cx-20||tx2>cx+VWz+20||ty3<cy-20||ty3>cy+VHz+20)continue;
+        ctx.beginPath();ctx.moveTo(tx2+px2*7,ty3+py2*7);ctx.lineTo(tx2-px2*7,ty3-py2*7);ctx.stroke();}
+      ctx.strokeStyle='#5a5048';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(ax+px2*4,ay+py2*4);ctx.lineTo(bx+px2*4,by+py2*4);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ax-px2*4,ay-py2*4);ctx.lineTo(bx-px2*4,by-py2*4);ctx.stroke();
+    }
   }
   ctx.lineCap='butt';
   // 纜車纜線與往返車廂（僅台灣）

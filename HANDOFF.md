@@ -43,7 +43,8 @@
 | `SPINES` | 山脈脊線（hw=淺山寬、mw=岩壁寬） | |
 | `TOWNS` | 129 個鄉鎮（區域顯示=最近town） | `{n,c(縣市),tx,ty}` |
 | `HIGHWAYS` | 公路 polyline（`mt:true` 可鑿穿山） | |
-| `RAILS` | 環島鐵路閉環節點；`STATIONS[].railIdx` 指到節點 | 改鐵路要同步兩者 |
+| `RAILS` | 台灣環島鐵路閉環節點；`STATIONS[].railIdx` 指到節點 | 改鐵路要同步兩者 |
+| `CN_RAIL_LINES`/`CN_STATIONS` | v45 大陸鐵路網：42 站(keyed by `city`,含`r`地區/`sight`名勝)＋30 條線(`s`=停靠城市名序列、`t:'hsr'/'reg'`、`ferry`) | 引擎在 `genWorld()` 呼叫 `buildRailNet()` 建圖，搭車走 `railRoute(from,to)` Dijkstra 自動轉乘 |
 | `CABLECARS` | 纜車（a/b 站+票價） | |
 | `HARBORS` | 港口+渡輪 routes（目的地名必須存在於 HARBORS） | 位置會在載入時自動 `coastSpot()` 貼海，寫個大概即可 |
 | `LANDMARKS` | 景點 `{t:類型,tx,ty,label,lines[],steam?}` | t 必須存在於 game.js 的 `SIZE` 與 `BUILDING_DRAWS` |
@@ -65,7 +66,7 @@
 - **地圖生成**：`genMap()`；落點工具 `findWalk / findWalkSafe(傳送必用!) / findWater / coastSpot / fitSpot`
 - **遊戲時鐘**：`gameMin/gameDay`（1現實秒=1遊戲分，一天24分鐘）；`hourNow/isNight/isRainy/dayPeriod`；`doSleep(cost,place)` 睡到隔天06:00
 - **生存**：`player.hp/hunger/tired`；進食 `eatFood(n)`；餓昏復活在 update() 生存區塊
-- **乘坐系統**（共用）：`startRide(pts,kind,speed,onEnd)`＋`railPath(i0,i1)`＋`pathPos`；火車=多節車廂 `drawTrainCars`；氣球/101觀景=`player.balloonRide{r,kind}`；摩天輪=`player.ferris`；泡湯=`player.soak`；拜拜=`player.pray`。**新增「占用玩家」的狀態時，記得同步加進 update() 的移動 gate 與 interact() 開頭的 early-return**
+- **乘坐系統**（共用）：`startRide(pts,kind,speed,onEnd)`＋`pathPos`；鐵路 v45 起為路網圖：`buildRailNet()`（genWorld 內 per 世界重建 `RAILNET{nodes,edges,adj}`）＋`railRoute(from,to)`（Dijkstra 最短路徑自動轉乘，回 `{pts,len,lines,reg,ferry}`；台灣以站名、大陸以城市名為 key）；火車=多節車廂 `drawTrainCars`（`r.tt==='reg'` 畫綠皮車）；氣球/101觀景=`player.balloonRide{r,kind}`；摩天輪=`player.ferris`；泡湯=`player.soak`；拜拜=`player.pray`。**新增「占用玩家」的狀態時，記得同步加進 update() 的移動 gate 與 interact() 開頭的 early-return**
 - **船**：`player.boat(擁有)/sailing(航行中)`；水面碰撞 `hitWater`；上下船在 `interact()` 的 sailing 分支
 - **夥伴/跟隨**：`partnerState{name:{s,f}}`、`followers[]`、`trail[]`（蛇形跟隨）；對話流程在 `talkTo()`
 - **偶發事件**：`events[]/eventT`；生成在 update()、處理在 interact() 徒手區、繪製在 y-sort
@@ -129,6 +130,6 @@ if(s>b.tw*b.th*0.3)w.push(b.label);}return w.length?w:'OK'})()
 1. 改「內容」（新景點/小吃/任務/魚蟲/台詞）→ 只動 data.js，跑 §6 檢查 A+B。
 2. 改「玩法」→ game.js，找對應系統函式（§4），注意互動優先序與狀態 gate。
 3. 每次改完：`node --check` → 本機開起來實測該功能 → 檢查 console 無錯 → 發布流程。
-4. 測試時用程式直接呼叫函式驗證（如 `buildHome(HOUSE_TYPES[1])`、`startRide(railPath(0,3),'train',920,...)`），比手動走路快得多。
+4. 測試時用程式直接呼叫函式驗證（如 `buildHome(HOUSE_TYPES[1])`、`startRide(railRoute('台北車站','台中車站').pts,'train',920,...)`），比手動走路快得多。
 5. 保持繁體中文 UI 與台灣在地內容的正確性（縣市對應要查證）。
 6. 玩家溝通風格：需求常一次列很多點，喜歡逐項回報表格；重視「實際看得到的改變」，發版後提醒他重新整理（快取號已處理大半）。
