@@ -4471,23 +4471,23 @@ function draw(){
         ctx.strokeStyle=wcol;ctx.lineCap='round';ctx.lineWidth=(e.sub==='cannon'?6:e.sub==='sniper'?3.5:2.2);
         ctx.beginPath();ctx.moveTo(e.x+ca*10,e.y+sa*10);ctx.lineTo(hx,hy);ctx.stroke();
         ctx.fillStyle=wcol;ctx.beginPath();ctx.arc(hx,hy,e.sub==='sniper'?3:2,0,7);ctx.fill();ctx.lineCap='butt'; } }
-    else if(e.kind==='magiccircle'){ // v50 施法魔法陣：地面壓扁旋轉符文圈
-      const a=(ph<0.18?ph/0.18:1-(ph-0.18)/0.82)*0.9, rot=tGlobal*2.6, R1=32,R2=21;
+    else if(e.kind==='magiccircle'){ // v50 施法魔法陣：地面壓扁旋轉符文圈（v51 放大到直徑3格=144px）
+      const a=(ph<0.18?ph/0.18:1-(ph-0.18)/0.82)*0.9, rot=tGlobal*2.6, R1=72,R2=46;
       ctx.save();ctx.translate(e.x,e.y+3);ctx.scale(1,0.5);
       ctx.globalAlpha=Math.max(0,a);
       ctx.fillStyle=e.col;ctx.globalAlpha=Math.max(0,a)*0.14; // 底部光暈
       ctx.beginPath();ctx.arc(0,0,R1,0,7);ctx.fill();
       ctx.globalAlpha=Math.max(0,a);
-      ctx.strokeStyle=e.col;ctx.lineWidth=2.6;
+      ctx.strokeStyle=e.col;ctx.lineWidth=3.4;
       ctx.beginPath();ctx.arc(0,0,R1,0,7);ctx.stroke();
-      ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,0,R2,0,7);ctx.stroke();
+      ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(0,0,R2,0,7);ctx.stroke();
       for(let i=0;i<8;i++){const aa=rot+i*Math.PI/4; // 旋轉符文刻線
         ctx.beginPath();ctx.moveTo(Math.cos(aa)*R2,Math.sin(aa)*R2);ctx.lineTo(Math.cos(aa)*R1,Math.sin(aa)*R1);ctx.stroke();}
       ctx.beginPath(); // 反向旋轉內三角
       for(let i=0;i<3;i++){const aa=-rot*1.5+i*2.094;const px=Math.cos(aa)*R2,py=Math.sin(aa)*R2;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}
       ctx.closePath();ctx.stroke();
       for(let i=0;i<6;i++){const aa=rot*0.8+i*Math.PI/3; // 外圈符點
-        ctx.fillStyle=e.col;ctx.beginPath();ctx.arc(Math.cos(aa)*(R1+5),Math.sin(aa)*(R1+5),2,0,7);ctx.fill();}
+        ctx.fillStyle=e.col;ctx.beginPath();ctx.arc(Math.cos(aa)*(R1+7),Math.sin(aa)*(R1+7),2.8,0,7);ctx.fill();}
       ctx.restore();ctx.globalAlpha=1; }
     else if(e.kind==='job'){ const a=1-ph; // v39 職業範圍技特效
       if(e.job==='firewall'){ const oy=e.y-16, n=8, grow=Math.min(1,ph*2);

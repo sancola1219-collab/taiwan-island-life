@@ -783,6 +783,10 @@ const EATERIES_CN=[
  {tx:264,ty:292,label:'西安涼皮攤',food:'秦鎮涼皮',price:40,icon:'🍜'},
  {tx:212,ty:258,label:'蘭州釀皮鋪',food:'釀皮子',price:40,icon:'🍜'},{tx:152,ty:232,label:'敦煌驢肉黃麵',food:'驢肉黃麵',price:60,icon:'🍜'}, // v47覆核：原(144,234)壓在山上
  {tx:242,ty:218,label:'銀川手抓羊肉',food:'手抓羊肉',price:150,icon:'🍖'},{tx:117,ty:205,label:'烏魯木齊烤串',food:'紅柳烤肉串',price:80,icon:'🍢'}, // v47覆核：原(106,190)埋在山裡走不到
+ // v51 左上補小吃
+ {tx:141,ty:202,label:'哈密瓜果攤',food:'哈密瓜',price:50,icon:'🍈'},
+ {tx:148,ty:194,label:'吐魯番烤饢舖',food:'烤饢配葡萄乾',price:45,icon:'🫓'},
+ {tx:264,ty:120,label:'草原烤全羊',food:'蒙古烤全羊',price:300,icon:'🍖'},
  {tx:128,ty:410,label:'拉薩甜茶館',food:'酥油茶配糌粑',price:50,icon:'🍵'},
  {tx:320,ty:414,label:'武漢豆皮店',food:'三鮮豆皮',price:45,icon:'🍱'},
  {tx:400,ty:328,label:'南京鴨血粉絲',food:'鴨血粉絲湯',price:55,icon:'🍜'},{tx:440,ty:340,label:'蘇州松鶴樓',food:'松鼠桂魚',price:220,icon:'🐟'},
@@ -800,6 +804,7 @@ const HOTELS_CN=[
  {tx:166,ty:434,label:'成都熊貓旅舍'},{tx:418,ty:570,label:'廈門鼓浪嶼民宿'},{tx:348,ty:684,label:'香港維港酒店'},
  {tx:318,ty:518,label:'株洲神農大酒店'},{tx:396,ty:64,label:'哈爾濱冰雪飯店'},{tx:126,ty:398,label:'拉薩雪域客棧'},
  {tx:262,ty:302,label:'西安古城旅館'},{tx:186,ty:554,label:'昆明春城旅店'},{tx:260,ty:560,label:'桂林山水民宿'},
+ {tx:172,ty:78,label:'喀納斯湖畔木屋'},{tx:152,ty:188,label:'吐魯番葡萄溝民宿'}, // v51 左上補住宿
 ];
 const LANDMARKS_CN=[
  // 著名古蹟／地標（多沿用既有建物繪製）
@@ -880,6 +885,17 @@ const LANDMARKS_CN=[
  {t:'archbridge',tx:200,ty:258,label:'蘭州中山鐵橋'},
  {t:'pagodas',tx:232,ty:218,label:'西夏王陵'},
  {t:'temple',tx:118,ty:410,label:'大昭寺'},
+ // v51 補齊大陸左上（新疆北部/甘肅西部/內蒙古）景點——座標皆經地形探勘避開山區
+ {t:'weir',tx:166,ty:72,label:'喀納斯湖',lines:['阿爾泰山中的神秘湖泊！','傳說湖裡有湖怪出沒…','湖水一年四季會變色。']},
+ {t:'peak',tx:148,ty:84,label:'克拉瑪依魔鬼城',lines:['風蝕出來的雅丹地貌！','大風一吹像鬼哭神號。']},
+ {t:'weir',tx:112,ty:164,label:'賽里木湖',lines:['大西洋的最後一滴眼淚！','高山湖水藍得不可思議。']},
+ {t:'peak',tx:142,ty:186,label:'吐魯番火焰山',lines:['西遊記鐵扇公主的火焰山！','夏天地表能煎熟雞蛋。']},
+ {t:'greatwall',tx:172,ty:228,label:'嘉峪關',lines:['明長城最西端！','號稱「天下第一雄關」。']},
+ {t:'weir',tx:160,ty:246,label:'敦煌月牙泉',lines:['沙漠中的月牙形清泉！','千年不涸的奇蹟。']},
+ {t:'temple',tx:252,ty:156,label:'成吉思汗陵'},
+ {t:'peak',tx:236,ty:150,label:'響沙灣',lines:['會唱歌的沙丘！','滑沙時沙子嗡嗡作響。']},
+ {t:'pagodas',tx:280,ty:140,label:'昭君墓'},
+ {t:'oldstreet',tx:296,ty:88,label:'錫林郭勒蒙古包營地',lines:['一望無際的大草原！','住進蒙古包、喝碗熱奶茶～']},
 ];
 const AIRPORTS=[
  {tx:246,ty:104,label:'桃園機場',w:'tw'},    // v42 靠西部海岸
