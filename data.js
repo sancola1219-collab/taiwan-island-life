@@ -468,13 +468,13 @@ const GUNS=[
 ];
 /* ---------- 職業（綠島魔法屋習得，v37；v39 全改範圍技能＋新增風女/冰女） ----------
    mode:'radius'=以自身為中心的範圍技；'line'=面向前方的直線技。range 以「格」計 */
-const JOBS=[
- {n:'魔法師',e:'🧙',w:'木杖',we:'🪄',atk:'火焰牆',mode:'line',range:6,fx:'firewall',desc:'向前噴出6格直線火焰牆'},
- {n:'劍士',e:'⚔️',w:'大劍',we:'🗡️',atk:'衝擊波',mode:'radius',range:3,fx:'shock',desc:'掄劍震出3格範圍衝擊波'},
- {n:'忍者',e:'🥷',w:'手裡劍',we:'✴️',atk:'手裡劍陣',mode:'line',range:6,fx:'shuriken',desc:'甩出6格直線手裡劍'},
- {n:'道士',e:'☯️',w:'魔法球',we:'🔮',atk:'落雷',mode:'radius',range:3,fx:'thunder',desc:'召喚3格周圍落雷'},
- {n:'風女',e:'🌪️',w:'風之扇',we:'🍃',atk:'龍捲風',mode:'radius',range:3,fx:'tornado',desc:'捲起3格範圍龍捲風'},
- {n:'冰女',e:'❄️',w:'冰霜杖',we:'🧊',atk:'冰錐牆',mode:'line',range:6,fx:'ice',desc:'射出6格直線冰錐牆'},
+const JOBS=[ // v50 spell=施法咒語(對話框)、col=魔法陣顏色
+ {n:'魔法師',e:'🧙',w:'木杖',we:'🪄',atk:'火焰牆',mode:'line',range:6,fx:'firewall',desc:'向前噴出6格直線火焰牆',spell:'烈焰聽我號令——火焰牆！',col:'#ff8a3a'},
+ {n:'劍士',e:'⚔️',w:'大劍',we:'🗡️',atk:'衝擊波',mode:'radius',range:3,fx:'shock',desc:'掄劍震出3格範圍衝擊波',spell:'劍氣縱橫——衝擊波！',col:'#e8d44a'},
+ {n:'忍者',e:'🥷',w:'手裡劍',we:'✴️',atk:'手裡劍陣',mode:'line',range:6,fx:'shuriken',desc:'甩出6格直線手裡劍',spell:'忍法・手裡劍陣！',col:'#aab8d0'},
+ {n:'道士',e:'☯️',w:'魔法球',we:'🔮',atk:'落雷',mode:'radius',range:3,fx:'thunder',desc:'召喚3格周圍落雷',spell:'天雷滾滾——急急如律令！',col:'#c9a2ff'},
+ {n:'風女',e:'🌪️',w:'風之扇',we:'🍃',atk:'龍捲風',mode:'radius',range:3,fx:'tornado',desc:'捲起3格範圍龍捲風',spell:'風之精靈啊——龍捲風！',col:'#8ad48a'},
+ {n:'冰女',e:'❄️',w:'冰霜杖',we:'🧊',atk:'冰錐牆',mode:'line',range:6,fx:'ice',desc:'射出6格直線冰錐牆',spell:'寒冰徹骨——冰錐牆！',col:'#8ad0ff'},
 ];
 /* ---------- 景點通用台詞池（每次點擊隨機組合） ---------- */
 const LM_POOL={

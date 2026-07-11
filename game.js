@@ -2335,6 +2335,8 @@ function spawnJobFx(job){ const fv=DIRV[player.face];
   fx.push({kind:'job',job:job.fx,x:player.x,y:player.y,dx:fv[0],dy:fv[1],range:job.range*TILE,t:0,dur:0.6}); }
 function doJobAttack(job){
   player.swing=0.32; spawnJobFx(job); sfx(job.mode==='radius'?'thud':'swing');
+  fx.push({kind:'magiccircle',x:player.x,y:player.y,col:job.col||'#ffd94a',t:0,dur:1.1}); // v50 腳下魔法陣
+  player.spellBub={text:job.spell||(job.atk+'！'),t:1.8}; // v50 咒語對話框
   let killed=0, copsHit=0;
   for(const c of citizens){ if(!c.dead && inJobAoE(job,c.x,c.y)){ markCitizenDead(c); killed++; } }
   if(player.wanted&&player.wanted.cops)for(const cp of player.wanted.cops){ if(!cp.down && inJobAoE(job,cp.x,cp.y)){ knockCop(cp); copsHit++; } }
@@ -2752,8 +2754,72 @@ function updatePet(dt){ const pets=player.pets||[]; if(!pets.length)return;
       if(!hitObstacle(p.x,p.y))p.stuck=0;
       p.walk+=dt*10; p.face=Math.abs(tx2-p.x)>Math.abs(ty2-p.y)?(tx2>p.x?2:1):(ty2>p.y?0:3); } }
 }
+function drawQuadruped(kind,x,y,face,walk){ // v50 貓狗四腳趴地走（不再直立）
+  const pal=PET_PALS[kind], fur=pal.fur, belly=pal.belly||'#fff', dog=kind==='dog';
+  const l1=Math.max(0,Math.sin(walk))*3, l2=Math.max(0,-Math.sin(walk))*3; // 對角步態
+  const bob=Math.abs(Math.sin(walk))*1.2;
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(x,y+2,15,5,0,0,7);ctx.fill();
+  if(face===1||face===2){ // ── 側面 ──
+    ctx.save(); if(face===1){ctx.translate(x*2,0);ctx.scale(-1,1);}
+    ctx.strokeStyle=fur;ctx.lineWidth=4;ctx.lineCap='round'; // 尾巴（狗上翹搖、貓S形立起）
+    ctx.beginPath();
+    if(dog){ctx.moveTo(x-13,y-15);ctx.quadraticCurveTo(x-19,y-21,x-17+Math.sin(tGlobal*9)*2,y-25);}
+    else{ctx.moveTo(x-13,y-14);ctx.quadraticCurveTo(x-21,y-16,x-20,y-26+Math.sin(tGlobal*3)*2);}
+    ctx.stroke();ctx.lineCap='butt';
+    ctx.fillStyle=tint(fur,-26); // 遠側前後腿
+    rr(x-11,y-9+ (l2>0?-l2:0),4.5,10,2);ctx.fill();
+    rr(x+6,y-9+(l1>0?-l1:0),4.5,10,2);ctx.fill();
+    let g=ctx.createLinearGradient(x,y-21,x,y-4); // 身體（水平橢圓）
+    g.addColorStop(0,tint(fur,22));g.addColorStop(1,tint(fur,-12));
+    ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x-1,y-13,15,8.5,0,0,7);ctx.fill();
+    ctx.fillStyle=belly;ctx.beginPath();ctx.ellipse(x-1,y-9,10,4,0,0,Math.PI);ctx.fill(); // 肚皮
+    ctx.fillStyle=fur; // 近側前後腿（交替抬起）
+    rr(x-8,y-9+(l1>0?-l1:0),5,11,2.5);ctx.fill();
+    rr(x+9,y-9+(l2>0?-l2:0),5,11,2.5);ctx.fill();
+    ctx.fillStyle=fur;ctx.beginPath();ctx.arc(x+14,y-18-bob,7.5,0,7);ctx.fill(); // 頭
+    ctx.fillStyle=belly;ctx.beginPath();ctx.ellipse(x+18,y-16-bob,4,3,0,0,7);ctx.fill(); // 口鼻
+    ctx.fillStyle='#3a2a20';ctx.beginPath();ctx.arc(x+20.5,y-17-bob,1.3,0,7);ctx.fill(); // 鼻
+    if(dog){ctx.fillStyle=tint(fur,-20); // 狗垂耳
+      ctx.beginPath();ctx.moveTo(x+10,y-24-bob);ctx.quadraticCurveTo(x+7,y-17-bob,x+11,y-15-bob);
+      ctx.quadraticCurveTo(x+13,y-20-bob,x+10,y-24-bob);ctx.fill();}
+    else{ctx.fillStyle=fur; // 貓立耳×2
+      ctx.beginPath();ctx.moveTo(x+9,y-23-bob);ctx.lineTo(x+10.5,y-29-bob);ctx.lineTo(x+14,y-24-bob);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(x+15,y-24.5-bob);ctx.lineTo(x+18,y-28.5-bob);ctx.lineTo(x+19.5,y-23-bob);ctx.closePath();ctx.fill();}
+    ctx.fillStyle='#2e2620';ctx.beginPath();ctx.arc(x+16,y-19.5-bob,1.4,0,7);ctx.fill(); // 眼
+    ctx.restore();
+  } else { // ── 正面(0)/背面(3) ──
+    const back=(face===3);
+    if(back){ctx.strokeStyle=fur;ctx.lineWidth=3.5;ctx.lineCap='round'; // 背面看得到尾巴
+      ctx.beginPath();ctx.moveTo(x,y-12);
+      ctx.quadraticCurveTo(x+4,y-19,x+(dog?3:6)+Math.sin(tGlobal*(dog?9:3))*2,y-24);ctx.stroke();ctx.lineCap='butt';}
+    ctx.fillStyle=tint(fur,-26); // 後腳掌（身側後方）
+    ctx.beginPath();ctx.ellipse(x-8,y-4,3,4.5,0,0,7);ctx.fill();
+    ctx.beginPath();ctx.ellipse(x+8,y-4,3,4.5,0,0,7);ctx.fill();
+    let g=ctx.createLinearGradient(x,y-18,x,y-2); // 身體
+    g.addColorStop(0,tint(fur,22));g.addColorStop(1,tint(fur,-12));
+    ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x,y-10,9,8,0,0,7);ctx.fill();
+    ctx.fillStyle=fur; // 前腿×2（交替）
+    rr(x-6.5,y-7-l1,4,8,2);ctx.fill(); rr(x+2.5,y-7-l2,4,8,2);ctx.fill();
+    ctx.fillStyle=fur;ctx.beginPath();ctx.arc(x,y-18-bob,8,0,7);ctx.fill(); // 頭
+    if(dog){ctx.fillStyle=tint(fur,-20); // 狗垂耳
+      ctx.beginPath();ctx.ellipse(x-7.5,y-21-bob,2.6,5,0.35,0,7);ctx.fill();
+      ctx.beginPath();ctx.ellipse(x+7.5,y-21-bob,2.6,5,-0.35,0,7);ctx.fill();}
+    else{ctx.fillStyle=fur; // 貓立耳
+      ctx.beginPath();ctx.moveTo(x-8,y-22-bob);ctx.lineTo(x-6,y-29-bob);ctx.lineTo(x-2.5,y-24-bob);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(x+8,y-22-bob);ctx.lineTo(x+6,y-29-bob);ctx.lineTo(x+2.5,y-24-bob);ctx.closePath();ctx.fill();}
+    if(!back){ ctx.fillStyle=belly;ctx.beginPath();ctx.ellipse(x,y-15.5-bob,4.5,3.5,0,0,7);ctx.fill(); // 口鼻
+      ctx.fillStyle='#3a2a20';ctx.beginPath();ctx.arc(x,y-17.2-bob,1.4,0,7);ctx.fill(); // 鼻
+      ctx.fillStyle='#2e2620'; // 眼
+      ctx.beginPath();ctx.arc(x-3.5,y-19.5-bob,1.3,0,7);ctx.arc(x+3.5,y-19.5-bob,1.3,0,7);ctx.fill();
+      if(!dog){ctx.strokeStyle='rgba(60,45,30,.55)';ctx.lineWidth=0.8; // 貓鬚
+        ctx.beginPath();ctx.moveTo(x-4,y-16-bob);ctx.lineTo(x-9,y-17.5-bob);ctx.moveTo(x-4,y-15-bob);ctx.lineTo(x-9,y-14.5-bob);
+        ctx.moveTo(x+4,y-16-bob);ctx.lineTo(x+9,y-17.5-bob);ctx.moveTo(x+4,y-15-bob);ctx.lineTo(x+9,y-14.5-bob);ctx.stroke();}}
+    else{ctx.strokeStyle=tint(fur,25);ctx.lineWidth=1; // 背面髮旋
+      ctx.beginPath();ctx.arc(x,y-18-bob,3,0.4,4.6);ctx.stroke();}
+  }
+}
 function drawPetActor(kind,x,y,face,walk,s){ ctx.save();ctx.translate(x,y);ctx.scale(s||0.72,s||0.72);ctx.translate(-x,-y);
-  drawActor(x,y,face,walk,{species:kind,pal:PET_PALS[kind],shirt:PET_PALS[kind].fur}); ctx.restore(); }
+  drawQuadruped(kind,x,y,face,walk); ctx.restore(); } // v50 改四腳趴地造型
 function drawPet(p){ drawPetActor(p.kind,p.x,p.y,p.face,p.walk);
   if(p.acc){ const a=PET_ACCS.find(q=>q.id===p.acc); // v49 頭上飾品
     if(a){ ctx.font='13px serif';ctx.textAlign='center';ctx.fillText(a.e,p.x,p.y-16);ctx.textAlign='left'; } }
@@ -2986,6 +3052,7 @@ function update(dt){
     dialog.ch=Math.min(dialog.lines[dialog.i].length,dialog.ch+36*dt);
     if(Math.floor(dialog.ch)!==dialog._pc){dialog._pc=Math.floor(dialog.ch);if(dialog._pc%2)sfx('blip');}}
   if(player.show){player.show.t-=dt;if(player.show.t<=0)player.show=null;}
+  if(player.spellBub){player.spellBub.t-=dt;if(player.spellBub.t<=0)player.spellBub=null;} // v50 咒語泡泡倒數
   if(player.fishing){ const f=player.fishing; f.t+=dt;
     if(f.state==='wait'&&f.t>=f.biteAt){f.state='bite';f.t=0;sfx('splash');}
     else if(f.state==='bite'&&f.t>0.9){player.fishing=null;toast('啊…魚跑掉了。');}}
@@ -4315,6 +4382,7 @@ function draw(){
       const w=ctx.measureText(s.text).width;
       ctx.fillStyle='rgba(255,251,233,.95)';rr(player.x-w/2-10,player.y-66,w+20,24,10);ctx.fill();
       ctx.fillStyle='#5b4023';ctx.fillText(s.text,player.x,player.y-49);ctx.textAlign='left';}
+    if(player.spellBub)drawChatBubble(player.x,player.y,player.spellBub.text); // v50 施法咒語對話框
     if(player.sparkle>0)drawSparkle(player.x,player.y,player.sparkle);
   }});
   for(const b of bugs)if(inView(b.x,b.y))list.push({y:b.y+(b.spec.fly?60:0),f:()=>{
@@ -4403,6 +4471,24 @@ function draw(){
         ctx.strokeStyle=wcol;ctx.lineCap='round';ctx.lineWidth=(e.sub==='cannon'?6:e.sub==='sniper'?3.5:2.2);
         ctx.beginPath();ctx.moveTo(e.x+ca*10,e.y+sa*10);ctx.lineTo(hx,hy);ctx.stroke();
         ctx.fillStyle=wcol;ctx.beginPath();ctx.arc(hx,hy,e.sub==='sniper'?3:2,0,7);ctx.fill();ctx.lineCap='butt'; } }
+    else if(e.kind==='magiccircle'){ // v50 施法魔法陣：地面壓扁旋轉符文圈
+      const a=(ph<0.18?ph/0.18:1-(ph-0.18)/0.82)*0.9, rot=tGlobal*2.6, R1=32,R2=21;
+      ctx.save();ctx.translate(e.x,e.y+3);ctx.scale(1,0.5);
+      ctx.globalAlpha=Math.max(0,a);
+      ctx.fillStyle=e.col;ctx.globalAlpha=Math.max(0,a)*0.14; // 底部光暈
+      ctx.beginPath();ctx.arc(0,0,R1,0,7);ctx.fill();
+      ctx.globalAlpha=Math.max(0,a);
+      ctx.strokeStyle=e.col;ctx.lineWidth=2.6;
+      ctx.beginPath();ctx.arc(0,0,R1,0,7);ctx.stroke();
+      ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,0,R2,0,7);ctx.stroke();
+      for(let i=0;i<8;i++){const aa=rot+i*Math.PI/4; // 旋轉符文刻線
+        ctx.beginPath();ctx.moveTo(Math.cos(aa)*R2,Math.sin(aa)*R2);ctx.lineTo(Math.cos(aa)*R1,Math.sin(aa)*R1);ctx.stroke();}
+      ctx.beginPath(); // 反向旋轉內三角
+      for(let i=0;i<3;i++){const aa=-rot*1.5+i*2.094;const px=Math.cos(aa)*R2,py=Math.sin(aa)*R2;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+      ctx.closePath();ctx.stroke();
+      for(let i=0;i<6;i++){const aa=rot*0.8+i*Math.PI/3; // 外圈符點
+        ctx.fillStyle=e.col;ctx.beginPath();ctx.arc(Math.cos(aa)*(R1+5),Math.sin(aa)*(R1+5),2,0,7);ctx.fill();}
+      ctx.restore();ctx.globalAlpha=1; }
     else if(e.kind==='job'){ const a=1-ph; // v39 職業範圍技特效
       if(e.job==='firewall'){ const oy=e.y-16, n=8, grow=Math.min(1,ph*2);
         for(let i=1;i<=n;i++){ const t2=i/n; if(t2>grow)continue;
