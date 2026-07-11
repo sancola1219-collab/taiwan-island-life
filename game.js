@@ -182,6 +182,47 @@ function drawRoofSign(x,y,txt,bg){ if(!txt)return;
 function bShadow(x,y,w){ctx.fillStyle='rgba(0,0,0,.15)';
   ctx.beginPath();ctx.ellipse(x+w/2,y,w/2,12,0,0,7);ctx.fill();}
 const BUILDING_DRAWS={
+ seven(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w); // v52 7-ELEVEN：白牆＋橘綠紅三色帶
+  ctx.fillStyle='#f4f4f0';rr(x,y-30,w,h+30,8);ctx.fill();
+  ctx.fillStyle='#0aa15a';ctx.fillRect(x,y-30,w,7);
+  ctx.fillStyle='#f28a1e';ctx.fillRect(x,y-23,w,7);
+  ctx.fillStyle='#e2453c';ctx.fillRect(x,y-16,w,7);
+  ctx.fillStyle='#8fd0e8';rr(x+6,y+2,w-12,h-12,4);ctx.fill();
+  ctx.fillStyle='#5a5a5a';rr(x+w/2-10,y+h-28,20,28,3);ctx.fill();
+  drawRoofSign(x+w/2,y-46,'7-ELEVEN','#0a7a45');},
+ familym(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w); // v52 全家：白牆＋藍綠雙色帶
+  ctx.fillStyle='#f6f8fa';rr(x,y-30,w,h+30,8);ctx.fill();
+  ctx.fillStyle='#00a0e9';ctx.fillRect(x,y-30,w,10);
+  ctx.fillStyle='#7cc623';ctx.fillRect(x,y-20,w,10);
+  ctx.fillStyle='#bfe3f2';rr(x+6,y+2,w-12,h-12,4);ctx.fill();
+  ctx.fillStyle='#5a6a72';rr(x+w/2-10,y+h-28,20,28,3);ctx.fill();
+  drawRoofSign(x+w/2,y-46,'全家便利商店','#0068b7');},
+ mcd(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w); // v52 麥當勞：米牆紅簷＋金拱門M
+  ctx.fillStyle='#f8f0dc';rr(x,y-28,w,h+28,8);ctx.fill();
+  ctx.fillStyle='#da2f28';rr(x,y-28,w,12,6);ctx.fill();
+  ctx.fillStyle='#8fd0e8';rr(x+6,y+4,w-12,h-14,4);ctx.fill();
+  ctx.strokeStyle='#ffc400';ctx.lineWidth=7;ctx.lineCap='round'; // 金拱門
+  ctx.beginPath();ctx.arc(x+w/2-11,y-4,13,Math.PI,0);ctx.stroke();
+  ctx.beginPath();ctx.arc(x+w/2+11,y-4,13,Math.PI,0);ctx.stroke();ctx.lineCap='butt';
+  drawRoofSign(x+w/2,y-44,'麥當勞','#da2f28');},
+ kfc(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w); // v52 肯德基：白牆＋紅白條紋簷
+  ctx.fillStyle='#faf6f0';rr(x,y-30,w,h+30,8);ctx.fill();
+  for(let i=0;i<6;i++){ctx.fillStyle=i%2?'#a6192e':'#fff';
+    ctx.beginPath();ctx.moveTo(x+i*w/6,y-30);ctx.lineTo(x+(i+1)*w/6,y-30);
+    ctx.lineTo(x+(i+1)*w/6,y-12);ctx.arc(x+(i+0.5)*w/6,y-12,w/12,0,Math.PI);ctx.lineTo(x+i*w/6,y-12);ctx.fill();}
+  ctx.fillStyle='#8fd0e8';rr(x+6,y+4,w-12,h-14,4);ctx.fill();
+  ctx.fillStyle='#a6192e';rr(x+w/2-10,y+h-28,20,28,3);ctx.fill();
+  drawRoofSign(x+w/2,y-46,'肯德基','#a6192e');},
+ rentcar(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w); // v52 租車行：車庫＋展示小紅車
+  ctx.fillStyle='#dfe4e8';rr(x,y-32,w,h+32,8);ctx.fill();
+  ctx.fillStyle='#4a6f8f';ctx.fillRect(x,y-32,w,9);
+  ctx.fillStyle='#3a3f44';rr(x+8,y-14,w-16,h+8,5);ctx.fill(); // 車庫口
+  let g=ctx.createLinearGradient(x,y+h-26,x,y+h-6); // 展示車
+  g.addColorStop(0,'#f26a5a');g.addColorStop(1,'#c93a2e');
+  ctx.fillStyle=g;rr(x+w/2-20,y+h-22,40,13,6);ctx.fill();
+  ctx.fillStyle='#bfe3f2';rr(x+w/2-12,y+h-20,22,6,3);ctx.fill();
+  ctx.fillStyle='#2a2a2a';ctx.beginPath();ctx.arc(x+w/2-11,y+h-8,5,0,7);ctx.arc(x+w/2+11,y+h-8,5,0,7);ctx.fill();
+  drawRoofSign(x+w/2,y-48,'🚗 租車行','#4a6f8f');},
  shop(b){const x=b.x,y=b.y,w=b.w,h=b.h;bShadow(x,y+h,w);
   ctx.fillStyle='#e8c07a';rr(x,y-38,w,h+38,10);ctx.fill();
   ctx.fillStyle='#b5854e';ctx.fillRect(x,y+h-8,w,8);
@@ -905,6 +946,7 @@ function drawBuild(b){ const d=BUILDING_DRAWS[b.t]; if(!d)return;
   const cx=b.x+b.w/2, by=b.y+b.h;
   ctx.save(); ctx.translate(cx,by); ctx.scale(s,s); ctx.translate(-cx,-by); d(b); ctx.restore(); }
 const SIZE={t101:[4,3],shop:[5,3],market:[8,2],teahouse:[4,3],queenhead:[2,2],lantern:[3,2],
+  seven:[3,2],familym:[3,2],mcd:[3,2],kfc:[3,2],rentcar:[4,3], // v52 連鎖店＋租車行
   hotspring:[4,3],gate:[4,2],opera:[6,3],windmill:[2,2],buddha:[3,3],temple:[6,4],fort:[5,4],
   redtower:[4,3],pagodas:[6,3],tower85:[3,3],gianttree:[3,3],peak:[2,2],lighthouse:[2,2],
   balloon:[4,3],weir:[4,3],station:[5,3],harbor:[3,3],house:[2,1],
@@ -976,6 +1018,54 @@ CABLECARS.forEach(c=>{
           {wall:WALLS[Math.floor(rand()*WALLS.length)],roof:ROOFS[Math.floor(rand()*ROOFS.length)]});
         placed++;}
     }}}
+/* v52 連鎖店/租車行放置：環形搜索＋空間網格快速重疊查詢 */
+function anyBuildOverlap(hx,hy,w,h){ // 用 BGRID 快查（含1格邊距）
+  const x0=(hx-1)*TILE, y0=(hy-1)*TILE, x1=(hx+w+1)*TILE, y1=(hy+h+2)*TILE;
+  const seen=new Set();
+  for(let gy=Math.floor(y0/GCELL);gy<=Math.floor(y1/GCELL);gy++)
+    for(let gx=Math.floor(x0/GCELL);gx<=Math.floor(x1/GCELL);gx++){
+      const a=BGRID.get(gx*1000+gy); if(!a)continue;
+      for(const b of a){ if(seen.has(b))continue; seen.add(b);
+        if(hx<b.tx+b.tw+1&&hx+w+1>b.tx&&hy<b.ty+b.th+2&&hy+h+1>b.ty)return true; } }
+  return false; }
+function findStoreSpot(cx,cy,w,h,r0){ // 由內而外沿環找可蓋店的空地
+  for(let r=(r0||2);r<=16;r++){
+    const n=r*8;
+    for(let k=0;k<n;k++){ const ang=k/n*6.283;
+      const hx=Math.round(cx+Math.cos(ang)*r), hy=Math.round(cy+Math.sin(ang)*r*0.8);
+      let ok=true;
+      for(let dy=-1;dy<=h&&ok;dy++)for(let dx=-1;dx<=w&&ok;dx++){const t=T(hx+dx,hy+dy);
+        if(!(t===GRASS||t===FIELD||t===PATH||t===PLAZA||t===SAND||t===HIGH))ok=false;} // 含沙地(離島)與高地(拉薩/烏魯木齊)
+      if(ok&&!anyBuildOverlap(hx,hy,w,h))return [hx,hy];
+    }}
+  return null; }
+/* v52 四大連鎖店：每個縣市/省份的首要城鎮各放一組 7-11/全家/麥當勞/肯德基 */
+function genBrandStores(townArr){
+  const brands=[
+    ['seven','7-ELEVEN',{}],
+    ['familym','全家便利商店',{}],
+    ['mcd','麥當勞',{food:'大麥克套餐',price:150,icon:'🍔'}],
+    ['kfc','肯德基',{food:'香脆炸雞桶',price:200,icon:'🍗'}]];
+  const seen=new Set(), seats=[];
+  for(const t of townArr){ if(seen.has(t.c))continue; seen.add(t.c); seats.push(t); }
+  for(const tw of seats)for(const [tp,nm,ex] of brands){
+    const spot=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),3,2);
+    if(spot)addBuild(tp,spot[0],spot[1],3,2,nm+'・'+tw.n,ex); }}
+/* v52 租車行：指定大城市附近各一間 */
+function genRentcars(townArr,keys){
+  for(const k of keys){ const tw=townArr.find(t=>(t.c&&t.c.includes(k))||t.n.includes(k)); if(!tw)continue;
+    const spot=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),4,3);
+    if(spot)addBuild('rentcar',spot[0],spot[1],4,3,'租車行・'+tw.n); }}
+/* v52 加開寵物店/禮品店/戶政（民政局）：指定城市各一組 */
+function genExtraShops(townArr,keys,regName){
+  for(const k of keys){ const tw=townArr.find(t=>(t.c&&t.c.includes(k))||t.n.includes(k)); if(!tw)continue;
+    for(const [tp,lb] of [['petshop','寵物店・'+tw.n],['giftshop','禮品店・'+tw.n],['registry',regName+'・'+tw.n]]){
+      const [w,h]=SIZE[tp]||[3,3];
+      const s=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),w,h);
+      if(s)addBuild(tp,s[0],s[1],w,h,lb); } }}
+genBrandStores(TOWNS);
+genRentcars(TOWNS,['台北','台中','高雄','花蓮','台南','桃園']);
+genExtraShops(TOWNS,['基隆','新竹','嘉義','屏東','宜蘭','花蓮','台東','南投','雲林','苗栗'],'戶政事務所');
 // 台灣機場（v40）：搭飛機去大陸
 function coastLandSpot(tx,ty,tw,th){ // v42 找「靠近海邊」的可用平地（機場用）
   let best=null,bd=1e9;
@@ -1037,6 +1127,7 @@ function genMapCN(m){
   sand.forEach(i=>m[i]=SAND);
 }
 function genWorldCN(){ // 於 map=cnMap、BUILDINGS=cnB 的狀態下呼叫
+  BGRID=new Map(); // v52 清掉台灣網格，避免大陸建置時的重疊查詢誤判（開機尾端會再 rebuildGrids）
   if(typeof CN_STATIONS!=='undefined')CN_STATIONS.forEach(s=>{const [sx,sy]=fitSpot(s.tx,s.ty,5,3);addBuild('station',sx,sy,5,3,s.n);}); // v42 高鐵站
   AIRPORTS.filter(a=>a.w==='cn').forEach(a=>{const [ax,ay]=fitSpot(a.tx,a.ty,5,3);addBuild('airport',ax,ay,5,3,a.label,{airport:a});});
   LANDMARKS_CN.forEach(L=>{const [tw,th]=SIZE[L.t];const [lx,ly]=fitSpot(L.tx,L.ty,tw,th);
@@ -1054,6 +1145,9 @@ function genWorldCN(){ // 於 map=cnMap、BUILDINGS=cnB 的狀態下呼叫
         if(ok){const nm=SUR[Math.floor(rand()*SUR.length)];
           addBuild('house',hx,hy,2,1,'🏠 '+nm+'宅',{wall:WALLS[Math.floor(rand()*WALLS.length)],roof:ROOFS[Math.floor(rand()*ROOFS.length)]});placed++;}
       }}}
+  genBrandStores(TOWNS_CN); // v52 每省份一組四大連鎖店
+  genRentcars(TOWNS_CN,['北京','上海','廣州','成都','西安','哈爾濱']); // v52 大城市租車行
+  genExtraShops(TOWNS_CN,['成都','重慶','武漢','南京','杭州','瀋陽','昆明','長沙','青島','蘭州'],'民政局'); // v52 加開寵物店/禮品店/民政局
 }
 const SCENES={ tw:{map,buildings:BUILDINGS,mini,towns:TOWNS,name:'台灣'} };
 let ACT_TOWNS=TOWNS, ACT_NPCDEFS=NPC_DEFS, ACT_STATIONS=STATIONS; // v45 鐵路改用 RAILNET 路網圖，ACT_RAILS 已移除
@@ -1271,7 +1365,7 @@ function startRide(pts,kind,speed,onEnd){
   let len=0; const segs=[];
   for(let i=0;i<pts.length-1;i++){const l=dist(pts[i].x,pts[i].y,pts[i+1].x,pts[i+1].y);segs.push(l);len+=l;}
   player.riding={pts,segs,len:len||1,d:0,kind,speed,onEnd};
-  player.fishing=null; player.sailing=false; ui=null; menu=null;
+  player.fishing=null; player.sailing=false; player.driving=false; ui=null; menu=null;
 }
 
 /* ================= 玩家 / NPC ================= */
@@ -1646,7 +1740,7 @@ let zoom=1, zoomT=1;
 function camPos(){ const VWz=VW/zoom, VHz=VH/zoom;
   return {cx:clamp(player.x-VWz/2,0,MW*TILE-VWz),cy:clamp(player.y-VHz/2,0,MH*TILE-VHz),VWz,VHz};}
 // 搭乘交通工具中（火車/纜車/熱氣球/摩天輪/船）——夥伴與配偶會一起同乘、不在地上飛
-function boarding(){return player.riding||player.balloonRide||player.ferris||player.sailing;}
+function boarding(){return player.riding||player.balloonRide||player.ferris||player.sailing||player.driving;} // v52 開車也算同乘：夥伴/寵物貼齊隱藏、下車自動出現
 function toast(t){toasts.push({t,life:3});}
 function dlg(name,lines,onDone){ ui='dialog';
   dialog={name,lines:lines.map(l=>l.replace(/\{name\}/g,player.name)),i:0,ch:0,onDone,npc:null}; }
@@ -2143,6 +2237,20 @@ function buildAct(b){
    bluetears(){ if(isNight())dlg(b.label,['哇——海面泛起夢幻的淡藍色螢光！','這是夜光蟲（渦鞭毛藻）受海浪擾動發出的光，','每年4～6月、無光害的夜晚最容易看見。','世界級的自然奇景，快拍下來！📸']);
      else dlg(b.label,['白天看只是普通的海面…','「藍眼淚」是夜光蟲受海浪或船隻擾動發出的藍光，','要等晚上（無光害的夜晚機率最高）再來，','就能看到海面發光的奇景喔！']);},
   };
+  L.seven=L.shop; L.familym=L.shop; L.mcd=L.eatery; L.kfc=L.eatery; // v52 連鎖店沿用雜貨/小吃行為
+  L.rentcar=function(){ const opts=[]; // v52 租車
+    if(!player.carRent) opts.push({label:'🚗 租一台小紅車（3,000 元・永久持有）',cb(){
+      if(money<3000){dlg(b.label,['租車一台 3,000 元喔！','租了以後隨時按互動鍵就能上下車，','速度比警車還快一點～']);return;}
+      money-=3000;player.carRent=true;player.driving=true;ui=null;sfx('cash');save();
+      toast('🚗 租到車了！比警車還快～（按互動鍵可下車）');}});
+    else{ opts.push({label:player.driving?'🅿️ 下車步行':'🚗 上車出發！',cb(){
+        player.driving=!player.driving;ui=null;sfx('pop');save();
+        toast(player.driving?'🚗 上車！出發～':'🅿️ 已下車');}});
+      opts.push({label:'↩️ 退租（退回 1,500 元）',cb(){
+        player.carRent=false;player.driving=false;money+=1500;ui=null;sfx('cash');save();
+        toast('↩️ 車子還給租車行，退回 1,500 元。');}}); }
+    opts.push({label:'離開',cb(){ui=null;}});
+    openMenu('🚗 '+b.label+'：想開車環遊嗎？',opts); };
   if(L[b.t]){L[b.t]();return true;}
   if(b.lines){ // 景點台詞：每次點擊隨機組合（專屬 2 句＋通用 1 句）
     const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -2395,7 +2503,7 @@ function arrest(){
   player.wanted=null; player.jailed=true; player.fishing=null;
   // 清除所有乘坐/占用狀態，避免被捕後卡死
   player.riding=null; player.balloonRide=null; player.ferris=null;
-  player.soak=null; player.pray=null; player.sailing=false; zoomT=1;
+  player.soak=null; player.pray=null; player.sailing=false; player.driving=false; zoomT=1;
   const pr=nearestPrison();
   if(pr){player.x=(pr.tx+pr.tw/2)*TILE;player.y=(pr.ty+pr.th/2)*TILE;}
   flash=1; sfx('sad'); ui='jail'; save();
@@ -2498,7 +2606,10 @@ function interact(){
   // 上船
   if(player.boat){ const ft=frontTile(1.3);
     if(ft.t===SEA||ft.t===LAKE){player.x=ft.x;player.y=ft.y;player.sailing=true;
-      sfx('splash');toast('出海囉！⛵');return;} }
+      player.driving=false; sfx('splash');toast('出海囉！⛵');return;} }
+  // v52 上/下車（已租車、且沒有其他互動目標時）
+  if(player.carRent&&!player.sailing){ player.driving=!player.driving; sfx('pop');
+    toast(player.driving?'🚗 上車！出發～（比警車還快）':'🅿️ 已下車'); save(); return; }
 }
 
 /* ================= 輸入 ================= */
@@ -2664,7 +2775,7 @@ let fx=[]; // {kind:'bolt'|'slash'|'beam',x,y,x2,y2,t,dur}
 let strayT=8+Math.random()*10; // 流浪貓狗生成計時
 const PET_PALS={dog:{fur:'#d8a35a',belly:'#fff'},cat:{fur:'#8a8a8a',belly:'#fff'}};
 const PET_NAMES=['小白','旺財','來福','咪咪','花花','阿黑','球球','奶茶','布丁','麻糬','妞妞','豆豆'];
-const PET_MAX=2; // v49 最多養兩隻
+const PET_MAX=4; // v52 上限提高：最多養四隻
 // v49 寵物飾品（戴在頭上）
 const PET_ACCS=[
  {id:'collar',n:'鈴鐺項圈',e:'🔔',price:600},
@@ -2678,10 +2789,15 @@ function petAgeDaysOf(p){ return p?((absMin()-p.born)/1440):0; }
 function petStageOf(p){ const d=petAgeDaysOf(p); return d<3?'幼':d<16?'成':'老'; }
 function makePetObj(kind,name){ return {kind,name:name||PET_NAMES[Math.floor(Math.random()*PET_NAMES.length)],
   born:absMin()-1440, aff:20,hunger:90, x:player.x,y:player.y+30, face:0,walk:0,vx:0,vy:0, sick:0, atk:null, note:0, acc:null, slot:(player.pets||[]).length}; }
+function askPetName(kind,cur){ // v52 幫寵物取名字（取消/留空則用預設）
+  try{ const nm=(prompt('幫'+(kind==='dog'?'狗狗':'貓咪')+'取個名字吧！(最多6個字)',cur||'')||'').trim();
+    return nm?nm.slice(0,6):null; }catch(e){ return null; } }
 function adoptPet(kind,name){ player.pets=player.pets||[];
   if(player.pets.length>=PET_MAX){toast('你已經養滿 '+PET_MAX+' 隻寵物了！先放生一隻才能再養。');return false;}
-  const p=makePetObj(kind,name); p.x=player.x; p.y=player.y+30; player.pets.push(p); reflowPetSlots(); sfx('jingle'); save();
-  toast('🐾 你領養了'+(kind==='dog'?'狗狗':'貓咪')+'「'+p.name+'」！面對牠按互動鍵可以摸摸/餵食/打扮/指使攻擊。'); return true; }
+  const p=makePetObj(kind,name);
+  const nm=askPetName(kind,p.name); if(nm)p.name=nm; // v52 領養時取名
+  p.x=player.x; p.y=player.y+30; player.pets.push(p); reflowPetSlots(); sfx('jingle'); save();
+  toast('🐾 你領養了'+(kind==='dog'?'狗狗':'貓咪')+'「'+p.name+'」！面對牠按互動鍵可以摸摸/餵食/取名/指使攻擊。'); return true; }
 function reflowPetSlots(){ (player.pets||[]).forEach((p,i)=>p.slot=i); } // 跟隨隊形站位
 function petAccShop(b){ // v49 寵物飾品店
   const pets=player.pets||[];
@@ -2718,6 +2834,9 @@ function petInteract(p){ if(!p)return;
      let best=null,bd=1e9; for(const c of citizens){if(c.dead)continue;const d=dist(c.x,c.y,p.x,p.y);if(d<bd){bd=d;best=c;}}
      if(!best||bd>360){toast(p.name+'四處張望…附近沒有可攻擊的路人。');return;}
      p.atk={c:best,t:0}; sfx('swing'); toast('🐾💢 '+p.name+'齜牙咧嘴地朝路人衝過去！');}},
+   {label:'✏️ 幫牠改名字',cb(){ const nm=askPetName(p.kind,p.name); // v52 隨時改名
+     if(nm){const old=p.name;p.name=nm;sfx('chime');save();toast('✏️ 「'+old+'」改名為「'+nm+'」！');}
+     ui=null;}},
    {label:'🏞️ 放生（送養）',cb(){openMenu('確定要放生「'+p.name+'」嗎？',[
      {label:'放生…',cb(){toast('你和'+p.name+'道別，牠回到了街上。');
        const i=player.pets.indexOf(p);if(i>=0)player.pets.splice(i,1);reflowPetSlots();sfx('sad');save();}},
@@ -2730,10 +2849,13 @@ function updatePet(dt){ const pets=player.pets||[]; if(!pets.length)return;
     p.note=Math.max(0,p.note-dt);
     p.hunger=Math.max(0,p.hunger-dt*0.35);                         // 飽食下降
     if(p.hunger>40)p.aff=Math.min(100,p.aff+dt*0.12);             // 吃飽→好感緩增
-    else{ p.aff=Math.max(0,p.aff-dt*0.18); p.sick=Math.min(100,p.sick+dt*0.05); } // 餓→好感降、易病
-    const age=petAgeDaysOf(p);
-    if(age>16)p.sick=Math.min(100,p.sick+dt*(0.02+(age-16)*0.004)); // 老年漸病
-    if(p.sick>=100){ toast('🌈 '+p.name+'年紀大了…在你懷裡安詳地離開了。謝謝牠這段日子的陪伴。'); pets.splice(pi,1); reflowPetSlots(); save(); continue; }
+    else{ p.aff=Math.max(0,p.aff-dt*0.18); } // 餓→好感降
+    p.sick=0; // v52 寵物永遠健康：不再生病、不會死亡
+    p.bark=(p.bark==null?4+Math.random()*8:p.bark)-dt; // v52 貓貓叫/汪汪叫
+    if(p.bark<=0){ if(dist(p.x,p.y,player.x,player.y)<280&&!boarding()){
+        p.say=1.6; p.cry=Math.floor(Math.random()*3); if(Math.random()<0.4)sfx('blip'); }
+      p.bark=6+Math.random()*10; }
+    if(p.say>0)p.say-=dt;
     if(p.atk){ const c=p.atk.c;                                    // 指使攻擊
       if(!c||c.dead||!citizens.includes(c)){p.atk=null;}
       else{ const a=Math.atan2(c.y-p.y,c.x-p.x); p.x+=Math.cos(a)*270*dt; p.y+=Math.sin(a)*270*dt; p.walk+=dt*16;
@@ -2753,6 +2875,51 @@ function updatePet(dt){ const pets=player.pets||[]; if(!pets.length)return;
       else { p.stuck=(p.stuck||0)+dt; if(p.stuck>1.2){p.x=tx2;p.y=ty2;p.stuck=0;} } // v49 卡住超過1.2秒＝瞬移解卡
       if(!hitObstacle(p.x,p.y))p.stuck=0;
       p.walk+=dt*10; p.face=Math.abs(tx2-p.x)>Math.abs(ty2-p.y)?(tx2>p.x?2:1):(ty2>p.y?0:3); } }
+}
+function drawRiderHead(x,y,hair,veil){ // v52 車窗探出的乘客頭
+  ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill();
+  ctx.fillStyle=hair||'#4a2f1d';ctx.beginPath();ctx.arc(x,y-1.5,7,Math.PI*1.02,Math.PI*1.98);ctx.fill();
+  if(veil){ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.arc(x,y-4,6,Math.PI,0);ctx.fill();}
+  ctx.fillStyle='#2e2620';ctx.beginPath();ctx.arc(x-2.3,y+1,1.1,0,7);ctx.arc(x+2.3,y+1,1.1,0,7);ctx.fill();}
+function drawCarRide(){ // v52 小紅車：玩家＋伴侶一起上車，四方向
+  const x=player.x, y=player.y, f=player.face;
+  const wed=player.love&&player.love.streamer&&player.love.stage==='married';
+  const bump=player.moving?Math.sin(tGlobal*18)*0.8:0;
+  ctx.fillStyle='rgba(0,0,0,.2)';
+  if(f===1||f===2){ // 側面
+    ctx.beginPath();ctx.ellipse(x,y+4,32,7,0,0,7);ctx.fill();
+    ctx.save(); if(f===1){ctx.translate(x*2,0);ctx.scale(-1,1);}
+    let g=ctx.createLinearGradient(x,y-30+bump,x,y+4+bump);
+    g.addColorStop(0,'#f26a5a');g.addColorStop(1,'#c93a2e');
+    ctx.fillStyle=g;ctx.beginPath(); // 車身流線
+    ctx.moveTo(x-30,y+2+bump);ctx.lineTo(x-30,y-10+bump);ctx.quadraticCurveTo(x-29,y-15+bump,x-22,y-15+bump);
+    ctx.lineTo(x-13,y-15+bump);ctx.lineTo(x-7,y-27+bump);ctx.lineTo(x+11,y-27+bump);ctx.lineTo(x+19,y-15+bump);
+    ctx.quadraticCurveTo(x+30,y-13+bump,x+30,y-5+bump);ctx.lineTo(x+30,y+2+bump);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#bfe3f2';ctx.beginPath(); // 車窗
+    ctx.moveTo(x-5,y-25+bump);ctx.lineTo(x+9,y-25+bump);ctx.lineTo(x+15,y-15+bump);ctx.lineTo(x-5,y-15+bump);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ffe9a8';ctx.fillRect(x+27,y-11+bump,4,4); // 車燈
+    ctx.fillStyle='#2a2a2a';ctx.beginPath();ctx.arc(x-17,y+3,7,0,7);ctx.arc(x+16,y+3,7,0,7);ctx.fill(); // 車輪
+    ctx.fillStyle='#cfcfcf';ctx.beginPath();ctx.arc(x-17,y+3,3,0,7);ctx.arc(x+16,y+3,3,0,7);ctx.fill();
+    ctx.restore();
+    // 乘客（探出天窗）：玩家＋伴侶
+    const dir=f===1?-1:1;
+    drawRiderHead(x-4*dir,y-30+bump,player.hair);
+    if(player.love)drawRiderHead(x-16*dir,y-29+bump,player.love.ap.hair,wed);
+  } else { // 正面(0)/背面(3)
+    const back=(f===3);
+    ctx.beginPath();ctx.ellipse(x,y+4,20,7,0,0,7);ctx.fill();
+    let g=ctx.createLinearGradient(x,y-28+bump,x,y+4+bump);
+    g.addColorStop(0,'#f26a5a');g.addColorStop(1,'#c93a2e');
+    ctx.fillStyle=g;rr(x-17,y-26+bump,34,30,9);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=1.5;rr(x-17,y-26+bump,34,30,9);ctx.stroke();
+    ctx.fillStyle='#bfe3f2';rr(x-12,back?y-14+bump:y-24+bump,24,9,4);ctx.fill(); // 擋風玻璃
+    if(back){ctx.fillStyle='#d33a2a';ctx.fillRect(x-14,y+bump,6,3);ctx.fillRect(x+8,y+bump,6,3);} // 尾燈
+    else{ctx.fillStyle='#ffe9a8';ctx.fillRect(x-14,y+bump,6,4);ctx.fillRect(x+8,y+bump,6,4);} // 頭燈
+    ctx.fillStyle='#2a2a2a';rr(x-20,y-8,5,12,2);ctx.fill();rr(x+15,y-8,5,12,2);ctx.fill(); // 側輪
+    drawRiderHead(x+(player.love?-7:0),y-31+bump,player.hair);
+    if(player.love)drawRiderHead(x+8,y-30+bump,player.love.ap.hair,wed);
+  }
 }
 function drawQuadruped(kind,x,y,face,walk){ // v50 貓狗四腳趴地走（不再直立）
   const pal=PET_PALS[kind], fur=pal.fur, belly=pal.belly||'#fff', dog=kind==='dog';
@@ -2826,7 +2993,8 @@ function drawPet(p){ drawPetActor(p.kind,p.x,p.y,p.face,p.walk);
   if(p.aff>=60||p.note>0){ ctx.font='12px serif';ctx.textAlign='center';ctx.globalAlpha=p.note>0?1:0.75;
     ctx.fillText('💗',p.x-8+Math.sin(tGlobal*3)*3,p.y-24-((tGlobal*22)%14));
     ctx.fillText('🎵',p.x+9+Math.sin(tGlobal*3+1)*3,p.y-28-((tGlobal*22+7)%14));ctx.globalAlpha=1;ctx.textAlign='left'; }
-  if(p.sick>55){ctx.font='11px serif';ctx.textAlign='center';ctx.fillText('🤒',p.x,p.y-22);ctx.textAlign='left';} }
+  if(p.say>0){ const cries=p.kind==='dog'?['汪汪！','汪！','嗚汪～']:['喵～','喵嗚～','咕嚕嚕…']; // v52 叫聲泡泡
+    drawChatBubble(p.x,p.y+30,cries[p.cry||0]); } }
 function drawStray(s){ drawPetActor(s.kind,s.x,s.y,s.face,s.walk,0.66);
   ctx.font='10px serif';ctx.textAlign='center';ctx.fillStyle='#fff';
   const w2=ctx.measureText('領養?').width+8;ctx.fillStyle='rgba(90,64,35,.8)';rr(s.x-w2/2,s.y-40,w2,15,7);ctx.fill();
@@ -3034,8 +3202,8 @@ function update(dt){
     if(fe.t>=fe.dur){player.x=fe.rx;player.y=fe.ry;player.ferris=null;zoomT=1;
       toast('🎡 轉了一圈回到地面！風景真好～');}}
   const run=keys.ShiftLeft||keys.ShiftRight;
-  let spd=player.sailing?420:(run?385:255)*(player.buffSpd>0?1.25:1);
-  if(typhoon&&typhoon.flood>0.4&&!player.sailing&&!player.riding)spd*=(1-typhoon.flood*0.32); // v43 淹水涉水變慢
+  let spd=player.driving?505:player.sailing?420:(run?385:255)*(player.buffSpd>0?1.25:1); // v52 開車505>警車460
+  if(typhoon&&typhoon.flood>0.4&&!player.sailing&&!player.riding&&!player.driving)spd*=(1-typhoon.flood*0.32); // v43 淹水涉水變慢
   if(player.hunger<20)spd*=0.7;
   if(player.tired>80)spd*=0.75; // 太累走不快，睡一覺吧
   player.moving=false;
@@ -4340,7 +4508,8 @@ function draw(){
       ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(player.x,player.y-2,5,0,7);ctx.fill();
       ctx.fillStyle='#4a2f1d';ctx.beginPath();ctx.arc(player.x,player.y-5,5,Math.PI,0);ctx.fill();
       return;}
-    if(player.sailing){
+    if(player.driving){ drawCarRide(); } // v52 開車：小紅車＋全員上車
+    else if(player.sailing){
       const wob=Math.sin(tGlobal*2.2)*2;
       drawBoat(player.x,player.y+wob,player.face,player.moving);
       drawActor(player.x,player.y-8+wob,player.face,0,
@@ -5003,7 +5172,7 @@ const SAVEKEY='twisland_v3';
 function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   name:player.name,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,hair:player.hair,
   headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,ownAcc:player.ownAcc,ownShoes:player.ownShoes,
-  outfit:player.outfit,deco:player.deco,tie:player.tie,ownClothes:player.ownClothes,money,inv,dex,boat:player.boat,
+  outfit:player.outfit,deco:player.deco,tie:player.tie,ownClothes:player.ownClothes,money,inv,dex,boat:player.boat,carRent:player.carRent?1:0,
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
   crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,ownGuns:player.ownGuns,murderRap:player.murderRap,
@@ -5037,7 +5206,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   player.job=s.job||null; // v37 職業＋農地
   myFarms=(s.farms||[]).map(f=>({tx:f.tx,ty:f.ty,state:f.state||'empty',at:f.at||0,pay:f.pay||0,w:f.w||'tw'}));
   for(const f of myFarms)addToScene(f.w,'farm',f.tx,f.ty,2,2,(s.name||'小島民')+'的農地',{farm:f});
-  player.boat=!!s.boat;musicOn=s.music!==false;
+  player.boat=!!s.boat;player.carRent=!!s.carRent;player.driving=false;musicOn=s.music!==false; // v52 車輛持有跨存檔、載入時下車
   setScene(s.world==='cn'?'cn':'tw'); genWorld(); genNpcs(); // v40 切到存檔所在世界，重生該世界物件/NPC
   if(s.x!=null){ if(s.sailing&&!hitWater(s.x,s.y)){player.x=s.x;player.y=s.y;player.sailing=true;}
     else if(s.jailed||!hitObstacle(s.x,s.y)){player.x=s.x;player.y=s.y;} } // v47 坐牢中存檔在監獄碰撞箱內，仍要還原位置（否則重整會被換到別座監獄）
