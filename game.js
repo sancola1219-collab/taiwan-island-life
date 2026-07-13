@@ -1051,11 +1051,13 @@ function genBrandStores(townArr){
   for(const tw of seats)for(const [tp,nm,ex] of brands){
     const spot=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),3,2);
     if(spot)addBuild(tp,spot[0],spot[1],3,2,nm+'・'+tw.n,ex); }}
-/* v52 租車行：指定大城市附近各一間 */
-function genRentcars(townArr,keys){
-  for(const k of keys){ const tw=townArr.find(t=>(t.c&&t.c.includes(k))||t.n.includes(k)); if(!tw)continue;
-    const spot=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),4,3);
-    if(spot)addBuild('rentcar',spot[0],spot[1],4,3,'租車行・'+tw.n); }}
+/* v52 租車行：每縣市/省份首要城鎮各一間（v53 由指定大城擴到全區） */
+function genRentcars(townArr){
+  const seen=new Set();
+  for(const tw of townArr){ if(seen.has(tw.c))continue; seen.add(tw.c);
+    let spot=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),4,3), w=4,h=3;
+    if(!spot){ spot=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),3,2); w=3;h=2; } // 離島小空地縮小版
+    if(spot)addBuild('rentcar',spot[0],spot[1],w,h,'租車行・'+tw.n); }}
 /* v52 加開寵物店/禮品店/戶政（民政局）：指定城市各一組 */
 function genExtraShops(townArr,keys,regName){
   for(const k of keys){ const tw=townArr.find(t=>(t.c&&t.c.includes(k))||t.n.includes(k)); if(!tw)continue;
@@ -1064,7 +1066,7 @@ function genExtraShops(townArr,keys,regName){
       const s=findStoreSpot(Math.round(tw.tx),Math.round(tw.ty),w,h);
       if(s)addBuild(tp,s[0],s[1],w,h,lb); } }}
 genBrandStores(TOWNS);
-genRentcars(TOWNS,['台北','台中','高雄','花蓮','台南','桃園']);
+genRentcars(TOWNS); // v53 全台各縣市都有租車行
 genExtraShops(TOWNS,['基隆','新竹','嘉義','屏東','宜蘭','花蓮','台東','南投','雲林','苗栗'],'戶政事務所');
 // 台灣機場（v40）：搭飛機去大陸
 function coastLandSpot(tx,ty,tw,th){ // v42 找「靠近海邊」的可用平地（機場用）
@@ -1146,7 +1148,7 @@ function genWorldCN(){ // 於 map=cnMap、BUILDINGS=cnB 的狀態下呼叫
           addBuild('house',hx,hy,2,1,'🏠 '+nm+'宅',{wall:WALLS[Math.floor(rand()*WALLS.length)],roof:ROOFS[Math.floor(rand()*ROOFS.length)]});placed++;}
       }}}
   genBrandStores(TOWNS_CN); // v52 每省份一組四大連鎖店
-  genRentcars(TOWNS_CN,['北京','上海','廣州','成都','西安','哈爾濱']); // v52 大城市租車行
+  genRentcars(TOWNS_CN); // v53 每省份都有租車行
   genExtraShops(TOWNS_CN,['成都','重慶','武漢','南京','杭州','瀋陽','昆明','長沙','青島','蘭州'],'民政局'); // v52 加開寵物店/禮品店/民政局
 }
 const SCENES={ tw:{map,buildings:BUILDINGS,mini,towns:TOWNS,name:'台灣'} };
@@ -4895,6 +4897,23 @@ function drawUI(){
           {label:'取消',cb(){ui=null;}}]);}
         else ui=(ui===m?null:m);
         sfx('blip');})(mode)});});
+  }
+  // v53 上/下車專屬按鈕（租車後常駐：開車=紅色「下車」、步行=綠色「上車」；不再靠互動鍵搶不到）
+  if(started&&player.carRent&&!ui&&!player.sailing&&!player.riding&&!player.balloonRide&&!player.jailed){
+    const bs=64, bx=VW-126, by=VH-252;
+    ctx.globalAlpha=.92;
+    ctx.fillStyle=player.driving?'#e2574c':'#3f8f5a';
+    ctx.beginPath();ctx.arc(bx+bs/2,by+bs/2,bs/2,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(bx+bs/2,by+bs/2,bs/2,0,7);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='20px serif';ctx.textAlign='center';
+    ctx.fillText(player.driving?'🅿️':'🚗',bx+bs/2,by+bs/2+1);
+    ctx.font='bold 13px '+F;
+    ctx.fillText(player.driving?'下車':'上車',bx+bs/2,by+bs/2+20);
+    ctx.textAlign='left';ctx.globalAlpha=1;
+    uiHits.push({x:bx-8,y:by-8,w:bs+16,h:bs+16,cb(){
+      player.driving=!player.driving; sfx('pop'); save();
+      toast(player.driving?'🚗 上車！出發～':'🅿️ 已下車');}});
   }
   let ty2=96;
   for(const t of toasts){ ctx.font='bold 16px '+F;
