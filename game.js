@@ -1251,16 +1251,15 @@ function genWorld(){
     const nearPath=[[0,0],[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const q=T(tx+dx,ty+dy);return q===PATH||q===PLAZA;});
     if(nearPath)continue;
     if(t===SAND){
-      if(rand()<0.003&&trees.length<830&&!nearBuilding(tx,ty))
+      if(rand()<0.006&&trees.length<1660&&!nearBuilding(tx,ty)) // v54 樹量加倍
         trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:'palm',fruit:'椰子',has:true,regrow:0,shake:0});
       continue;}
     const cluster=vnoise(tx*0.07+7,ty*0.07+3);
-    if(cluster>0.66&&rand()<0.11&&trees.length<800&&!nearBuilding(tx,ty)){
-      if(t===HIGH){ const peach=rand()<0.3;
-        trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:peach?'fruit':'pine',
-          fruit:peach?'水蜜桃':null,has:true,regrow:0,shake:0});}
-      else{ const f=fruitOf(tx,ty);
-        if(f)trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:'fruit',fruit:f,has:true,regrow:0,shake:0});}
+    if(cluster>0.62&&rand()<0.22&&trees.length<1600&&!nearBuilding(tx,ty)){ // v54 樹量加倍
+      if(t===HIGH){ // v54 高地松樹全改水蜜桃樹：所有樹都有水果可搖
+        trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:'fruit',fruit:'水蜜桃',has:true,regrow:0,shake:0});}
+      else{ const f=fruitOf(tx,ty)||'香蕉'; // v54 仙人掌區也給香蕉，全部有果
+        trees.push({x:(tx+0.5)*TILE,y:(ty+0.8)*TILE,kind:'fruit',fruit:f,has:true,regrow:0,shake:0});}
       continue;}
     if(rand()<0.005&&rocks.length<170&&!nearBuilding(tx,ty)){rocks.push({x:(tx+0.5)*TILE,y:(ty+0.6)*TILE,hit:0});continue;}
     if(rand()<0.0018&&weeds.length<240){weeds.push({x:(tx+0.5)*TILE,y:(ty+0.5)*TILE});continue;}
@@ -2192,7 +2191,8 @@ function buildAct(b){
    },
    magicschool(){ // v37 綠島魔法屋：職業學習
      const opts=JOBS.map(j=>({label:(player.job===j.n?'✓ ':'')+j.e+' '+j.n+'（'+j.w+j.we+'・'+j.atk+'）'+(player.job===j.n?' 修習中':' 免費'),cb(){
-       if(player.job===j.n){dlg(b.label,['你已經是'+j.n+'了！','裝備「'+j.w+'」（工具列第7格）就能施展'+j.atk+'。']);return;}
+       if(player.job===j.n){ player.toy=j.w; player.tool=6; sfx('chime'); save(); ui=null; // v54 同職業=直接重新裝備
+         toast(j.we+' 已重新裝備「'+j.w+'」——按互動鍵施展'+j.atk+'！');return;}
        player.job=j.n; player.toy=j.w; player.tool=6; sfx('jingle'); save(); ui=null;
        toast(j.e+' 你習得【'+j.n+'】了！已裝備'+j.w+j.we+'——按互動鍵對人施展'+j.atk+'。⚠️會擊斃路人，後果同槍枝！');}}));
      if(player.job)opts.push({label:'🚪 放棄職業（免費）',cb(){
@@ -2509,6 +2509,23 @@ function arrest(){
   const pr=nearestPrison();
   if(pr){player.x=(pr.tx+pr.tw/2)*TILE;player.y=(pr.ty+pr.th/2)*TILE;}
   flash=1; sfx('sad'); ui='jail'; save();
+}
+function openWeaponBag(){ // v54 武器包：職業武器＋已購槍枝集中管理，隨時切換不再弄丟
+  const opts=[];
+  const j=JOBS.find(q=>q.n===player.job);
+  if(j)opts.push({label:(player.toy===j.w?'✅ ':'')+j.we+' '+j.w+'（'+j.n+'技能：'+j.atk+'）',cb(){
+    player.toy=j.w; player.tool=6; sfx('chime'); save(); ui=null;
+    toast(j.we+' 已裝備「'+j.w+'」——按互動鍵施展'+j.atk+'！');}});
+  for(const gn of (player.ownGuns||[])){ const g=GUNS.find(x=>x.n===gn); if(!g)continue;
+    opts.push({label:(player.toy===gn?'✅ ':'')+g.e+' '+gn,cb(){
+      player.toy=gn; player.tool=6; sfx('chime'); save(); ui=null;
+      toast(g.e+' 已裝備「'+gn+'」！');}}); }
+  if(!opts.length)opts.push({label:'（空空的…轉職可得職業武器、軍火店可買槍）',cb(){ui=null;}});
+  else opts.push({label:'🚫 收起武器（空手）',cb(){
+    if(jobOfWeapon(player.toy)||isGun(player.toy))player.toy=null;
+    save(); ui=null; toast('把武器收進包包了。');}});
+  opts.push({label:'離開',cb(){ui=null;}});
+  openMenu('🗡️ 武器包（買過/習得的都在這，點擊切換）',opts);
 }
 function interact(){
   if(ui)return;
@@ -4882,7 +4899,7 @@ function drawUI(){
       uiHits.push({x:VW-118,y:VH-168,w:88,h:88,cb(){interact();}});
     }
     // 側邊功能圖示（坐牢時整排停用：否則點🆘或切面板就能免服刑越獄，且存檔仍是jailed，重整又被關回去）
-    const icons=[['🎒','bag'],['🗺️','map'],['📖','dex'],['📋','quest'],['🔨','craft'],['💾','save'],['🆘','rescue'],['❓','help']];
+    const icons=[['🎒','bag'],['🗺️','map'],['📖','dex'],['📋','quest'],['🗡️','wpn'],['🔨','craft'],['💾','save'],['🆘','rescue'],['❓','help']]; // v54 武器包
     const step=Math.min(50,(VH*0.66)/icons.length), iy0=Math.max(92,VH*0.15);
     if(ui!=='jail')icons.forEach(([em,mode],i)=>{ const iy=iy0+i*step;
       ctx.globalAlpha=0.85;panel(VW-52,iy,42,42,.85);ctx.globalAlpha=1;
@@ -4890,7 +4907,8 @@ function drawUI(){
       else{ctx.font='20px serif';ctx.fillText(em,VW-45,iy+29);}
       // 點擊區加大：填滿整格高度、延伸到螢幕右緣，減少手機誤觸
       uiHits.push({x:VW-60,y:iy-(step-42)/2,w:60,h:step,cb:((m)=>()=>{
-        if(m==='craft'){if(!ui)openCraft();else ui=null;}
+        if(m==='wpn'){if(!ui)openWeaponBag();else ui=null;} // v54 武器包
+        else if(m==='craft'){if(!ui)openCraft();else ui=null;}
         else if(m==='save'){save();toast('💾 已存檔！');}
         else if(m==='rescue'){openMenu('🆘 卡住了嗎？',[
           {label:'✅ 換個地方！傳送到最近的城市',cb(){rescueTeleport();}},
