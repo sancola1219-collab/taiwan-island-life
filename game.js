@@ -2051,6 +2051,17 @@ function buildAct(b){
        if(w){player.x=w.x;player.y=w.y;player.sailing=true;player.fishing=null;
          sfx('splash');toast('出海囉！⛵ 在船上也可以釣魚（深海魚！）');ui=null;save();}
        else dlg(b.label,['附近找不到可以下水的地方…']);}});
+     if(player.boat){ // v55 五船型×五色
+       opts.push({label:'🚢 換船型（現：'+(BOAT_TYPES.find(t=>t[0]===(player.boatType||'fishing'))||BOAT_TYPES[0])[1]+'）',cb(){
+         openMenu('🚢 選擇船型（免費更換）',[...BOAT_TYPES.map(([id,nm])=>({
+           label:((player.boatType||'fishing')===id?'✅ ':'')+nm,cb(){
+             player.boatType=id;sfx('chime');save();toast('🚢 換成「'+nm+'」！出海看看吧');buildAct(b);}})),
+           {label:'回上頁',cb(){buildAct(b);}}]);}});
+       opts.push({label:'🎨 換船色（現：'+(BOAT_COLORS.find(c=>c[0]===(player.boatColor||'#c98a4a'))||BOAT_COLORS[0])[1]+'）',cb(){
+         openMenu('🎨 選擇船色（免費更換）',[...BOAT_COLORS.map(([cc,nm])=>({
+           label:((player.boatColor||'#c98a4a')===cc?'✅ ':'')+nm,cb(){
+             player.boatColor=cc;sfx('chime');save();toast('🎨 船身換成「'+nm+'」！');buildAct(b);}})),
+           {label:'回上頁',cb(){buildAct(b);}}]);}}); }
      for(const [to,fee] of (b.routes||[]))opts.push({label:'渡輪 → '+to+'（'+fmt(fee)+'元）',cb(){
        if(money<fee){dlg(b.label,['船票錢不夠喔！']);return;}
        const target=HARBORS.find(h2=>h2.n===to); if(!target)return;
@@ -2248,6 +2259,16 @@ function buildAct(b){
     else{ opts.push({label:player.driving?'🅿️ 下車步行':'🚗 上車出發！',cb(){
         player.driving=!player.driving;ui=null;sfx('pop');save();
         toast(player.driving?'🚗 上車！出發～':'🅿️ 已下車');}});
+      opts.push({label:'🚙 換車型（現：'+(CAR_TYPES.find(t=>t[0]===(player.carType||'sedan'))||CAR_TYPES[0])[1]+'）',cb(){ // v55 五車型
+        openMenu('🚙 選擇車型（免費更換）',[...CAR_TYPES.map(([id,nm])=>({
+          label:((player.carType||'sedan')===id?'✅ ':'')+nm,cb(){
+            player.carType=id;sfx('chime');save();toast('🚙 換成「'+nm+'」！');buildAct(b);}})),
+          {label:'回上頁',cb(){buildAct(b);}}]);}});
+      opts.push({label:'🎨 換車色（現：'+(CAR_COLORS.find(c=>c[0]===(player.carColor||'#c93a2e'))||CAR_COLORS[0])[1]+'）',cb(){ // v55 五車色
+        openMenu('🎨 選擇車色（免費更換）',[...CAR_COLORS.map(([cc,nm])=>({
+          label:((player.carColor||'#c93a2e')===cc?'✅ ':'')+nm,cb(){
+            player.carColor=cc;sfx('chime');save();toast('🎨 烤漆換成「'+nm+'」！');buildAct(b);}})),
+          {label:'回上頁',cb(){buildAct(b);}}]);}});
       opts.push({label:'↩️ 退租（退回 1,500 元）',cb(){
         player.carRent=false;player.driving=false;money+=1500;ui=null;sfx('cash');save();
         toast('↩️ 車子還給租車行，退回 1,500 元。');}}); }
@@ -2531,6 +2552,7 @@ function interact(){
   if(ui)return;
   if(player.riding){player.riding.speed=Math.max(player.riding.speed,2400);return;}
   if(player.balloonRide||player.soak||player.pray||player.ferris)return;
+  if(player.tool===6&&player.toy==='次元砲'&&godz&&dist(godz.x,godz.y,player.x,player.y)<1900){fireCannon();return;} // v55 陸地/船上都能迎戰哥吉拉（射程加大）
   const p=frontPoint(44);
   if(!player.sailing){
     if(isWeapon()){ // 持武器/道具時：對任何人（NPC／路人／店老闆／警察）都是攻擊，不對話
@@ -2895,49 +2917,71 @@ function updatePet(dt){ const pets=player.pets||[]; if(!pets.length)return;
       if(!hitObstacle(p.x,p.y))p.stuck=0;
       p.walk+=dt*10; p.face=Math.abs(tx2-p.x)>Math.abs(ty2-p.y)?(tx2>p.x?2:1):(ty2>p.y?0:3); } }
 }
+/* v55 車型/船型/顏色 */
+const CAR_TYPES=[['sedan','小客車'],['sport','跑車'],['suv','休旅車'],['pickup','小貨車'],['taxi','計程車']];
+const CAR_COLORS=[['#c93a2e','經典紅'],['#2e6bc9','海洋藍'],['#e8b520','亮黃'],['#3f8f5a','森林綠'],['#3a3a3a','曜石黑']];
+const BOAT_TYPES=[['fishing','小漁船'],['yacht','遊艇'],['ocean','遠洋漁船'],['cruise','郵輪'],['carrier','航空母艦']];
+const BOAT_COLORS=[['#c98a4a','木棕'],['#f5f5f0','純白'],['#c93a2e','緋紅'],['#2e6bc9','深藍'],['#7a8a99','艦灰']];
 function drawRiderHead(x,y,hair,veil){ // v52 車窗探出的乘客頭
   ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill();
   ctx.fillStyle=hair||'#4a2f1d';ctx.beginPath();ctx.arc(x,y-1.5,7,Math.PI*1.02,Math.PI*1.98);ctx.fill();
   if(veil){ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.arc(x,y-4,6,Math.PI,0);ctx.fill();}
   ctx.fillStyle='#2e2620';ctx.beginPath();ctx.arc(x-2.3,y+1,1.1,0,7);ctx.arc(x+2.3,y+1,1.1,0,7);ctx.fill();}
-function drawCarRide(){ // v52 小紅車：玩家＋伴侶一起上車，四方向
+function drawCarRide(){ // v52 租車：玩家＋伴侶一起上車，四方向（v55 五車型×五色）
   const x=player.x, y=player.y, f=player.face;
   const wed=player.love&&player.love.streamer&&player.love.stage==='married';
   const bump=player.moving?Math.sin(tGlobal*18)*0.8:0;
+  const col=player.carColor||'#c93a2e', tp=player.carType||'sedan';
+  const cabT=tp==='sport'?23:tp==='suv'?31:27; // 車頂高度：跑車低、休旅高
   ctx.fillStyle='rgba(0,0,0,.2)';
   if(f===1||f===2){ // 側面
     ctx.beginPath();ctx.ellipse(x,y+4,32,7,0,0,7);ctx.fill();
     ctx.save(); if(f===1){ctx.translate(x*2,0);ctx.scale(-1,1);}
-    let g=ctx.createLinearGradient(x,y-30+bump,x,y+4+bump);
-    g.addColorStop(0,'#f26a5a');g.addColorStop(1,'#c93a2e');
+    let g=ctx.createLinearGradient(x,y-cabT-3+bump,x,y+4+bump);
+    g.addColorStop(0,tint(col,45));g.addColorStop(1,tint(col,-10));
     ctx.fillStyle=g;ctx.beginPath(); // 車身流線
-    ctx.moveTo(x-30,y+2+bump);ctx.lineTo(x-30,y-10+bump);ctx.quadraticCurveTo(x-29,y-15+bump,x-22,y-15+bump);
-    ctx.lineTo(x-13,y-15+bump);ctx.lineTo(x-7,y-27+bump);ctx.lineTo(x+11,y-27+bump);ctx.lineTo(x+19,y-15+bump);
-    ctx.quadraticCurveTo(x+30,y-13+bump,x+30,y-5+bump);ctx.lineTo(x+30,y+2+bump);ctx.closePath();ctx.fill();
+    if(tp==='pickup'){ // 小貨車：前艙＋後斗
+      ctx.moveTo(x-30,y+2+bump);ctx.lineTo(x-30,y-13+bump);ctx.lineTo(x-2,y-13+bump);
+      ctx.lineTo(x-2,y-15+bump);ctx.lineTo(x+2,y-cabT+bump);ctx.lineTo(x+14,y-cabT+bump);ctx.lineTo(x+20,y-15+bump);
+      ctx.quadraticCurveTo(x+30,y-13+bump,x+30,y-5+bump);ctx.lineTo(x+30,y+2+bump);ctx.closePath();ctx.fill();
+    }else{
+      ctx.moveTo(x-30,y+2+bump);ctx.lineTo(x-30,y-10+bump);ctx.quadraticCurveTo(x-29,y-15+bump,x-22,y-15+bump);
+      ctx.lineTo(x-13,y-15+bump);ctx.lineTo(x-7,y-cabT+bump);ctx.lineTo(x+11,y-cabT+bump);ctx.lineTo(x+19,y-15+bump);
+      ctx.quadraticCurveTo(x+30,y-13+bump,x+30,y-5+bump);ctx.lineTo(x+30,y+2+bump);ctx.closePath();ctx.fill();
+    }
     ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=1.5;ctx.stroke();
     ctx.fillStyle='#bfe3f2';ctx.beginPath(); // 車窗
-    ctx.moveTo(x-5,y-25+bump);ctx.lineTo(x+9,y-25+bump);ctx.lineTo(x+15,y-15+bump);ctx.lineTo(x-5,y-15+bump);ctx.closePath();ctx.fill();
+    if(tp==='pickup'){ctx.moveTo(x+4,y-cabT+2+bump);ctx.lineTo(x+13,y-cabT+2+bump);ctx.lineTo(x+17,y-16+bump);ctx.lineTo(x+4,y-16+bump);ctx.closePath();ctx.fill();}
+    else{ctx.moveTo(x-5,y-cabT+2+bump);ctx.lineTo(x+9,y-cabT+2+bump);ctx.lineTo(x+15,y-16+bump);ctx.lineTo(x-5,y-16+bump);ctx.closePath();ctx.fill();}
+    if(tp==='sport'){ctx.fillStyle=tint(col,-25); // 尾翼
+      ctx.fillRect(x-32,y-22+bump,8,3);ctx.fillRect(x-29,y-19+bump,3,5);}
+    if(tp==='suv'){ctx.strokeStyle=tint(col,-30);ctx.lineWidth=2; // 車頂架
+      ctx.beginPath();ctx.moveTo(x-8,y-cabT-2+bump);ctx.lineTo(x+12,y-cabT-2+bump);ctx.stroke();}
+    if(tp==='taxi'){ctx.fillStyle='#ffd23a';rr(x-2,y-cabT-7+bump,14,7,2);ctx.fill(); // 車頂燈
+      ctx.fillStyle='#5b4023';ctx.font='bold 6px sans-serif';ctx.fillText('TAXI',x,y-cabT-1.5+bump);}
     ctx.fillStyle='#ffe9a8';ctx.fillRect(x+27,y-11+bump,4,4); // 車燈
     ctx.fillStyle='#2a2a2a';ctx.beginPath();ctx.arc(x-17,y+3,7,0,7);ctx.arc(x+16,y+3,7,0,7);ctx.fill(); // 車輪
     ctx.fillStyle='#cfcfcf';ctx.beginPath();ctx.arc(x-17,y+3,3,0,7);ctx.arc(x+16,y+3,3,0,7);ctx.fill();
     ctx.restore();
-    // 乘客（探出天窗）：玩家＋伴侶
-    const dir=f===1?-1:1;
-    drawRiderHead(x-4*dir,y-30+bump,player.hair);
-    if(player.love)drawRiderHead(x-16*dir,y-29+bump,player.love.ap.hair,wed);
+    // 乘客（探出天窗）：玩家＋伴侶（小貨車坐前艙）
+    const dir=f===1?-1:1, hx=tp==='pickup'?8*dir:-4*dir;
+    drawRiderHead(x+hx,y-cabT-3+bump,player.hair);
+    if(player.love)drawRiderHead(x+hx-12*dir,y-cabT-2+bump,player.love.ap.hair,wed);
   } else { // 正面(0)/背面(3)
     const back=(f===3);
     ctx.beginPath();ctx.ellipse(x,y+4,20,7,0,0,7);ctx.fill();
-    let g=ctx.createLinearGradient(x,y-28+bump,x,y+4+bump);
-    g.addColorStop(0,'#f26a5a');g.addColorStop(1,'#c93a2e');
-    ctx.fillStyle=g;rr(x-17,y-26+bump,34,30,9);ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=1.5;rr(x-17,y-26+bump,34,30,9);ctx.stroke();
-    ctx.fillStyle='#bfe3f2';rr(x-12,back?y-14+bump:y-24+bump,24,9,4);ctx.fill(); // 擋風玻璃
+    let g=ctx.createLinearGradient(x,y-cabT-1+bump,x,y+4+bump);
+    g.addColorStop(0,tint(col,45));g.addColorStop(1,tint(col,-10));
+    ctx.fillStyle=g;rr(x-17,y-cabT+1+bump,34,cabT+3,9);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=1.5;rr(x-17,y-cabT+1+bump,34,cabT+3,9);ctx.stroke();
+    ctx.fillStyle='#bfe3f2';rr(x-12,back?y-14+bump:y-cabT+3+bump,24,9,4);ctx.fill(); // 擋風玻璃
+    if(tp==='pickup'&&back){ctx.fillStyle=tint(col,-30);rr(x-14,y-12+bump,28,10,2);ctx.fill();} // 後斗擋板
+    if(tp==='taxi'){ctx.fillStyle='#ffd23a';rr(x-7,y-cabT-5+bump,14,6,2);ctx.fill();}
     if(back){ctx.fillStyle='#d33a2a';ctx.fillRect(x-14,y+bump,6,3);ctx.fillRect(x+8,y+bump,6,3);} // 尾燈
     else{ctx.fillStyle='#ffe9a8';ctx.fillRect(x-14,y+bump,6,4);ctx.fillRect(x+8,y+bump,6,4);} // 頭燈
     ctx.fillStyle='#2a2a2a';rr(x-20,y-8,5,12,2);ctx.fill();rr(x+15,y-8,5,12,2);ctx.fill(); // 側輪
-    drawRiderHead(x+(player.love?-7:0),y-31+bump,player.hair);
-    if(player.love)drawRiderHead(x+8,y-30+bump,player.love.ap.hair,wed);
+    drawRiderHead(x+(player.love?-7:0),y-cabT-4+bump,player.hair);
+    if(player.love)drawRiderHead(x+8,y-cabT-3+bump,player.love.ap.hair,wed);
   }
 }
 function drawQuadruped(kind,x,y,face,walk){ // v50 貓狗四腳趴地走（不再直立）
@@ -3458,7 +3502,7 @@ function update(dt){
           if(tx2<4||ty2<4||tx2>MW-5||ty2>MH-5)continue;
           let sea=true; for(let dy=-3;dy<=3&&sea;dy++)for(let dx=-3;dx<=3&&sea;dx++)if(T(tx2+dx,ty2+dy)!==SEA)sea=false;
           if(sea)sp={x:gx2,y:gy2}; }
-        if(sp){ godz={x:sp.x,y:sp.y,hp:GODZ_HP,t:300,boltT:2,bolt:0,btx:0,bty:0,dir:Math.random()<0.5?1:-1,hit:0};
+        if(sp){ godz={x:sp.x,y:sp.y,hp:GODZ_HP,t:3600,boltT:2,bolt:0,btx:0,bty:0,dir:Math.random()<0.5?1:-1,hit:0}; // v55 停留至少1小時（現實時間）
           sfx('sad');
           toast('📢【全島緊急廣播】怪獸「哥吉拉」出現在你附近的外海！🚨 擊敗可獲 '+fmt(GODZ_PRIZE)+' 元賞金（武器店有售次元砲・5分鐘內有效）'); }
         else godzT=30; } // 附近沒深海，稍後再試
@@ -4239,22 +4283,56 @@ function drawBalloonRideSprite(x,y,bR){
   ctx.fillStyle='#f5c99b';ctx.beginPath();ctx.arc(x,by2-12,5,0,7);ctx.fill();
   ctx.fillStyle='#4a2f1d';ctx.beginPath();ctx.arc(x,by2-15,5,Math.PI,0);ctx.fill();
 }
-function drawBoat(x,y,face,moving){
-  ctx.fillStyle='rgba(0,0,40,.2)';ctx.beginPath();ctx.ellipse(x,y+8,27,10,0,0,7);ctx.fill();
+function drawBoat(x,y,face,moving){ // v55 五船型×五色
+  const tp=player.boatType||'fishing', col=player.boatColor||'#c98a4a';
+  const W=tp==='carrier'?44:tp==='cruise'?40:tp==='ocean'?32:25; // 船身半寬
+  ctx.fillStyle='rgba(0,0,40,.2)';ctx.beginPath();ctx.ellipse(x,y+8,W+3,10,0,0,7);ctx.fill();
   if(moving){ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=2;
     const bx=-DIRV[face][0],by=-DIRV[face][1];
-    for(let i=1;i<=2;i++){ctx.beginPath();ctx.arc(x+bx*i*18,y+6+by*i*12,5+i*4,0,7);ctx.stroke();}}
+    for(let i=1;i<=2;i++){ctx.beginPath();ctx.arc(x+bx*i*(W*0.7),y+6+by*i*12,5+i*4,0,7);ctx.stroke();}}
   let g=ctx.createLinearGradient(x,y-12,x,y+14);
-  g.addColorStop(0,'#c98a4a');g.addColorStop(1,'#7a4e24');
+  g.addColorStop(0,tint(col,20));g.addColorStop(1,tint(col,-35));
   ctx.fillStyle=g;
-  ctx.beginPath();ctx.moveTo(x-25,y-5);ctx.quadraticCurveTo(x,y+17,x+25,y-5);
-  ctx.quadraticCurveTo(x+27,y-11,x+20,y-11);ctx.lineTo(x-20,y-11);
-  ctx.quadraticCurveTo(x-27,y-11,x-25,y-5);ctx.closePath();ctx.fill();
-  ctx.strokeStyle='#5f3d1c';ctx.lineWidth=2;ctx.stroke();
-  ctx.fillStyle='#e8d8b8';ctx.beginPath();ctx.ellipse(x,y-9,17,4.5,0,0,7);ctx.fill();
-  ctx.strokeStyle='#6a4520';ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(x+17,y-11);ctx.lineTo(x+17,y-28);ctx.stroke();
-  ctx.fillStyle='#e2574c';ctx.beginPath();ctx.moveTo(x+17,y-28);ctx.lineTo(x+28,y-24);ctx.lineTo(x+17,y-20);ctx.fill();
+  ctx.beginPath();ctx.moveTo(x-W,y-5);ctx.quadraticCurveTo(x,y+17,x+W,y-5); // 船殼
+  ctx.quadraticCurveTo(x+W+2,y-11,x+W-5,y-11);ctx.lineTo(x-W+5,y-11);
+  ctx.quadraticCurveTo(x-W-2,y-11,x-W,y-5);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=tint(col,-55);ctx.lineWidth=2;ctx.stroke();
+  if(tp==='fishing'){ // 小漁船：木甲板＋小旗
+    ctx.fillStyle='#e8d8b8';ctx.beginPath();ctx.ellipse(x,y-9,17,4.5,0,0,7);ctx.fill();
+    ctx.strokeStyle='#6a4520';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(x+17,y-11);ctx.lineTo(x+17,y-28);ctx.stroke();
+    ctx.fillStyle='#e2574c';ctx.beginPath();ctx.moveTo(x+17,y-28);ctx.lineTo(x+28,y-24);ctx.lineTo(x+17,y-20);ctx.fill();
+  }else if(tp==='yacht'){ // 遊艇：流線艙房＋大窗
+    ctx.fillStyle='#f8f8f4';ctx.beginPath();
+    ctx.moveTo(x-14,y-11);ctx.quadraticCurveTo(x-12,y-24,x+2,y-24);ctx.lineTo(x+14,y-24);
+    ctx.quadraticCurveTo(x+20,y-18,x+18,y-11);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#8fd0e8';for(let i=0;i<3;i++)rr(x-8+i*9,y-21,7,5,2),ctx.fill();
+    ctx.strokeStyle='#c8c8c0';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(x-14,y-24);ctx.lineTo(x-20,y-30);ctx.stroke(); // 天線
+  }else if(tp==='ocean'){ // 遠洋漁船：駕駛樓＋吊桿
+    ctx.fillStyle='#f0ece0';rr(x+6,y-27,18,16,3);ctx.fill();
+    ctx.fillStyle='#8fd0e8';rr(x+9,y-24,12,6,2);ctx.fill();
+    ctx.strokeStyle='#5a4a3a';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(x-14,y-11);ctx.lineTo(x-14,y-34);ctx.moveTo(x-14,y-30);ctx.lineTo(x+2,y-16);ctx.stroke(); // 桅杆吊桿
+    ctx.strokeStyle='rgba(90,74,58,.6)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x+2,y-16);ctx.lineTo(x+2,y-11);ctx.stroke();
+  }else if(tp==='cruise'){ // 郵輪：雙層白艙＋圓窗排＋煙囪
+    ctx.fillStyle='#fafaf6';rr(x-30,y-22,60,11,3);ctx.fill();
+    rr(x-22,y-31,44,10,3);ctx.fill();
+    ctx.fillStyle='#8fd0e8';for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(x-24+i*10,y-17,2.2,0,7);ctx.fill();}
+    for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(x-15+i*10,y-26,2.2,0,7);ctx.fill();}
+    ctx.fillStyle='#e2574c';rr(x+12,y-40,9,10,2);ctx.fill(); // 煙囪
+    ctx.fillStyle='#3a3a3a';rr(x+12,y-41,9,3,1);ctx.fill();
+  }else if(tp==='carrier'){ // 航空母艦：平甲板＋跑道線＋艦島＋小戰機
+    ctx.fillStyle='#6a7480';rr(x-W-2,y-16,W*2+4,7,2);ctx.fill(); // 飛行甲板
+    ctx.strokeStyle='#f2d24a';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(x-W+2,y-12.5);ctx.lineTo(x+W-2,y-12.5);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#8a94a0';rr(x+18,y-32,12,16,2);ctx.fill(); // 艦島
+    ctx.fillStyle='#8fd0e8';rr(x+20,y-29,8,4,1);ctx.fill();
+    ctx.strokeStyle='#5a626c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+24,y-32);ctx.lineTo(x+24,y-38);ctx.stroke(); // 天線
+    ctx.fillStyle='#d8dde2';ctx.beginPath(); // 甲板小戰機
+    ctx.moveTo(x-18,y-17);ctx.lineTo(x-8,y-20);ctx.lineTo(x-18,y-23);ctx.closePath();ctx.fill();
+  }
 }
 
 /* ================= 樹木 / 岩石 / 小物 ================= */
@@ -5048,6 +5126,14 @@ function drawUI(){
     for(const [nm,tx,ty3] of MKS){const px=x+tx/MW*mw3,py=y+ty3/MH*mh;
       ctx.fillStyle='#e2574c';ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fill();
       ctx.fillStyle='#5b4023';ctx.fillText(nm,px+5,py+4);}
+    // v55 標註機場✈️與港口⚓（依當前世界的實際建築位置）
+    ctx.font='13px serif';
+    for(const b2 of BUILDINGS){ if(b2.t!=='airport'&&b2.t!=='harbor')continue;
+      const px2=x+(b2.tx+b2.tw/2)/MW*mw3, py2=y+(b2.ty+b2.th/2)/MH*mh;
+      ctx.fillText(b2.t==='airport'?'✈️':'⚓',px2-7,py2+5);}
+    if(world==='cn'&&RAILNET)for(const e of RAILNET.edges)if(e.ferry){ // 粵海鐵路輪渡兩端＝港口
+      for(const p2 of [e.pts[0],e.pts[e.pts.length-1]]){
+        const px2=x+p2[0]/MW*mw3, py2=y+p2[1]/MH*mh; ctx.fillText('⚓',px2-7,py2+5);} }
     const px=x+player.x/(MW*TILE)*mw3, py=y+player.y/(MH*TILE)*mh;
     if(Math.sin(tGlobal*5)>-0.3){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px,py,7,0,7);ctx.fill();
       ctx.fillStyle='#f0913a';ctx.beginPath();ctx.arc(px,py,5,0,7);ctx.fill();}
@@ -5210,6 +5296,7 @@ function save(){ try{ localStorage.setItem(SAVEKEY,JSON.stringify({
   name:player.name,shirt:player.shirt,race:player.race,gender:player.gender,hairStyle:player.hairStyle,hair:player.hair,
   headAcc:player.headAcc,bodyAcc:player.bodyAcc,shoes:player.shoes,ownAcc:player.ownAcc,ownShoes:player.ownShoes,
   outfit:player.outfit,deco:player.deco,tie:player.tie,ownClothes:player.ownClothes,money,inv,dex,boat:player.boat,carRent:player.carRent?1:0,
+  carType:player.carType,carColor:player.carColor,boatType:player.boatType,boatColor:player.boatColor, // v55 車船型色
   hp:player.hp,hunger:player.hunger,stamps,townsV,partners:partnerState,followers,
   gameDay,gameMin:Math.floor(gameMin),tired:Math.floor(player.tired),myHomes,eateryDone,toy:player.toy,jailed:player.jailed,love:player.love,
   crimes:player.crimes,notoriousUntil:player.notoriousUntil,honor:player.honor,ownGuns:player.ownGuns,murderRap:player.murderRap,
@@ -5244,6 +5331,8 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVEKEY));
   myFarms=(s.farms||[]).map(f=>({tx:f.tx,ty:f.ty,state:f.state||'empty',at:f.at||0,pay:f.pay||0,w:f.w||'tw'}));
   for(const f of myFarms)addToScene(f.w,'farm',f.tx,f.ty,2,2,(s.name||'小島民')+'的農地',{farm:f});
   player.boat=!!s.boat;player.carRent=!!s.carRent;player.driving=false;musicOn=s.music!==false; // v52 車輛持有跨存檔、載入時下車
+  player.carType=s.carType||'sedan';player.carColor=s.carColor||'#c93a2e'; // v55
+  player.boatType=s.boatType||'fishing';player.boatColor=s.boatColor||'#c98a4a';
   setScene(s.world==='cn'?'cn':'tw'); genWorld(); genNpcs(); // v40 切到存檔所在世界，重生該世界物件/NPC
   if(s.x!=null){ if(s.sailing&&!hitWater(s.x,s.y)){player.x=s.x;player.y=s.y;player.sailing=true;}
     else if(s.jailed||!hitObstacle(s.x,s.y)){player.x=s.x;player.y=s.y;} } // v47 坐牢中存檔在監獄碰撞箱內，仍要還原位置（否則重整會被換到別座監獄）
