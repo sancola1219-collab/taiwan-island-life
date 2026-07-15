@@ -37,19 +37,26 @@
 <canvas id="c"></canvas>
 <div id="intro">
   <div id="introCard">
-    <h1>我的小世界</h1>
-    <div class="sub">～ 台灣島物語・環島大冒險 ～</div>
-    <div class="feat">🏝️ 115+鄉鎮·77景點·10離島　⛵ 買船出海　🚂 火車沿鐵軌環島<br>
+    <h1 id="inTitle">我的小世界</h1>
+    <div class="sub" id="inSub">～ 台灣島物語・環島大冒險 ～</div>
+    <div class="pick" id="langRow" style="margin-bottom:4px;">
+      <button class="pk lang sel" data-l="tw">繁體中文</button>
+      <button class="pk lang" data-l="cn">简体中文</button>
+      <button class="pk lang" data-l="en">English</button>
+      <button class="pk lang" data-l="de">Deutsch</button>
+      <button class="pk lang" data-l="ja">日本語</button>
+    </div>
+    <div class="feat" id="inFeat">🏝️ 115+鄉鎮·77景點·10離島　⛵ 買船出海　🚂 火車沿鐵軌環島<br>
       🚡 貓空/日月潭纜車　🎈 熱氣球升空　🎣 深海釣魚　📋 動物任務<br>
       📱 支援手機觸控：搖桿移動·雙指縮放</div>
-    <label>你的名字</label>
+    <label id="inNameL">你的名字</label>
     <input id="nameIn" maxlength="8" value="小島民">
-    <label>族群（決定你的傳統服飾）</label>
+    <label id="inRaceL">族群（決定你的傳統服飾）</label>
     <select id="raceSel"></select>
-    <label>衣服顏色</label>
+    <label id="inColorL">衣服顏色</label>
     <div class="swatches" id="swatches"></div>
     <button id="startBtn">出發前往台灣島！</button>
-    <div class="keys">💻 WASD移動·空白鍵互動·滾輪縮放｜📱 搖桿移動·Ⓐ互動·雙指縮放<br>
+    <div class="keys" id="inKeys">💻 WASD移動·空白鍵互動·滾輪縮放｜📱 搖桿移動·Ⓐ互動·雙指縮放<br>
       工具 1~5　·　背包 B　·　地圖 M　·　圖鑑 P　·　任務 J　·　說明 H（建議手機橫向遊玩）</div>
   </div>
 </div>
@@ -65,7 +72,7 @@
   <img id="refImg" style="max-width:94vw;max-height:84vh;border-radius:14px;
     box-shadow:0 10px 40px rgba(0,0,0,.6);border:4px solid #b58a4e;">
 </div>
-<script src="data.js?v=55"></script>
-<script src="game.js?v=55"></script>
+<script src="data.js?v=56"></script>
+<script src="game.js?v=56"></script>
 </body>
 </html>

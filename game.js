@@ -4,6 +4,32 @@
    （資料定義在 data.js）
    ============================================================ */
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+/* ===== v56 多語系：fillText/measureText 全域攔截，所有畫面文字自動過翻譯層 ===== */
+let LANG=localStorage.getItem('twisland_lang')||'tw';
+const T2S_MAP=new Map(); // 建表延後到 data 讀完（T2S_FROM 在 data.js）
+function initT2S(){ if(T2S_MAP.size)return;
+  const F=[...T2S_FROM,...(typeof T2S_FROM2!=='undefined'?[...T2S_FROM2]:[])],
+        T=[...T2S_TO,...(typeof T2S_TO2!=='undefined'?[...T2S_TO2]:[])];
+  for(let i=0;i<F.length;i++)T2S_MAP.set(F[i],T[i]); }
+function t2s(s){ initT2S(); let out='';
+  for(const ch of s)out+=(T2S_MAP.get(ch)||ch); return out; }
+const L10N_CACHE=new Map();
+function L10N(s){
+  if(LANG==='tw'||!s)return s;
+  const key=LANG+'|'+s, hit=L10N_CACHE.get(key); if(hit!==undefined)return hit;
+  let out;
+  if(LANG==='cn')out=t2s(s);
+  else{ const d=(typeof I18N!=='undefined')&&I18N[LANG];
+    out=(d&&d[s])||s;
+    if(out===s){ const rules=(typeof I18N_RULES!=='undefined')&&I18N_RULES[LANG];
+      if(rules)for(const [re,rep] of rules)out=out.replace(re,rep); } }
+  if(L10N_CACHE.size>6000)L10N_CACHE.clear();
+  L10N_CACHE.set(key,out); return out;
+}
+{ const _fill=CanvasRenderingContext2D.prototype.fillText,
+        _meas=CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.fillText=function(s,...a){return _fill.call(this,L10N(String(s)),...a);};
+  CanvasRenderingContext2D.prototype.measureText=function(s){return _meas.call(this,L10N(String(s)));}; }
 let VW=innerWidth, VH=innerHeight, DPR=Math.min(devicePixelRatio||1,2);
 function resize(){VW=innerWidth;VH=innerHeight;cv.width=VW*DPR;cv.height=VH*DPR;
   cv.style.width=VW+'px';cv.style.height=VH+'px';ctx.setTransform(DPR,0,0,DPR,0,0);}
@@ -5370,7 +5396,21 @@ document.getElementById('nameIn').value=player.name;
   RACES.forEach((r,i)=>{const o=document.createElement('option');o.value=i;o.textContent=r.n;rs2.appendChild(o);});
   rs2.value=player.race||0; }
 // （開場不再選性別/髮型；預設後可到髮型店更換造型）
-if(hasSave)document.getElementById('startBtn').textContent='繼續遊戲！';
+/* v56 開場語言選擇 */
+function applyIntroLang(){
+  const T=(typeof INTRO_TEXTS!=='undefined'&&INTRO_TEXTS[LANG])||INTRO_TEXTS.tw;
+  const q=id=>document.getElementById(id);
+  q('inTitle').textContent=T.title; q('inSub').textContent=T.sub;
+  q('inFeat').innerHTML=T.feat; q('inNameL').textContent=T.name;
+  q('inRaceL').textContent=T.race; q('inColorL').textContent=T.color;
+  q('inKeys').innerHTML=T.keys;
+  const cont={tw:'繼續遊戲！',cn:'继续游戏！',en:'Continue!',de:'Weiterspielen!',ja:'つづきから！'};
+  q('startBtn').textContent=hasSave?cont[LANG]||cont.tw:T.start;
+  document.querySelectorAll('#langRow .lang').forEach(bt=>bt.classList.toggle('sel',bt.dataset.l===LANG));
+}
+document.querySelectorAll('#langRow .lang').forEach(bt=>bt.addEventListener('click',()=>{
+  LANG=bt.dataset.l; localStorage.setItem('twisland_lang',LANG); L10N_CACHE.clear(); applyIntroLang(); try{sfx('blip');}catch(e){} }));
+applyIntroLang();
 document.getElementById('startBtn').onclick=()=>{
   player.name=(document.getElementById('nameIn').value.trim()||'小島民').slice(0,8);
   player.race=+document.getElementById('raceSel').value||0;
