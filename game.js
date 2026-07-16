@@ -5211,15 +5211,16 @@ function drawUI(){
     ctx.drawImage(mini,x,y,mw3,mh);
     ctx.strokeStyle='#c9a06a';ctx.lineWidth=3;ctx.strokeRect(x,y,mw3,mh);
     ctx.font='bold 14px '+F;ctx.fillStyle='#5b4023';
-    ctx.fillText('🗺️ 地區 '+Object.keys(townsV).length+'/'+TOWNS.length+
+    ctx.fillText('🗺️ 地區 '+Object.keys(townsV).length+'/'+ACT_TOWNS.length+ // v57.1 依當前世界
       '　📍 印章 '+Object.keys(stamps).length+'/'+STAMP_TOTAL,x,y+mh+28);
-    ctx.fillStyle='#f0913a';rr(x+mw3-150,y+mh+8,150,30,9);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='bold 14px '+F;
-    ctx.fillText('🖼️ 縣市導覽圖',x+mw3-138,y+mh+29);
-    uiHits.push({x:x+mw3-150,y:y+mh+8,w:150,h:30,cb(){ui=null;openRefView();}});
+    if(world==='tw'){ // v57.1 縣市導覽圖是台灣照片，只在台灣顯示
+      ctx.fillStyle='#f0913a';rr(x+mw3-150,y+mh+8,150,30,9);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='bold 14px '+F;
+      ctx.fillText('🖼️ 縣市導覽圖',x+mw3-138,y+mh+29);
+      uiHits.push({x:x+mw3-150,y:y+mh+8,w:150,h:30,cb(){ui=null;openRefView();}}); }
     drawClose(Math.min(x+mw3+6,VW-24),Math.max(24,y-4));
-    const MKS = world==='cn'
-      ? TOWNS_CN.map(t=>[t.n,t.tx,t.ty])
+    const MKS = world==='cn' ? TOWNS_CN.map(t=>[t.n,t.tx,t.ty])
+      : world==='jp' ? TOWNS_JP.map(t=>[t.n,t.tx,t.ty]) // v57.1 修：日本地圖原本誤畫台灣地名(玉山跑到日本)
       : [['台北',202,44],['桃園',178,70],['新竹',163,98],['台中',158,174],['彰化',150,200],
       ['嘉義',156,258],['台南',159,328],['高雄',171,360],['墾丁',210,458],['宜蘭',242,74],
       ['花蓮',257,171],['台東',245,282],['日月潭',186,220],['玉山',206,262],['阿里山',184,260],
