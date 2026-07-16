@@ -45,6 +45,7 @@
 | `HIGHWAYS` | 公路 polyline（`mt:true` 可鑿穿山） | |
 | `RAILS` | 台灣環島鐵路閉環節點；`STATIONS[].railIdx` 指到節點 | 改鐵路要同步兩者 |
 | `CN_RAIL_LINES`/`CN_STATIONS` | v45 大陸鐵路網：42 站(keyed by `city`,含`r`地區/`sight`名勝)＋30 條線(`s`=停靠城市名序列、`t:'hsr'/'reg'`、`ferry`) | 引擎在 `genWorld()` 呼叫 `buildRailNet()` 建圖，搭車走 `railRoute(from,to)` Dijkstra 自動轉乘 |
+| `TOWNS_JP`/`JP_STATIONS`/`JP_RAIL_LINES`/`LANDMARKS_JP` 等 | v57 日本世界（`world==='jp'`）：22 城、新幹線網、線旗標 `bridge`(跨海橋=正常軌道)/`tunnel`(海底隧道=灰虛線)/`ferry`(渡輪=藍虛線)，三者皆豁免跨海檢查 | 世界切換點都要三分支(tw/cn/jp)：setScene/buildRailNet/明星/路人口音/fruitOf/時差/雪/save-load |
 | `CABLECARS` | 纜車（a/b 站+票價） | |
 | `HARBORS` | 港口+渡輪 routes（目的地名必須存在於 HARBORS） | 位置會在載入時自動 `coastSpot()` 貼海，寫個大概即可 |
 | `LANDMARKS` | 景點 `{t:類型,tx,ty,label,lines[],steam?}` | t 必須存在於 game.js 的 `SIZE` 與 `BUILDING_DRAWS` |
