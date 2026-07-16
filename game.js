@@ -1257,7 +1257,8 @@ function setScene(w){ const S=SCENES[w]; if(!S)return; world=w; map=S.map; BUILD
   ACT_STATIONS=(w==='cn')?CN_STATIONS:(w==='jp')?JP_STATIONS:STATIONS; }
 function flyTo(destW,destLabel){
   setScene(destW);
-  for(const a of [citizens,animals,sealife,bugs,digs,drops,puffs,groundToys,events,fx,campfires,strays,stars])a.length=0; // 清空舊世界動態物件
+  for(const a of [citizens,animals,sealife,bugs,digs,drops,puffs,groundToys,events,fx,campfires,strays,stars,raiders])a.length=0; // 清空舊世界動態物件
+  raidActive=false; // v59 離開台灣：日軍事件結束
   player.wanted=null;player.riding=null;player.balloonRide=null;player.sailing=false;player.fishing=null;
   player.soak=null;player.pray=null;player.ferris=null;
   godz=null; godzT=240+Math.random()*300;
@@ -2566,12 +2567,16 @@ function doJobAttack(job){
   player.swing=0.32; spawnJobFx(job); sfx(job.mode==='radius'?'thud':'swing');
   fx.push({kind:'magiccircle',x:player.x,y:player.y,col:job.col||'#ffd94a',t:0,dur:1.1}); // v50 腳下魔法陣
   player.spellBub={text:job.spell||(job.atk+'！'),t:1.8}; // v50 咒語對話框
-  let killed=0, copsHit=0;
+  let killed=0, copsHit=0, raidHit=0;
   for(const c of citizens){ if(!c.dead && inJobAoE(job,c.x,c.y)){ markCitizenDead(c); killed++; } }
+  for(const r of raiders){ if(!r.dead && inJobAoE(job,r.x,r.y)){ r.hit=0.3; r.hp-=2; raidHit++; // v59 範圍技也能掃日軍
+    if(r.hp<=0){ r.dead=true; r.deadT=3; if(Math.random()<0.7)drops.push({x:r.x,y:r.y+8,coin:120+Math.floor(Math.random()*260)}); } } }
+  if(raidHit>0&&raiders.every(s=>s.dead))raidVictory();
   if(player.wanted&&player.wanted.cops)for(const cp of player.wanted.cops){ if(!cp.down && inJobAoE(job,cp.x,cp.y)){ knockCop(cp); copsHit++; } }
   if(killed>0){ toast(job.we+'💥 '+job.atk+'！一次擊倒 '+killed+' 名路人…引發警方追捕！'); crimeSpike(2+killed); }
+  else if(raidHit>0){ toast(job.we+'💥 '+job.atk+'！掃中 '+raidHit+' 名日本兵！'); }
   if(copsHit>0){ player.crimes=(player.crimes||0)+copsHit; copsRetreatCheck('👊 '+job.atk+' 掃倒 '+copsHit+' 名警察！'); }
-  if(!killed&&!copsHit) toast(job.we+' 你施展了'+job.atk+'…範圍內沒有目標。');
+  if(!killed&&!copsHit&&!raidHit) toast(job.we+' 你施展了'+job.atk+'…範圍內沒有目標。');
 }
 // v37 次元砲 vs 哥吉拉
 function fireCannon(){
@@ -2662,11 +2667,13 @@ function interact(){
       const scan=arr=>{for(const c of arr){if(c.dead||c.down)continue;const d=Math.min(dist(c.x,c.y,p.x,p.y),dist(c.x,c.y,player.x,player.y));
         if(d<bd){bd=d;best=c;}}};
       scan(citizens);
+      if(raiders.length)scan(raiders); // v59 日軍也可被攻擊
       if(player.wanted&&player.wanted.cops)scan(player.wanted.cops); // v37 警察也可攻擊
       if(!gun){scan(NPCS.filter(n=>!followers.includes(n.name))); scan(owners);}
       if(best){
-        const isCop=player.wanted&&player.wanted.cops&&player.wanted.cops.includes(best);
         if(gun)spawnGunFx(gunFxOf(player.toy),best.x,best.y-16); // v41 開火特效
+        if(raiders.includes(best)){ hitRaider(best,gun?2:1); return; } // v59 打日軍
+        const isCop=player.wanted&&player.wanted.cops&&player.wanted.cops.includes(best);
         if(isCop){attackCop(best);return;}
         attackPerson(best);return;}
       if(gun){ spawnGunFx(gunFxOf(player.toy),player.x+DIRV[player.face][0]*190,player.y-16);
@@ -2906,6 +2913,78 @@ function updateTyphoon(dt){
       toast('⚡ 落雷就打在你附近！HP-8——快躲進屋裡或搭交通工具避雷！'); } }
   if(ty.strike){ ty.strike.t+=dt; if(ty.strike.t>0.45)ty.strike=null; }
   if(ty.t>=ty.dur){ toast('🌤️ 颱風『'+ty.name+'』遠離了，天氣逐漸放晴～'); typhoon=null; typhoonT=420+Math.random()*520; }
+}
+/* ---- v59 日據時期・日軍來襲（僅台灣；平均約1小時一次真實時間；會攻擊你，可反擊） ---- */
+let raiders=[], raidActive=false, raidT=2400+Math.random()*2400, raidLeft=0; // 2400~4800s，平均1hr
+function spawnRaid(){
+  raiders=[]; raidActive=true; raidLeft=120;
+  const n=4+Math.floor(Math.random()*3);
+  for(let i=0;i<n;i++){ let sx,sy,ok=false;
+    for(let k=0;k<40&&!ok;k++){ const a=Math.random()*6.283, r=(6+Math.random()*6)*TILE;
+      sx=player.x+Math.cos(a)*r; sy=player.y+Math.sin(a)*r;
+      if(!hitObstacle(sx,sy)&&!waterAt(sx,sy))ok=true; }
+    if(!ok){sx=player.x+(i-2)*44;sy=player.y-130;}
+    raiders.push({x:sx,y:sy,face:0,walk:0,hp:3,maxhp:3,atkCd:0.8+Math.random(),shootCd:2+Math.random()*2,dead:false,deadT:0,hit:0}); }
+  sfx('sad'); flash=0.5;
+  dlg('🎌 日據時期・空襲警報',['「敵襲！日本軍が攻めてきた！」',
+    '一隊日本兵朝你衝過來了——是日據時期的突發事件！',
+    '⚔️ 拿起武器反擊：鏟子/斧頭/木矛/槍枝/職業法術都能打！',
+    '（打倒全部日本兵有賞金；躲進自己家裡可暫避）']);
+}
+function raidVictory(){ if(!raidActive)return;
+  raidActive=false; raiders=[]; raidT=2400+Math.random()*2400;
+  const reward=5000+Math.floor(Math.random()*3000); money+=reward; sfx('cash'); save();
+  dlg('🎌 擊退日軍！',['最後一名日本兵倒下了！','村民們從屋裡探出頭，對你歡呼致謝。',
+    '（獲得抗敵獎金 '+fmt(reward)+' 元！）']); }
+function hitRaider(r,dmg){ player.swing=0.28; sfx('swing'); r.hit=0.3;
+  puffs.push({x:r.x,y:r.y-16,t:0.4}); r.hp-=dmg;
+  if(r.hp<=0){ r.dead=true; r.deadT=3; sfx('pop');
+    if(Math.random()<0.7)drops.push({x:r.x,y:r.y+8,coin:120+Math.floor(Math.random()*260)});
+    puffs.push({x:r.x,y:r.y-14,t:0.5});
+    if(raiders.every(s=>s.dead))raidVictory(); }
+  else toast('⚔️ 擊中日本兵！剩 '+Math.max(0,r.hp)+'/'+r.maxhp+' 血'); }
+function updateRaid(dt){
+  if(world!=='tw'||!started){ if(world!=='tw'){raiders=[];raidActive=false;} return; }
+  if(!raidActive){ if(player.jailed||player.sailing)return;
+    raidT-=dt; if(raidT<=0&&!ui)spawnRaid(); return; } // 不在選單/對話中才開打，避免打斷
+  if(player.jailed){ raidActive=false; raiders=[]; raidT=2400+Math.random()*2400; return; } // 被捕→日軍撤退
+  raidLeft-=dt;
+  const safe=(ui==='home')||boarding();
+  let aliveN=0;
+  for(let i=raiders.length-1;i>=0;i--){ const s=raiders[i];
+    if(s.hit>0)s.hit-=dt;
+    if(s.dead){ s.deadT-=dt; if(s.deadT<=0)raiders.splice(i,1); continue; }
+    aliveN++; s.atkCd-=dt; s.shootCd-=dt;
+    const d=dist(s.x,s.y,player.x,player.y);
+    if(safe)continue; // 玩家躲屋裡/搭乘：日軍暫不攻擊
+    if(d>50){ if(moveActor(s,player.x-s.x,player.y-s.y,165,dt))s.walk+=dt*7; }
+    else if(s.atkCd<=0){ s.atkCd=1.6; player.hp=Math.max(0,player.hp-8);
+      flash=Math.max(flash,0.4); sfx('thud'); puffs.push({x:player.x,y:player.y-16,t:0.4});
+      toast('🎌 日本兵刺刀突襲！HP-8——反擊或躲進屋裡！'); }
+    if(d>60&&d<340&&s.shootCd<=0){ s.shootCd=2.6+Math.random()*2;
+      fx.push({kind:'gun',sub:'rifle',x:s.x,y:s.y-16,x2:player.x,y2:player.y-16,ang:Math.atan2(player.y-s.y,player.x-s.x),t:0,dur:0.2});
+      player.hp=Math.max(0,player.hp-5); flash=Math.max(flash,0.28); sfx('swing');
+      toast('🔫 日本兵開槍！HP-5'); } }
+  if(aliveN===0){ raidActive=false; return; } // 全滅（raidVictory 已於 hitRaider 觸發）
+  if(raidLeft<=0){ raidActive=false; raiders=[]; raidT=2400+Math.random()*2400;
+    toast('🎌 日本兵撤退了…下次可能還會來襲，多備武器吧！'); }
+}
+function drawSoldier(s){
+  if(s.dead){ ctx.save();ctx.globalAlpha=Math.max(0,s.deadT/3);drawCorpse(s);ctx.restore();return; }
+  drawActor(s.x,s.y,s.face,s.walk,{species:'human',skin:'#f5c99b',pal:{fur:'#f5c99b'},hair:'#2a2a2a',shirt:'#8a875a',outfit:'tee'});
+  const x=s.x,y=s.y,hy=y-40; // 軍帽（土黃戰鬥帽＋帽垂布）
+  ctx.fillStyle='#6f6a45';ctx.beginPath();ctx.arc(x,hy-4,15,Math.PI*1.02,Math.PI*1.98);ctx.fill();
+  ctx.fillRect(x-15,hy-6,30,4);
+  ctx.fillStyle='#e2453c';ctx.beginPath();ctx.arc(x,hy-9,2.2,0,7);ctx.fill(); // 帽章紅點
+  ctx.fillStyle='#d8cf9a';ctx.fillRect(x-15,hy-3,5,7);ctx.fillRect(x+10,hy-3,5,7); // 帽垂布
+  ctx.strokeStyle='#3a2a1a';ctx.lineWidth=2.5; // 步槍
+  const gd=s.face===1?-1:1;
+  ctx.beginPath();ctx.moveTo(x+gd*4,y-20);ctx.lineTo(x+gd*20,y-30);ctx.stroke();
+  ctx.strokeStyle='#c8c8c8';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+gd*20,y-30);ctx.lineTo(x+gd*26,y-34);ctx.stroke(); // 刺刀
+  if(s.hit>0){ ctx.fillStyle=`rgba(255,60,60,${s.hit*1.6})`;ctx.beginPath();ctx.arc(x,y-24,20,0,7);ctx.fill(); }
+  // 血條
+  ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(x-14,y-58,28,4);
+  ctx.fillStyle='#e2453c';ctx.fillRect(x-14,y-58,28*Math.max(0,s.hp)/s.maxhp,4);
 }
 const GODZ_HP=6, GODZ_PRIZE=1000000;
 /* ---- v37 特效（雷擊/斬擊/光束） ---- */
@@ -3624,7 +3703,7 @@ function update(dt){
     if(gain){ money+=gain; sfx('cash'); toast('🌾 農地補助入帳 +'+gain+' 元'); save(); } }
   // v37 特效與次元砲冷卻
   for(let i=fx.length-1;i>=0;i--){fx[i].t+=dt;if(fx[i].t>fx[i].dur)fx.splice(i,1);}
-  updatePet(dt); updateStrays(dt); updateStars(dt); updateTyphoon(dt); // v41 寵物/流浪貓狗、v42 明星、v43 颱風
+  updatePet(dt); updateStrays(dt); updateStars(dt); updateTyphoon(dt); updateRaid(dt); // v41 寵物/流浪貓狗、v42 明星、v43 颱風、v59 日軍來襲
   if(flyAnim>0){ flyAnim-=dt; if(flyAnim<=0){flyAnim=0;
     toast('✈️ 抵達「'+flyLabel+'」！歡迎來到'+(flyDestW==='cn'?'大陸'+(regionOf?'':''):'台灣')+'～'+(flyDestW==='cn'?'（湖南株洲有直播主劉思思）':'')); } }
   if((player.cannonCd||0)>0)player.cannonCd-=dt;
@@ -4643,6 +4722,7 @@ function draw(){
   for(const s of strays)if(inView(s.x,s.y))list.push({y:s.y,f:()=>drawStray(s)}); // v41 流浪貓狗
   for(const s of stars)if(inView(s.x,s.y))list.push({y:s.y,f:()=>drawStar(s)}); // v42 明星
   if(!boarding())for(const pt of (player.pets||[]))if(inView(pt.x,pt.y))list.push({y:pt.y,f:()=>drawPet(pt)}); // v41/v49 寵物（可多隻；搭乘時隱藏，抵達自動回到身邊）
+  for(const s of raiders)if(inView(s.x,s.y))list.push({y:s.y,f:()=>drawSoldier(s)}); // v59 日軍
   for(const c of citizens)if(inView(c.x,c.y))list.push({y:c.y,f:()=>{
      if(c.dead){ drawCorpse(c); return; }
      drawActor(c.x,c.y,c.face,c.walk,
@@ -5383,14 +5463,30 @@ function drawUI(){
       '🌾 各縣市政府可買農地：播種後每小時領補助、成熟收割賺大錢！',
       '🧙 綠島魔法屋免費學職業（魔法師/劍士/忍者/道士/風女/冰女），全是範圍技！',
       '🦖 聽到廣播「哥吉拉出現」→武器店買次元砲(5萬)出海討伐，賞金100萬！',
+      '🎌 台灣約每小時會有「日據時期・日軍來襲」：一隊日本兵攻擊你，拿武器反擊擊退有賞金（躲進自己家可暫避）！',
       '✈️ 桃園/松山/小港機場可搭飛機去「大陸」(長城/東方明珠/熊貓)，株洲有直播主劉思思會唱歌喔！',
       '',
       'B背包 M地圖 P圖鑑 J任務 C製作 N音樂 (H 或 Esc 關閉)'];
-    panel(x,y,w,lines.length*27+46);
+    // v59 自動換行：長句子不再爆出面板（依面板寬度斷字，窄螢幕縮小字級）
+    const fs=w<520?12:15, sp=fs+5, maxW=w-56;
+    ctx.font='bold '+fs+'px '+F;
+    const rows=[]; // {t,head}
+    lines.forEach((l,li)=>{
+      if(l===''){rows.push({t:'',head:false});return;}
+      let cur='';
+      for(const ch of l){
+        if(cur&&ctx.measureText(cur+ch).width>maxW){rows.push({t:cur,head:false});cur=ch;}
+        else cur+=ch;
+      }
+      rows.push({t:cur,head:li===0});
+    });
+    const ph=Math.min(rows.length*sp+40, VH-y-16);
+    panel(x,y,w,ph);
     drawClose(x+w-24,y+26);
-    ctx.font='bold 15px '+F;
-    lines.forEach((l,i)=>{ctx.fillStyle=i===0?'#c9500f':'#5b4023';
-      ctx.fillText(l,x+30,y+38+i*27);});
+    ctx.font='bold '+fs+'px '+F;
+    rows.forEach((r,i)=>{ const yy=y+34+i*sp; if(yy>y+ph-8)return; // 超出面板不畫
+      ctx.fillStyle=r.head?'#c9500f':'#5b4023';
+      ctx.fillText(r.t,x+28,yy);});
   }
 }
 
